@@ -1,7 +1,6 @@
 import type { Metadata } from "next";
 import type { Viewport } from "next";
 import { JetBrains_Mono, Source_Sans_3, Teko } from "next/font/google";
-import { cookies } from "next/headers";
 import { AppShell } from "@/components/app-shell";
 import "./globals.css";
 
@@ -43,19 +42,15 @@ export const viewport: Viewport = {
   initialScale: 1,
 };
 
-export default async function RootLayout({
+export default function RootLayout({
   children,
 }: Readonly<{
   children: React.ReactNode;
 }>) {
-  const cookieStore = await cookies();
-  const initialUnlocked = cookieStore.get("mi_household_unlocked")?.value === "1";
-  const initialOwnerUnlocked = cookieStore.get("mi_owner_unlocked")?.value === "1";
-
   return (
     <html lang="en">
       <body className={`${teko.variable} ${sourceSans.variable} ${mono.variable}`}>
-        <AppShell initialUnlocked={initialUnlocked} initialOwnerUnlocked={initialOwnerUnlocked}>
+        <AppShell>
           {children}
         </AppShell>
       </body>
