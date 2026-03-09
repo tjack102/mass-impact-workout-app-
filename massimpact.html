@@ -1,0 +1,452 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Mass Impact 12-Week Tracker</title>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <style>
+        /* --- Theme & Reset --- */
+        :root {
+            --bg-color: #121212; --card-bg: #1e1e1e; --text-main: #e0e0e0;
+            --accent: #bb86fc; --secondary: #03dac6; --hers: #ff80ab;
+            --input-bg: #2c2c2c; --border: #333; --danger: #cf6679;
+        }
+        body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; background-color: var(--bg-color); color: var(--text-main); margin: 0; padding: 10px; padding-bottom: 100px; transition: background 0.3s; }
+        body.wife-mode { --accent: #ff80ab; --secondary: #ff4081; }
+
+        /* --- Header & Controls --- */
+        .header-container { display: flex; justify-content: space-between; align-items: center; gap: 10px; margin-bottom: 20px; padding: 5px; }
+        h1 { margin: 0; font-size: 1.3rem; color: var(--accent); flex-grow: 1; letter-spacing: -0.5px; }
+        .control-btn, .week-select { background: var(--input-bg); border-radius: 8px; font-weight: bold; font-size: 0.9rem; padding: 12px 16px; cursor: pointer; transition: 0.2s; border: none; color: #888; }
+        .mode-toggle { border: 1px solid var(--accent); color: var(--accent); }
+        .week-select { border: 1px solid var(--secondary); color: var(--secondary); outline: none; -webkit-appearance: none; text-align: center; }
+
+        /* --- Tabs --- */
+        .tabs { display: flex; justify-content: space-between; margin-bottom: 20px; border-bottom: 1px solid var(--border); gap: 5px; }
+        .tab-btn { background: none; border: none; color: #666; padding: 12px 2px; font-weight: bold; font-size: 0.8rem; cursor: pointer; flex: 1; text-align: center; }
+        .tab-btn.active { color: var(--secondary); border-bottom: 3px solid var(--secondary); }
+        .phase-container { display: none; }
+        .phase-container.active { display: block; }
+
+        /* --- Cards --- */
+        .day-card { background: var(--card-bg); border-radius: 12px; margin-bottom: 12px; border: 1px solid var(--border); overflow: hidden; }
+        .day-header { padding: 18px 15px; background: #252525; display: flex; justify-content: space-between; align-items: center; cursor: pointer; font-weight: bold; }
+        .day-header span { color: var(--text-main); opacity: 0.5; }
+        .day-content { display: none; padding: 15px 10px; }
+        .day-content.open { display: block; }
+
+        /* --- Exercise Rows --- */
+        .exercise-block { margin-bottom: 20px; padding-bottom: 20px; border-bottom: 1px dashed var(--border); position: relative; }
+        .exercise-block:last-child { border-bottom: none; }
+        .ex-header { display: flex; flex-direction: column; gap: 4px; margin-bottom: 10px; position: relative; padding-right: 40px; }
+        
+        .ex-name-input, .ex-reps-input { background: transparent; border: none; width: 100%; padding: 4px 0; }
+        .ex-name-input { border-bottom: 1px dashed #444; color: var(--text-main); font-weight: bold; font-size: 1.1rem; border-radius: 0; }
+        .ex-name-input:focus { outline: none; border-bottom: 1px solid var(--accent); }
+        .ex-reps-input { color: var(--secondary); font-family: monospace; font-size: 0.95rem; }
+        .ex-reps-input:focus { outline: none; border-bottom: 1px solid var(--secondary); }
+
+        .input-row { display: flex; gap: 12px; margin-top: 8px; }
+        .input-group { flex: 1; }
+        .data-input { background: var(--input-bg); border: 1px solid var(--border); color: white; padding: 12px; border-radius: 6px; width: 100%; font-size: 16px; box-sizing: border-box; }
+        .data-input:focus { border-color: var(--accent); outline: none; }
+        label { font-size: 0.75rem; color: #888; display: block; margin-bottom: 4px; }
+        .prev-stat { font-size: 0.9em; color: var(--secondary); float: right; font-family: monospace; opacity: 0.9; }
+        .hers-badge { font-size: 0.7rem; background: var(--hers); color: black; padding: 2px 6px; border-radius: 4px; display: inline-block; width: fit-content; margin-bottom: 4px; font-weight: bold; }
+
+        /* --- Buttons & Utils --- */
+        .add-ex-btn { background: var(--input-bg); border: 2px dashed #444; color: #888; width: 100%; padding: 15px; border-radius: 8px; margin-top: 15px; cursor: pointer; font-weight: bold; }
+        .delete-btn { position: absolute; right: -10px; top: -10px; background: none; border: none; color: #555; font-size: 1.5rem; padding: 15px; cursor: pointer; z-index: 20; line-height: 1; }
+        .delete-btn:hover { color: var(--danger); }
+
+        .tools-section { margin-top: 40px; border-top: 2px solid var(--border); padding-top: 20px; }
+        .tools-title { color: #888; font-size: 0.9rem; text-transform: uppercase; letter-spacing: 1px; margin-bottom: 15px; }
+        .tool-card { background: var(--card-bg); padding: 15px; border-radius: 8px; margin-bottom: 15px; border: 1px solid var(--border); }
+        .tool-row { display: flex; gap: 10px; margin-bottom: 10px; }
+        .action-btn { flex: 1; padding: 12px; border-radius: 6px; border: none; font-weight: bold; cursor: pointer; color: #121212; font-size: 0.9rem; }
+        .btn-blue { background: var(--secondary); } 
+        .btn-purple { background: var(--accent); } 
+        .btn-red { background: var(--danger); color: white; }
+
+        .io-area { width: 100%; background: #111; color: #aaa; border: 1px solid #333; padding: 10px; font-family: monospace; font-size: 0.8rem; border-radius: 4px; margin-bottom: 10px; height: 60px; box-sizing: border-box; }
+        .warmup-results { display: flex; justify-content: space-between; margin-top: 10px; background: #111; padding: 10px; border-radius: 4px; }
+        .w-set { text-align: center; }
+        .w-lbl { font-size: 0.7rem; color: #888; display: block; }
+        .w-val { font-size: 1.1rem; color: var(--secondary); font-weight: bold; }
+        .chart-wrapper { background: var(--card-bg); border-radius: 12px; padding: 15px; border: 1px solid var(--border); height: 350px; position: relative; }
+    </style>
+</head>
+<body>
+
+    <!-- Header -->
+    <div class="header-container">
+        <h1>MASS IMPACT</h1>
+        <select id="weekSelect" class="week-select" onchange="Handlers.changeWeek(this.value)">
+            <option value="1">WEEK 1</option><option value="2">WEEK 2</option><option value="3">WEEK 3</option>
+            <option value="4">WEEK 4</option><option value="5">WEEK 5</option><option value="6">WEEK 6</option>
+            <option value="7">WEEK 7</option><option value="8">WEEK 8</option><option value="9">WEEK 9</option>
+            <option value="10">WEEK 10</option><option value="11">WEEK 11</option><option value="12">WEEK 12</option>
+        </select>
+        <button class="control-btn mode-toggle" onclick="Handlers.toggleMode()">CURRENT: HIS</button>
+    </div>
+
+    <!-- Navigation -->
+    <div class="tabs">
+        <button class="tab-btn active" onclick="Handlers.switchTab('p1', this)">PH 1: VOL<br><span style="font-size:0.7em">Wks 1-4</span></button>
+        <button class="tab-btn" onclick="Handlers.switchTab('p2', this)">PH 2: PYR<br><span style="font-size:0.7em">Wks 5-8</span></button>
+        <button class="tab-btn" onclick="Handlers.switchTab('p3', this)">PH 3: STR<br><span style="font-size:0.7em">Wks 9-12</span></button>
+        <button class="tab-btn" onclick="Handlers.switchTab('progress', this)">📈<br><span style="font-size:0.7em">Progress</span></button>
+    </div>
+
+    <!-- Content Areas -->
+    <div id="p1" class="phase-container active"></div>
+    <div id="p2" class="phase-container"></div>
+    <div id="p3" class="phase-container"></div>
+
+    <div id="progress" class="phase-container">
+        <div class="chart-wrapper"><canvas id="progressChart"></canvas></div>
+        <p style="text-align: center; color: #666; font-size: 0.8rem; margin-top: 10px;">Tracking main compound lifts across all 12 weeks.</p>
+    </div>
+
+    <!-- Utilities -->
+    <div class="tools-section">
+        <div class="tools-title">Utilities</div>
+        
+        <!-- Warmup -->
+        <div class="tool-card">
+            <h3 style="margin-top:0; font-size:1rem;">🔥 Warmup Calculator</h3>
+            <div class="input-row" style="margin-bottom:10px;">
+                <input type="number" id="warmupInput" class="data-input" placeholder="Working Weight" oninput="Handlers.calcWarmup()">
+                <button class="action-btn btn-blue" style="max-width: 100px;" onclick="Handlers.calcWarmup()">CALC</button>
+            </div>
+            <div class="warmup-results">
+                <div class="w-set"><span class="w-lbl">50% x12</span><span class="w-val" id="w1">-</span></div>
+                <div class="w-set"><span class="w-lbl">70% x4</span><span class="w-val" id="w2">-</span></div>
+                <div class="w-set"><span class="w-lbl">90% x1</span><span class="w-val" id="w3">-</span></div>
+            </div>
+        </div>
+
+        <!-- Backup -->
+        <div class="tool-card">
+            <h3 style="margin-top:0; font-size:1rem;">💾 Backup Data</h3>
+            <p style="font-size:0.8rem; color:#888; margin-bottom:10px;">Export to JSON to save history.</p>
+            <textarea id="io-field" class="io-area" placeholder="Paste JSON data here to import..."></textarea>
+            <div class="tool-row">
+                <button class="action-btn btn-blue" onclick="Handlers.exportData()">EXPORT TO JSON</button>
+                <button class="action-btn btn-purple" onclick="Handlers.importData()">IMPORT</button>
+            </div>
+            <button class="action-btn btn-red" style="width:100%" onclick="Handlers.clearData()">⚠️ RESET EVERYTHING</button>
+        </div>
+    </div>
+
+<script>
+    /* -------------------------------------------------------------------------- */
+    /* 1. CONFIG & DATA                                                           */
+    /* -------------------------------------------------------------------------- */
+    const Config = {
+        phases: ['p1', 'p2', 'p3'],
+        days: ['d1', 'd2', 'd3', 'd4', 'd5'],
+        chartKeywords: { Squat: "Squat", Press: "Shoulder Press", Row: "Bent Over Row" },
+        chartColors: {
+            his: { squat: '#bb86fc', press: '#03dac6', row: '#ffffff' },
+            hers: { squat: '#ff80ab', press: '#bb86fc', row: '#ffffff' }
+        }
+    };
+
+    const WorkoutData = {
+        p1: {
+            d1: [{ name: "Single Arm Row (Cable)", reps: "3x 15-20", note: "Focus on stretch", hers: "Single Arm Row (Stretch)" }, { name: "Pull-Up (Bodyweight)", reps: "2x 8-12", note: "", hers: "Assisted Pull-Up" }, { name: "Power Shrug", reps: "3x 8-12", note: "Heavy", hers: "Pause Shrugs (3s hold)" }, { name: "Standing Pullover", reps: "3x 12-15", note: "", hers: "Standing Pullover" }, { name: "Rear Delt Fly", reps: "2x 10-15", note: "", hers: "Rear Delt Fly" }, { name: "Incline Curl", reps: "2x 8-10", note: "", hers: "Incline Curl" }],
+            d2: [{ name: "Face Pull", reps: "3x 10-15", note: "Do not skip", hers: "Face Pull (Essential)" }, { name: "Weighted Dip", reps: "2x 8-12", note: "", hers: "Bench Dips / Machine Dips" }, { name: "AD Press (Arnold)", reps: "3x 8-12", note: "", hers: "Seated DB Press (Standard)" }, { name: "Lu Raise", reps: "2x 10-15", note: "", hers: "Lateral Raise" }, { name: "Pec Deck (Fly)", reps: "2x 10-15", note: "Sub for Crossover", hers: "Incline Fly" }, { name: "Overhead Tri Ext", reps: "2x 10-15", note: "", hers: "Overhead Tri Ext" }],
+            d3: [{ name: "Squat (Barbell)", reps: "3x 6-8", note: "", hers: "Bulgarian Split Squat" }, { name: "RDL (Barbell)", reps: "2x 6-8", note: "Hamstring stretch", hers: "RDL (Focus Glute Shelf)" }, { name: "Bulgarian Split Squat", reps: "2x 20", note: "Sub for Walking Lunge", hers: "Walking Lunges" }, { name: "Single Arm Row (DB)", reps: "2x 8-10", note: "Heavy density", hers: "Single Arm Row" }, { name: "Abs / Neck", reps: "Failure", note: "", hers: "Good/Bad Girl Superset" }],
+            d4: [{ name: "Neutral Pull-Up", reps: "3x 8-12", note: "", hers: "Neutral Pulldown" }, { name: "Bent Over Row", reps: "3x 8-12", note: "", hers: "Bent Over Row" }, { name: "Rack Pulls (Above Knee)", reps: "2x 8-12", note: "Use Straps", hers: "Rack Pulls (Use Straps)" }, { name: "Partial Lat Raise", reps: "3x 8-15", note: "Heavy swing ok", hers: "Partial Lat Raise" }, { name: "Hammer Curl", reps: "3x 8-12", note: "", hers: "Hammer Curl" }],
+            d5: [{ name: "Face Pull", reps: "3x 10-15", note: "", hers: "Face Pull" }, { name: "Incline DB Press", reps: "3x 8-10", note: "", hers: "Incline DB Press" }, { name: "Seated Shoulder Press", reps: "3x 8-10", note: "", hers: "Seated Shoulder Press" }, { name: "Tricep Extension", reps: "2x 8-10", note: "", hers: "Tricep Extension" }, { name: "Lateral Raise", reps: "3x 8-12", note: "", hers: "Lateral Raise" }, { name: "Neck/Legs", reps: "Failure", note: "", hers: "Leg Ext / Leg Curl Superset" }]
+        },
+        p2: {
+            d1: [{ name: "Single Arm Row", reps: "4 Sets: 20, 15, 10, 8", note: "Pyramid", hers: "Single Arm Row (Pyramid)" }, { name: "Pull-Up", reps: "4x 6-8", note: "Heavier than Ph1", hers: "Assisted Pull-Up" }, { name: "Power Shrug", reps: "3x 8-12", note: "", hers: "Pause Shrug (3s hold)" }, { name: "Standing Pullover", reps: "3x 10-12", note: "", hers: "Standing Pullover" }, { name: "Rear Delt / Inc Curl", reps: "2 Sets", note: "Superset", hers: "Rear Delt / Inc Curl" }],
+            d2: [{ name: "Face Pull", reps: "3x 10-15", note: "", hers: "Face Pull" }, { name: "Weighted Dip", reps: "2x 8-12", note: "", hers: "Machine Dips" }, { name: "AD Press", reps: "3 Sets: 6-8, 12, 12", note: "Heavy first set", hers: "Seated DB Press" }, { name: "Lu Raise", reps: "2x 10-15", note: "", hers: "Lateral Raise" }, { name: "Pec Deck", reps: "2x 10-15", note: "", hers: "Pec Deck" }, { name: "Overhead Tri Ext", reps: "2x 10-15", note: "", hers: "Overhead Tri Ext" }],
+            d3: [{ name: "Squat", reps: "3x 6-8", note: "", hers: "Split Squat" }, { name: "RDL", reps: "2 Sets: 6-8, 10-15", note: "1 Heavy, 1 Backoff", hers: "RDL (1 Heavy, 1 Backoff)" }, { name: "Bulgarian Split Squat", reps: "2x 20", note: "Death march", hers: "Walking Lunge" }, { name: "Single Arm Row (DB)", reps: "2 Sets: 8-10, 10-15", note: "", hers: "Single Arm Row" }, { name: "Abs / Neck", reps: "Failure", note: "", hers: "Good/Bad Girl Superset" }],
+            d4: [{ name: "Neutral Pull-Up", reps: "3x 6-8", note: "Heavy", hers: "Neutral Pulldown" }, { name: "Bent Over Row", reps: "3x 8-12", note: "", hers: "Bent Over Row" }, { name: "Rack Pulls", reps: "2x 8-12", note: "Use Straps", hers: "Rack Pulls" }, { name: "Partial Lat Raise", reps: "3x 8-15", note: "", hers: "Partial Lat Raise" }, { name: "Hammer Curl", reps: "3x 8-12", note: "", hers: "Hammer Curl" }],
+            d5: [{ name: "Face Pull", reps: "3x 10-15", note: "", hers: "Face Pull" }, { name: "Incline DB Press", reps: "2 Sets: 6-8, 10", note: "Heavy first", hers: "Incline Fly" }, { name: "Seated Shoulder Press", reps: "2 Sets: 6-8, 10", note: "Heavy first", hers: "Seated Shoulder Press" }, { name: "Tricep Ext / Lat Raise", reps: "3 Sets", note: "Superset", hers: "Tricep / Lat Raise" }, { name: "Neck/Legs", reps: "Failure", note: "", hers: "Leg Ext / Leg Curl" }]
+        },
+        p3: {
+            d1: [{ name: "Single Arm Row", reps: "4x 6-10", note: "ALL SETS HEAVY", hers: "Single Arm Row" }, { name: "Pull-Up (Weighted)", reps: "4x 4-6", note: "Very Heavy", hers: "Assisted Pull-Up" }, { name: "Power Shrug", reps: "3x 8-12", note: "", hers: "Pause Shrug" }, { name: "Standing Pullover", reps: "3x 8-10", note: "", hers: "Standing Pullover" }, { name: "Rear Delt / Curl", reps: "2 Sets", note: "Superset", hers: "Rear Delt / Curl" }],
+            d2: [{ name: "Face Pull", reps: "3x 10-15", note: "", hers: "Face Pull" }, { name: "Weighted Dip", reps: "2x 8-12", note: "", hers: "Machine Dip" }, { name: "AD Press", reps: "3 Sets: 4-6, 8, 12", note: "Reverse Pyramid", hers: "Seated DB Press" }, { name: "Lu Raise / Pec Deck", reps: "2 Sets", note: "", hers: "Lat Raise / Pec Deck" }, { name: "Tri Ext", reps: "2 Sets", note: "", hers: "Tri Ext" }],
+            d3: [{ name: "Squat", reps: "3x 6-8", note: "Heavy", hers: "Split Squat" }, { name: "RDL", reps: "2 Sets: 6, 15", note: "", hers: "RDL" }, { name: "Bulgarian Split Squat", reps: "2x 20", note: "", hers: "Walking Lunge" }, { name: "DB Row", reps: "2 Sets: 8, 12", note: "", hers: "DB Row" }, { name: "Abs/Neck", reps: "Failure", note: "", hers: "Good/Bad Girl" }],
+            d4: [{ name: "Neutral Pull-Up", reps: "3x 4-6", note: "Max Strength", hers: "Pulldown" }, { name: "Bent Over Row", reps: "3x 8-12", note: "", hers: "Bent Over Row" }, { name: "Rack Pulls", reps: "2x 8-12", note: "Use Straps", hers: "Rack Pulls" }, { name: "Partial Lat Raise", reps: "3x 8-15", note: "", hers: "Partial Lat Raise" }, { name: "Hammer Curl", reps: "3x 8-12", note: "", hers: "Hammer Curl" }],
+            d5: [{ name: "Face Pull", reps: "3x 10-15", note: "", hers: "Face Pull" }, { name: "Incline DB Press", reps: "3 Sets: 4-6, 8, 10", note: "Reverse Pyramid", hers: "Incline Fly" }, { name: "Seated Shoulder Press", reps: "3 Sets: 4-6, 8, 10", note: "Reverse Pyramid", hers: "Seated Shoulder Press" }, { name: "Tricep / Lat Raise", reps: "3 Sets", note: "", hers: "Tricep / Lat Raise" }, { name: "Neck/Legs", reps: "Failure", note: "", hers: "Leg Ext / Leg Curl" }]
+        }
+    };
+
+    /* -------------------------------------------------------------------------- */
+    /* 2. STATE & STORAGE                                                         */
+    /* -------------------------------------------------------------------------- */
+    const State = {
+        isWifeMode: false,
+        currentWeek: 1,
+        setWeek(val) { this.currentWeek = parseInt(val) || 1; Storage.set('currentWeek', this.currentWeek); },
+        toggleMode() { this.isWifeMode = !this.isWifeMode; }
+    };
+
+    const Storage = {
+        get(key) { return localStorage.getItem(key); },
+        set(key, val) { localStorage.setItem(key, val); },
+        getJSON(key, fallback = []) { try { return JSON.parse(this.get(key)) || fallback; } catch { return fallback; } },
+        setJSON(key, val) { this.set(key, JSON.stringify(val)); },
+        update(key, val) { localStorage.setItem(key, val); }
+    };
+
+    /* -------------------------------------------------------------------------- */
+    /* 3. BUSINESS LOGIC (CORE)                                                   */
+    /* -------------------------------------------------------------------------- */
+    const Core = {
+        getKeys(id) {
+            const suffix = State.isWifeMode ? '-hers' : '-his';
+            const wPrefix = `w${State.currentWeek}-`;
+            return {
+                name: `${id}-name${suffix}`, reps: `${id}-reps${suffix}`,
+                weight: `${wPrefix}${id}-weight${suffix}`, notes: `${wPrefix}${id}-notes${suffix}`,
+                legacyWeight: `${id}-weight${suffix}`, legacyNotes: `${id}-notes${suffix}`,
+                hidden: `${id}-hidden`
+            };
+        },
+        getPreviousWeight(id) {
+            if (State.currentWeek <= 1) return '-';
+            const suffix = State.isWifeMode ? '-hers' : '-his';
+            return Storage.get(`w${State.currentWeek - 1}-${id}-weight${suffix}`) || '-';
+        },
+        getExerciseContext(ex, id, isCustom) {
+            const keys = this.getKeys(id);
+            const defaultName = State.isWifeMode ? (ex.hers || ex.name) : ex.name;
+            const name = Storage.get(keys.name) || (isCustom ? ex.name : defaultName);
+            const reps = Storage.get(keys.reps) || ex.reps;
+            let weight = Storage.get(keys.weight) || '';
+            let notes = Storage.get(keys.notes) || '';
+            
+            // Week 1 Legacy Fallback
+            if (State.currentWeek === 1 && !weight && !notes) {
+                weight = Storage.get(keys.legacyWeight) || '';
+                notes = Storage.get(keys.legacyNotes) || '';
+            }
+
+            return {
+                id, name, reps, weight, notes, keys,
+                prevWeight: this.getPreviousWeight(id),
+                placeholder: ex.note || 'Notes',
+                isBadgeVisible: !isCustom && State.isWifeMode && ex.hers && ex.hers !== ex.name,
+                isHidden: Storage.get(keys.hidden) === 'true'
+            };
+        }
+    };
+
+    /* -------------------------------------------------------------------------- */
+    /* 4. VISUALIZATION (CHARTS)                                                  */
+    /* -------------------------------------------------------------------------- */
+    const Charts = {
+        instance: null,
+        findIdByKeyword(phase, keyword) {
+            for (let day of Config.days) {
+                const list = WorkoutData[phase]?.[day] || [];
+                const idx = list.findIndex(ex => ex.name.includes(keyword));
+                if (idx !== -1) return `${phase}-${day}-ex${idx}`;
+            }
+            return null;
+        },
+        getDataSeries(keyword) {
+            const data = [];
+            const suffix = State.isWifeMode ? '-hers' : '-his';
+            for (let w = 1; w <= 12; w++) {
+                let phase = 'p1';
+                if (w > 8) phase = 'p3'; else if (w > 4) phase = 'p2';
+                const id = this.findIdByKeyword(phase, keyword);
+                if (!id) { data.push(null); continue; }
+                const key = `w${w}-${id}-weight${suffix}`;
+                let val = Storage.get(key);
+                if (w === 1 && !val) val = Storage.get(`${id}-weight${suffix}`);
+                data.push(val ? parseFloat(val) : null);
+            }
+            return data;
+        },
+        render() {
+            const ctx = document.getElementById('progressChart');
+            if (!ctx) return;
+            if (this.instance) this.instance.destroy();
+            const colors = State.isWifeMode ? Config.chartColors.hers : Config.chartColors.his;
+            this.instance = new Chart(ctx, {
+                type: 'line',
+                data: {
+                    labels: Array.from({length: 12}, (_, i) => `W${i+1}`),
+                    datasets: [
+                        { label: 'Squat', data: this.getDataSeries(Config.chartKeywords.Squat), borderColor: colors.squat, backgroundColor: colors.squat, tension: 0.2 },
+                        { label: 'Press', data: this.getDataSeries(Config.chartKeywords.Press), borderColor: colors.press, backgroundColor: colors.press, tension: 0.2 },
+                        { label: 'Row', data: this.getDataSeries(Config.chartKeywords.Row), borderColor: colors.row, backgroundColor: colors.row, tension: 0.2 }
+                    ]
+                },
+                options: {
+                    responsive: true, maintainAspectRatio: false,
+                    scales: { y: { grid: { color: '#333' } }, x: { grid: { color: '#333' } } },
+                    plugins: { legend: { labels: { color: '#e0e0e0' } } }
+                }
+            });
+        }
+    };
+
+    /* -------------------------------------------------------------------------- */
+    /* 5. PRESENTATION (UI)                                                       */
+    /* -------------------------------------------------------------------------- */
+    const UI = {
+        init() {
+            const savedWeek = Storage.get('currentWeek');
+            if (savedWeek) State.setWeek(savedWeek);
+            document.getElementById('weekSelect').value = State.currentWeek;
+            this.renderAll();
+        },
+        renderAll() {
+            this.updateTheme();
+            Config.phases.forEach(p => {
+                const container = document.getElementById(p);
+                if (!container) return;
+                container.innerHTML = ''; 
+                Config.days.forEach(d => this.renderDay(container, p, d));
+            });
+            if (document.getElementById('progress').classList.contains('active')) Charts.render();
+        },
+        updateTheme() {
+            const btn = document.querySelector('.mode-toggle');
+            if (State.isWifeMode) {
+                document.body.classList.add('wife-mode');
+                btn.textContent = "CURRENT: HERS";
+            } else {
+                document.body.classList.remove('wife-mode');
+                btn.textContent = "CURRENT: HIS";
+            }
+        },
+        renderDay(container, phase, day) {
+            container.insertAdjacentHTML('beforeend', `
+                <div class="day-card">
+                    <div class="day-header" onclick="Handlers.toggleAccordion(this)">Day ${day.slice(1)} <span>▼</span></div>
+                    <div class="day-content" id="${phase}-${day}-list"></div>
+                </div>`
+            );
+            const listEl = document.getElementById(`${phase}-${day}-list`);
+            // Standard Exercises
+            (WorkoutData[phase]?.[day] || []).forEach((ex, idx) => {
+                const ctx = Core.getExerciseContext(ex, `${phase}-${day}-ex${idx}`, false);
+                if (!ctx.isHidden) listEl.insertAdjacentHTML('beforeend', this.buildRow(ctx, false, null, null));
+            });
+            // Custom Exercises
+            const customKey = `custom-${phase}-${day}`;
+            Storage.getJSON(customKey).forEach((ex, idx) => {
+                const ctx = Core.getExerciseContext(ex, ex.id, true);
+                listEl.insertAdjacentHTML('beforeend', this.buildRow(ctx, true, customKey, idx));
+            });
+            // Add Button
+            listEl.insertAdjacentHTML('beforeend', `<button class="add-ex-btn" onclick="Handlers.addCustomExercise('${phase}', '${day}')">+ ADD EXERCISE</button>`);
+        },
+        buildRow(ctx, isCustom, listKey, idx) {
+            return `
+                <div class="exercise-block">
+                    ${this.renderHeader(ctx, isCustom, listKey, idx)}
+                    ${this.renderInputs(ctx)}
+                </div>`;
+        },
+        renderHeader(ctx, isCustom, listKey, idx) {
+            const deleteAction = isCustom ? `Handlers.deleteCustom('${listKey}', ${idx})` : `Handlers.hideStandard('${ctx.id}')`;
+            return `
+                <div class="ex-header">
+                    <button class="delete-btn" onclick="${deleteAction}">×</button>
+                    ${ctx.isBadgeVisible ? '<span class="hers-badge">GODDESS MOD</span>' : ''}
+                    <input class="ex-name-input" type="text" value="${ctx.name}" oninput="Storage.update('${ctx.keys.name}', this.value)">
+                    <input class="ex-reps-input" type="text" value="${ctx.reps}" placeholder="Target Reps" oninput="Storage.update('${ctx.keys.reps}', this.value)">
+                </div>`;
+        },
+        renderInputs(ctx) {
+            const prevText = (State.currentWeek > 1 && ctx.prevWeight !== '-') ? `<span class="prev-stat">Last: ${ctx.prevWeight}</span>` : '';
+            return `
+                <div class="input-row">
+                    <div class="input-group">
+                        <label>WEIGHT ${prevText}</label>
+                        <input class="data-input" type="text" value="${ctx.weight}" placeholder="lbs/kg" oninput="Storage.update('${ctx.keys.weight}', this.value)">
+                    </div>
+                    <div class="input-group">
+                        <label>NOTES / REPS</label>
+                        <input class="data-input" type="text" value="${ctx.notes}" placeholder="${ctx.placeholder}" oninput="Storage.update('${ctx.keys.notes}', this.value)">
+                    </div>
+                </div>`;
+        }
+    };
+
+    /* -------------------------------------------------------------------------- */
+    /* 6. INTERACTION (HANDLERS)                                                  */
+    /* -------------------------------------------------------------------------- */
+    const Handlers = {
+        toggleMode() { State.toggleMode(); UI.renderAll(); },
+        changeWeek(val) { State.setWeek(val); UI.renderAll(); },
+        switchTab(id, btn) {
+            document.querySelectorAll('.phase-container').forEach(e => e.classList.remove('active'));
+            document.getElementById(id).classList.add('active');
+            document.querySelectorAll('.tab-btn').forEach(e => e.classList.remove('active'));
+            if(btn) btn.classList.add('active');
+            if(id === 'progress') Charts.render();
+        },
+        toggleAccordion(header) {
+            const content = header.nextElementSibling;
+            content.classList.toggle('open');
+            header.querySelector('span').textContent = content.classList.contains('open') ? '▲' : '▼';
+        },
+        addCustomExercise(phase, day) {
+            const key = `custom-${phase}-${day}`;
+            const list = Storage.getJSON(key);
+            list.push({ id: `custom_${Date.now()}`, name: "New Exercise", reps: "3x 10", note: "Custom" });
+            Storage.setJSON(key, list);
+            UI.renderAll();
+        },
+        deleteCustom(key, idx) {
+            if (!confirm("Delete custom exercise?")) return;
+            const list = Storage.getJSON(key);
+            list.splice(idx, 1);
+            Storage.setJSON(key, list);
+            UI.renderAll();
+        },
+        hideStandard(id) {
+            if (!confirm("Hide this exercise?")) return;
+            Storage.set(`${id}-hidden`, 'true');
+            UI.renderAll();
+        },
+        calcWarmup() {
+            const val = parseFloat(document.getElementById('warmupInput').value);
+            const w1 = document.getElementById('w1'), w2 = document.getElementById('w2'), w3 = document.getElementById('w3');
+            if (!val || isNaN(val)) { w1.innerText = w2.innerText = w3.innerText = "-"; return; }
+            w1.innerText = Math.round(val * 0.5); w2.innerText = Math.round(val * 0.7); w3.innerText = Math.round(val * 0.9);
+        },
+        exportData() {
+            const el = document.getElementById('io-field');
+            el.value = JSON.stringify(localStorage);
+            el.select();
+            document.execCommand('copy');
+            alert("✅ Data Copied!");
+        },
+        importData() {
+            const str = document.getElementById('io-field').value;
+            if (!str) return alert("Paste data first.");
+            if (!confirm("Overwrite all data?")) return;
+            try {
+                const data = JSON.parse(str);
+                localStorage.clear();
+                for (let k in data) localStorage.setItem(k, data[k]);
+                location.reload();
+            } catch { alert("Invalid data."); }
+        },
+        clearData() {
+            if (confirm("Reset ALL history? This cannot be undone.")) { localStorage.clear(); location.reload(); }
+        }
+    };
+
+    // --- Init ---
+    window.Handlers = Handlers; 
+    window.Storage = Storage; 
+    UI.init();
+
+</script>
+</body>
+</html>
