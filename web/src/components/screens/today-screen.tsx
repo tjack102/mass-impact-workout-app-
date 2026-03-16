@@ -17,6 +17,13 @@ import { WorkoutHeader } from "@/components/workout-header";
 import type { ProgramExercise } from "@/lib/program-data";
 import { formatScheme, getRestSecondsForExercise, getTotalSets } from "@/lib/program-data";
 import { getProgram, getProgramDay, saveProgram } from "@/lib/program-store";
+import { getStoredPrefsFromLocalStorage } from "@/lib/household-profiles";
+import {
+  getExercisesForDay,
+  getDayTitle,
+  getDaysInCycle,
+  getProgramMeta,
+} from "@/lib/program-registry";
 import {
   completeSession,
   getActiveSession,
@@ -89,35 +96,44 @@ function getLastPerformanceFromSessions(sessions: WorkoutSession[], exerciseName
   return undefined;
 }
 
-function shiftWeekDay(currentWeek: number, currentDay: number, step: 1 | -1) {
+function shiftWeekDay(currentWeek: number, currentDay: number, step: 1 | -1, daysPerCycle: number, totalWeeks: number) {
   let week = currentWeek;
   let day = currentDay + step;
 
-  if (day > 5) {
+  if (day > daysPerCycle) {
     day = 1;
-    week = week >= 12 ? 1 : week + 1;
+    week = week >= totalWeeks ? 1 : week + 1;
   } else if (day < 1) {
-    day = 5;
-    week = week <= 1 ? 12 : week - 1;
+    day = daysPerCycle;
+    week = week <= 1 ? totalWeeks : week - 1;
   }
 
   return { week, day };
 }
 
-function clampDayPrefs(prefs: UserPrefs): UserPrefs {
+function clampDayPrefs(prefs: UserPrefs, daysPerCycle: number, totalWeeks: number): UserPrefs {
   return {
     ...prefs,
-    currentWeek: Math.min(12, Math.max(1, prefs.currentWeek)),
-    currentDay: Math.min(5, Math.max(1, prefs.currentDay)),
+    currentWeek: Math.min(totalWeeks, Math.max(1, prefs.currentWeek)),
+    currentDay: Math.min(daysPerCycle, Math.max(1, prefs.currentDay)),
   };
 }
 
 export function TodayScreen() {
   const router = useRouter();
   const { ownerPinEnabled, ownerUnlocked } = useAccess();
-  const canEditTemplate = !ownerPinEnabled || ownerUnlocked;
+
+  // Read selectedProgram for the active profile
+  const storedPrefs = getStoredPrefsFromLocalStorage();
+  const programId = storedPrefs.profiles[storedPrefs.activeUser]?.selectedProgram ?? "mass-impact";
+  const programMeta = getProgramMeta(programId);
+  const daysPerCycle = getDaysInCycle(programId);
+  // For ongoing programs (cycleLength = 0), use 52 as a reasonable upper bound
+  const totalWeeks = programMeta && programMeta.cycleLength > 0 ? programMeta.cycleLength : 52;
+
+  const canEditTemplate = (!ownerPinEnabled || ownerUnlocked) && programId === "mass-impact";
   const [program, setProgram] = useState(() => getProgram());
-  const [prefs, setPrefs] = useState<UserPrefs>(() => clampDayPrefs(getPrefs()));
+  const [prefs, setPrefs] = useState<UserPrefs>(() => clampDayPrefs(getPrefs(), daysPerCycle, totalWeeks));
   const [activeSession, setActiveSession] = useState<WorkoutSession | null>(() => getActiveSession());
   const [sessionHistory, setSessionHistory] = useState<WorkoutSession[]>(() => getAllSessions());
   const [activeIndex, setActiveIndex] = useState(0);
@@ -139,8 +155,15 @@ export function TodayScreen() {
   const restStartedAtRef = useRef<number | null>(null);
   const restTargetRef = useRef<number>(90);
 
-  const programDay = getProgramDay(program, prefs.currentWeek, prefs.currentDay);
-  const currentWeekData = program.weeks.find((week) => week.weekNumber === prefs.currentWeek);
+  // Mass Impact uses program-store (preserves user template edits); all others use registry
+  const programDay = programId === "mass-impact" ? getProgramDay(program, prefs.currentWeek, prefs.currentDay) : null;
+  const exercises = useMemo<ProgramExercise[]>(() => {
+    if (programId === "mass-impact") {
+      return programDay?.exercises ?? [];
+    }
+    return getExercisesForDay(programId, prefs.currentDay, prefs.currentWeek);
+  }, [programId, programDay, prefs.currentDay, prefs.currentWeek]);
+
   const matchingActiveSession =
     activeSession && activeSession.weekNumber === prefs.currentWeek && activeSession.dayNumber === prefs.currentDay
       ? activeSession
@@ -164,11 +187,7 @@ export function TodayScreen() {
       : "Not Started";
 
   const queueExercises = useMemo<QueueExercise[]>(() => {
-    if (!programDay) {
-      return [];
-    }
-
-    return programDay.exercises.map((exercise, index) => {
+    return exercises.map((exercise, index) => {
       const completedSets = matchingActiveSession
         ? matchingActiveSession.sets.filter((set) => set.exerciseName === exercise.name).length
         : 0;
@@ -186,12 +205,13 @@ export function TodayScreen() {
         track: prefs.activeUser,
       };
     });
-  }, [matchingActiveSession, prefs.activeUser, prefs.currentDay, prefs.currentWeek, programDay, sessionHistory]);
+  }, [exercises, matchingActiveSession, prefs.activeUser, prefs.currentDay, prefs.currentWeek, sessionHistory]);
 
   const safeActiveIndex =
     queueExercises.length === 0 ? 0 : Math.min(activeIndex, Math.max(0, queueExercises.length - 1));
   const activeExercise = queueExercises[safeActiveIndex];
-  const activeProgramExercise = programDay?.exercises[safeActiveIndex];
+  // Only used for template editing, which is Mass Impact-only
+  const activeProgramExercise = exercises[safeActiveIndex];
   const activeExerciseSets = useMemo(
     () =>
       !matchingActiveSession || !activeExercise
@@ -317,13 +337,13 @@ export function TodayScreen() {
     if (matchingActiveSession) {
       return matchingActiveSession;
     }
-    const session = startSession(prefs.currentWeek, prefs.currentDay);
+    const session = startSession(prefs.currentWeek, prefs.currentDay, undefined, programId);
     setActiveSession(session);
     setNowMs(Date.now());
     setExerciseStartedAt(Date.now());
     setExerciseRestSeconds(0);
     return session;
-  }, [matchingActiveSession, prefs.currentDay, prefs.currentWeek]);
+  }, [matchingActiveSession, prefs.currentDay, prefs.currentWeek, programId]);
 
   const persistPrefs = useCallback(
     (nextWeek: number, nextDay: number) => {
@@ -345,20 +365,27 @@ export function TodayScreen() {
       setExerciseRestSeconds(0);
       setTemplateEditorOpen(false);
       stopTimer();
-      const nextDayData = getProgramDay(program, nextWeek, nextDay);
-      setTemplateDraft(buildTemplateDraft(nextDayData?.exercises[0]));
-      const nextRest = nextDayData?.exercises[0] ? getRestSecondsForExercise(nextDayData.exercises[0]) : 90;
+
+      // Get first exercise for the next day to pre-set the template draft and rest timer
+      let firstExercise: ProgramExercise | undefined;
+      if (programId === "mass-impact") {
+        firstExercise = getProgramDay(program, nextWeek, nextDay)?.exercises[0];
+      } else {
+        firstExercise = getExercisesForDay(programId, nextDay, nextWeek)[0];
+      }
+      setTemplateDraft(buildTemplateDraft(firstExercise));
+      const nextRest = firstExercise ? getRestSecondsForExercise(firstExercise) : 90;
       setTimerTarget(nextRest);
     },
-    [persistPrefs, program, setTimerTarget, stopTimer],
+    [persistPrefs, program, programId, setTimerTarget, stopTimer],
   );
 
   const handleShiftDay = useCallback(
     (step: 1 | -1) => {
-      const shifted = shiftWeekDay(prefs.currentWeek, prefs.currentDay, step);
+      const shifted = shiftWeekDay(prefs.currentWeek, prefs.currentDay, step, daysPerCycle, totalWeeks);
       applyDaySelection(shifted.week, shifted.day);
     },
-    [applyDaySelection, prefs.currentDay, prefs.currentWeek],
+    [applyDaySelection, daysPerCycle, prefs.currentDay, prefs.currentWeek, totalWeeks],
   );
 
   const handleSelectExercise = useCallback(
@@ -369,12 +396,12 @@ export function TodayScreen() {
       setExerciseSummary(null);
       setTemplateEditorOpen(false);
       const selected = queueExercises[index];
-      setTemplateDraft(buildTemplateDraft(programDay?.exercises[index]));
+      setTemplateDraft(buildTemplateDraft(exercises[index]));
       const rest = selected ? selected.restTargetSeconds : 90;
       stopTimer();
       setTimerTarget(rest);
     },
-    [programDay, queueExercises, setTimerTarget, stopTimer],
+    [exercises, queueExercises, setTimerTarget, stopTimer],
   );
 
   const handleSaveSet = useCallback(() => {
@@ -524,7 +551,7 @@ export function TodayScreen() {
   return (
     <section className="screen">
       <WorkoutHeader
-        dayLabel={`Week ${prefs.currentWeek} - Day ${prefs.currentDay}  |  ${programDay?.title ?? "Program day"}`}
+        dayLabel={`Week ${prefs.currentWeek} - Day ${prefs.currentDay}  |  ${getDayTitle(programId, prefs.currentDay)}`}
         sessionStatus={sessionStatus}
         onPrimaryAction={() => {
           ensureActiveSession();
@@ -555,9 +582,9 @@ export function TodayScreen() {
                     value={prefs.currentWeek}
                     onChange={(event) => applyDaySelection(Number(event.target.value), prefs.currentDay)}
                   >
-                    {program.weeks.map((week) => (
-                      <option key={week.weekNumber} value={week.weekNumber}>
-                        Week {week.weekNumber}
+                    {Array.from({ length: totalWeeks }, (_, i) => i + 1).map((weekNum) => (
+                      <option key={weekNum} value={weekNum}>
+                        Week {weekNum}
                       </option>
                     ))}
                   </select>
@@ -569,9 +596,9 @@ export function TodayScreen() {
                     value={prefs.currentDay}
                     onChange={(event) => applyDaySelection(prefs.currentWeek, Number(event.target.value))}
                   >
-                    {(currentWeekData?.days ?? []).map((day) => (
-                      <option key={day.dayNumber} value={day.dayNumber}>
-                        Day {day.dayNumber} - {day.title}
+                    {Array.from({ length: daysPerCycle }, (_, i) => i + 1).map((dayNum) => (
+                      <option key={dayNum} value={dayNum}>
+                        Day {dayNum} - {getDayTitle(programId, dayNum)}
                       </option>
                     ))}
                   </select>
@@ -587,30 +614,32 @@ export function TodayScreen() {
               </div>
             </div>
 
-            <div className="queue-action-row">
-              <button
-                type="button"
-                className="ghost-btn"
-                disabled={!canEditTemplate || !activeProgramExercise}
-                title={!canEditTemplate ? "Unlock Coach Mode in Templates to edit" : ""}
-                onClick={() => {
-                  setTemplateDraft(buildTemplateDraft(activeProgramExercise));
-                  setTemplateEditorOpen((current) => !current);
-                }}
-              >
-                {templateEditorOpen ? "Close Exercise Edit" : "Edit Selected"}
-              </button>
-              <button
-                type="button"
-                className="ghost-btn"
-                disabled={!activeProgramExercise}
-                onClick={() =>
-                  router.push(`/templates?week=${prefs.currentWeek}&day=${prefs.currentDay}&exercise=${safeActiveIndex}`)
-                }
-              >
-                Open in Templates
-              </button>
-            </div>
+            {programId === "mass-impact" ? (
+              <div className="queue-action-row">
+                <button
+                  type="button"
+                  className="ghost-btn"
+                  disabled={!canEditTemplate || !activeProgramExercise}
+                  title={!canEditTemplate ? "Unlock Coach Mode in Templates to edit" : ""}
+                  onClick={() => {
+                    setTemplateDraft(buildTemplateDraft(activeProgramExercise));
+                    setTemplateEditorOpen((current) => !current);
+                  }}
+                >
+                  {templateEditorOpen ? "Close Exercise Edit" : "Edit Selected"}
+                </button>
+                <button
+                  type="button"
+                  className="ghost-btn"
+                  disabled={!activeProgramExercise}
+                  onClick={() =>
+                    router.push(`/templates?week=${prefs.currentWeek}&day=${prefs.currentDay}&exercise=${safeActiveIndex}`)
+                  }
+                >
+                  Open in Templates
+                </button>
+              </div>
+            ) : null}
 
             {templateEditorOpen && activeProgramExercise ? (
               <ExerciseTemplateInlineEditor
