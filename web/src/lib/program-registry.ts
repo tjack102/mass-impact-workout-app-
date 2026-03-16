@@ -1,6 +1,7 @@
 import type { ProgramExercise } from "./program-data";
 import { getDayForWeek, getDefaultRestSeconds } from "./program-data";
 import { RAVAGE_PROGRAM, getRavageDayTemplate } from "./program-data-ravage";
+import { getHersDayTemplate } from "./program-data-hers";
 import type { ProgramMeta } from "./types";
 import type { HouseholdUser } from "./household-profiles";
 
@@ -100,7 +101,18 @@ export function getExercisesForDay(
       } satisfies ProgramExercise;
     });
   }
-  // Hers stubs — will be filled in Task 18
+  if (programId.startsWith("hers-")) {
+    const template = getHersDayTemplate(programId, dayNumber);
+    if (!template) return [];
+    return template.exercises.map((ex, i) => ({
+      order: i + 1,
+      orderLabel: ex.orderLabel,
+      name: ex.name,
+      setGroups: [{ sets: ex.sets, reps: ex.reps }],
+      restSeconds: getDefaultRestSeconds(ex.name),
+      supersetGroup: ex.supersetGroup,
+    } satisfies ProgramExercise));
+  }
   return [];
 }
 
@@ -114,7 +126,9 @@ export function getDayTitle(programId: string, dayNumber: number): string {
   if (programId === "ravage") {
     return getRavageDayTemplate(dayNumber)?.title ?? `Day ${dayNumber}`;
   }
-  // Stubs for Hers programs
+  if (programId.startsWith("hers-")) {
+    return getHersDayTemplate(programId, dayNumber)?.title ?? `Day ${dayNumber}`;
+  }
   return `Day ${dayNumber}`;
 }
 
