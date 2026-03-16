@@ -462,6 +462,11 @@ a {
   border-color: color-mix(in srgb, var(--ok), transparent 58%);
 }
 
+.exercise-card.superset-grouped {
+  border-left: 2px solid var(--accent-primary);
+  margin-left: 0.5rem;
+}
+
 .exercise-line {
   display: flex;
   justify-content: space-between;

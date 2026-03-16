@@ -57,6 +57,7 @@ type QueueExercise = {
   completedSets: number;
   restTargetSeconds: number;
   track: "his" | "hers";
+  supersetGroup?: string;
 };
 
 function buildTemplateDraft(exercise?: ProgramExercise): ExerciseTemplateDraft {
@@ -203,6 +204,7 @@ export function TodayScreen() {
         completedSets,
         restTargetSeconds: getRestSecondsForExercise(exercise),
         track: prefs.activeUser,
+        supersetGroup: exercise.supersetGroup,
       };
     });
   }, [exercises, matchingActiveSession, prefs.activeUser, prefs.currentDay, prefs.currentWeek, sessionHistory]);
@@ -437,10 +439,27 @@ export function TodayScreen() {
     if (updated) {
       setActiveSession(updated);
     }
-    startTimer(targetSeconds);
     setDraft({ weight: draft.weight, reps: draft.reps, rpe: "" });
     window.setTimeout(() => setSyncState("synced"), 520);
-  }, [activeExercise, draft, ensureActiveSession, startTimer, targetSeconds]);
+
+    // Superset behavior: if the current exercise is the "A" partner, auto-advance to the "B"
+    // partner instead of starting the rest timer. Rest happens after the B set.
+    const currentExercise = queueExercises[safeActiveIndex];
+    if (currentExercise?.supersetGroup) {
+      const isA = currentExercise.orderLabel.toUpperCase().endsWith("A");
+      if (isA) {
+        const bIndex = queueExercises.findIndex(
+          (ex, idx) => idx > safeActiveIndex && ex.supersetGroup === currentExercise.supersetGroup
+        );
+        if (bIndex >= 0) {
+          handleSelectExercise(bIndex);
+          return;
+        }
+      }
+    }
+
+    startTimer(targetSeconds);
+  }, [activeExercise, draft, ensureActiveSession, handleSelectExercise, queueExercises, safeActiveIndex, startTimer, targetSeconds]);
 
   const handleFinishExercise = useCallback(() => {
     if (!activeExercise) {
@@ -667,6 +686,7 @@ export function TodayScreen() {
                   lastPerformance={exercise.lastPerformance}
                   isActive={index === safeActiveIndex}
                   onSelect={() => handleSelectExercise(index)}
+                  supersetGroup={exercise.supersetGroup}
                 />
               ))}
             </div>

@@ -96,6 +96,7 @@ export function getExercisesForDay(
         name: ex.name,
         setGroups,
         restSeconds: getDefaultRestSeconds(ex.name),
+        supersetGroup: ex.supersetGroup,
       } satisfies ProgramExercise;
     });
   }

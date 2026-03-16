@@ -115,23 +115,96 @@ Add `programId` to `WorkoutSession`, `selectedProgram` to `ProfilePrefs`, and mi
 
 ---
 
-## HANDOFF
+---
 
-### Current State
-- Tasks 1–4 complete and committed
-- Build passing
-- Ready for Task 5
+## 2026-03-16 — Task 5: Program Selector + App Shell Integration
 
-### Next Steps
-1. Task 5: Program Selector + App Shell Integration
-2. Task 6: Volume Route Placeholder
+### Goal
+Create `program-selector.tsx` dropdown component and wire it into `app-shell.tsx`. Add Volume nav tab.
 
-### Key Files
-- Spec: `docs/superpowers/specs/2026-03-16-hypertrophy-hub-design.md`
-- Plan: `docs/superpowers/plans/2026-03-16-hypertrophy-hub.md`
-- Types: `web/src/lib/types.ts`
-- Exercise library: `web/src/lib/exercise-library.ts`
-- Program registry: `web/src/lib/program-registry.ts`
-- Household profiles: `web/src/lib/household-profiles.ts` (now has selectedProgram)
-- Workout store: `web/src/lib/workout-store.ts` (now has programId + migration)
-- RAVAGE raw data: `ravage.md` at project root
+### Checklist
+- [x] Create `web/src/components/program-selector.tsx`
+- [x] Add `<ProgramSelector>` to sidebar in `app-shell.tsx`
+- [x] Add `<ProgramSelector>` to mobile profile-banner in `app-shell.tsx`
+- [x] Add Volume nav tab (between Progress and Templates)
+- [x] Verify build (✓ Compiled successfully)
+- [x] Committed: a06ce9f
+
+## 2026-03-16 — Task 7: RAVAGE Program Data
+
+### Goal
+Create `web/src/lib/program-data-ravage.ts` with all 6 day templates, then wire the RAVAGE adapter into `program-registry.ts`.
+
+### Checklist
+- [x] Create program-data-ravage.ts with types, RAVAGE_PROGRAM, getRavageDayTemplate
+- [x] Verify all exercise names match exercise-library.ts exactly
+- [x] Wire getExercisesForDay("ravage") adapter in program-registry.ts
+- [x] Implement getDayTitle("ravage") in program-registry.ts
+- [x] Verify build passes (✓ Compiled successfully)
+- [x] Committed: 0dedd9c
+
+### Exercise name corrections applied (task spec vs library canonical)
+- "Incline Dumbbell Curl" → "Incline Curl (Dumbbell)"
+- "Cable Lateral Raise" → "Lateral Raise (Cable)"
+- "Back Squat" → "Squat (Barbell)"
+- "Romanian Deadlift" → "Romanian Deadlift (Barbell)"
+- "Hip Thrust" → "Hip Thrust (Barbell)"
+- "Lu Lateral Raise" → "Lu Raise"
+- "Cable Rear Delt" → "Rear Delt Fly (Cable)"
+
+---
+
+---
+
+## 2026-03-16 — Task 8: Today Screen — Program-Aware Queue
+
+### Goal
+Modify `today-screen.tsx` to load exercises from the program registry instead of always using Mass Impact.
+
+### Checklist
+- [x] Read selectedProgram from profile prefs via getStoredPrefsFromLocalStorage
+- [x] Import getExercisesForDay, getDayTitle, getDaysInCycle, getProgramMeta from program-registry
+- [x] Add exercises useMemo: Mass Impact → program-store (preserves edits), others → registry
+- [x] Update shiftWeekDay / clampDayPrefs to accept daysPerCycle + totalWeeks params
+- [x] Update ensureActiveSession to pass programId to startSession
+- [x] Update applyDaySelection to branch on programId for first-exercise lookup
+- [x] Update handleSelectExercise to use exercises[] instead of programDay?.exercises[]
+- [x] Update queueExercises useMemo to use exercises[] instead of programDay.exercises
+- [x] Update WorkoutHeader dayLabel to use getDayTitle()
+- [x] Replace week dropdown (program.weeks.map) with Array.from({length: totalWeeks})
+- [x] Replace day dropdown (currentWeekData?.days) with Array.from({length: daysPerCycle})
+- [x] Hide template editor buttons for non-Mass Impact programs
+- [x] Build verified (✓ Compiled successfully)
+- [x] Committed: 675ad48
+
+### Notes
+- canEditTemplate now includes `&& programId === "mass-impact"` — no template editing for other programs
+- handleSaveTemplateEdit still intact for Mass Impact; unreachable for other programs since buttons are hidden
+- ongoing programs (cycleLength = 0) get totalWeeks = 52 as cap
+- programDay variable kept but only computed when programId === "mass-impact" (returns null otherwise)
+
+---
+
+---
+
+## 2026-03-16 — Task 9: Superset Visual Grouping
+
+### Goal
+Wire `supersetGroup` from RAVAGE exercise data through to visual grouping and superset auto-advance behavior in the queue.
+
+### Checklist
+- [x] Add `supersetGroup?: string` to `ProgramExercise` in `program-data.ts`
+- [x] Pass `supersetGroup` through RAVAGE adapter in `program-registry.ts`
+- [x] Add `supersetGroup?: string` to `QueueExercise` in `today-screen.tsx`
+- [x] Map `supersetGroup` in `queueExercises` useMemo
+- [x] Add `supersetGroup` prop to `ExerciseQueueCardProps`; apply `superset-grouped` CSS class
+- [x] Pass `supersetGroup` prop in queue render in `today-screen.tsx`
+- [x] Add `.exercise-card.superset-grouped` CSS to `globals.css`
+- [x] Superset auto-advance in `handleSaveSet`: A partner → select B, skip rest timer
+- [x] Build verified (✓ Compiled successfully)
+- [x] Committed
+
+### Notes
+- Mass Impact already had "A/B" orderLabels (e.g. "5A"/"5B") but no `supersetGroup` — those exercises don't get the visual treatment, which is correct per the design
+- The superset check uses `orderLabel.toUpperCase().endsWith("A")` — works for both single-letter suffix ("1A") and any future multi-pair setups
+- `handleSelectExercise` calls `stopTimer()` internally, so returning early from `handleSaveSet` after calling it correctly skips `startTimer`
