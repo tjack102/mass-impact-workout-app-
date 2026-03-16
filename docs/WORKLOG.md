@@ -17,22 +17,64 @@ Extend the Mass Impact workout app into a multi-program hypertrophy training hub
 
 ---
 
+---
+
+## 2026-03-16 — Task 1: Shared Types Implementation
+
+### Goal
+Create foundational types file for hypertrophy hub extension.
+
+### What was done
+- [x] Created `web/src/lib/types.ts` with all required types
+  - MuscleGroup union (15 muscle groups)
+  - ExerciseType and Equipment types
+  - ExerciseDefinition interface
+  - ProgramMeta interface
+  - VolumeLandmarks, MesocycleState, RecoveryRating interfaces
+  - TRACKED_MUSCLES constant (12 muscles excluding front_delts, neck, forearms)
+- [x] Verified Next.js build passes
+- [x] Committed with message: "feat: add shared types for hypertrophy hub extension"
+
+### Notes
+- File created at: `web/src/lib/types.ts`
+- Build: successful (Compiled successfully, all routes prerendered)
+- No imports yet — file ready for Task 2 (Exercise Library)
+
+---
+
+---
+
+## 2026-03-16 — Task 2: Exercise Library
+
+### Goal
+Create `web/src/lib/exercise-library.ts` with ~80 tagged exercises covering Mass Impact, RAVAGE, and Hers programs.
+
+### What was done
+- [x] Created `web/src/lib/exercise-library.ts`
+  - 80 ExerciseDefinition entries covering all three programs
+  - Duplicate/alias handling: RAVAGE alternates (Cable Lateral Raise → Lateral Raise (Cable), Back Squat → Squat (Barbell), etc.) collapsed to canonical Mass Impact names; Cable Pullover kept as separate entry since program data may use that exact name
+  - Secondary muscles mapped per RP conventions (rows → biceps 0.5, pressing → triceps 0.5 + front_delts 0.5, squat patterns → glutes 0.5, RDL patterns → glutes 0.5, hip thrust → hamstrings 0.5)
+  - `findExercise`: exact match then prefix match (case-insensitive)
+  - `getExercisesForMuscle`: filter by primaryMuscle
+- [x] Build verified (Next.js)
+- [x] Committed
+
+---
+
 ## HANDOFF
 
 ### Current State
-- Design spec written, reviewed, and approved
-- Implementation plan written, reviewed, and committed (22 tasks, 4 chunks)
-- No code has been written yet
-- Ready to execute the implementation plan
+- Task 1 complete: types.ts created and committed
+- Task 2 complete: exercise-library.ts created and committed
+- Build passing
+- Ready for Task 3
 
 ### Next Steps
-1. Execute the implementation plan using `superpowers:subagent-driven-development` skill
-2. Chunk 1 (Tasks 1-6): Foundation — types, exercise library, program registry, workout store, program selector, volume route
-3. Chunk 2 (Tasks 7-11): RAVAGE — program data, today screen, supersets, double progression, planner
-4. Chunk 3 (Tasks 12-17): Volume System — vitest, volume engine (TDD), recovery ratings, dashboard
-5. Chunk 4 (Tasks 18-22): Hers programs, settings, manual overrides, deload/meso, integration test
+1. Continue with Chunk 1 tasks (3-6)
 
 ### Key Files
 - Spec: `docs/superpowers/specs/2026-03-16-hypertrophy-hub-design.md`
 - Plan: `docs/superpowers/plans/2026-03-16-hypertrophy-hub.md`
+- New types: `web/src/lib/types.ts`
+- Exercise library: `web/src/lib/exercise-library.ts`
 - RAVAGE raw data: `ravage.md` at project root
