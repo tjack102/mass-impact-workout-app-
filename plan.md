@@ -336,7 +336,126 @@ Release gate:
 - Backup and restore procedure tested.
 - Production monitoring and alerting enabled.
 
-## 14. Not Implementing Yet
+## 14. UI/UX Overhaul Plan (March 2026)
+
+### Status: PLANNED — not yet implemented
+
+### Context
+App is live at https://web-blush-phi.vercel.app. Lock screen was removed. The UI works but needs polish — exercise cards, rest timer, and set logger all blend together, mobile layout is too long (~4 screens of scroll), and there's no visual feedback for logging sets. The dark tactical "Iron Ledger" aesthetic should be preserved and enhanced.
+
+### Phase 1: Quick Wins (CSS-heavy, ship as one batch)
+
+**1.1 — Animated Progress Rings on Exercise Cards**
+- Files: `exercise-queue-card.tsx`, `globals.css`
+- Replace "Logged 2 of 4 sets" text with a 28px SVG progress ring in the card header
+- Uses `stroke-dashoffset` transition (400ms) driven by completedSets/targetSets
+- Turns green (`--ok`) when complete. Keep completion dots as smaller secondary indicator
+
+**1.2 — Better Visual Hierarchy in Live Console**
+- Files: `globals.css`
+- Colored left-border accents: orange on set-entry row, cyan on logged-sets panel
+- Bottom border + padding below rest timer to separate it from the form
+- Subtle background differentiation for the live console column
+
+**1.3 — Better Mobile Bottom Nav**
+- Files: `globals.css`, `app-shell.tsx`
+- Bigger touch targets (increase padding + font size)
+- Active indicator bar (4px colored bar above active link)
+- Glass effect (`backdrop-filter: blur(12px)` + semi-transparent bg)
+- Add `item.short` code as small label above each nav text
+
+**1.4 — Smoother Animations & Staggered Entrances**
+- Files: `globals.css`
+- `reveal-y`: increase travel 8px→12px, duration 320ms→380ms
+- Staggered delays on `.queue-list` children (40ms increments, up to 8)
+- Exercise card transitions at 280ms covering all properties
+
+**1.5 — Mobile Collapsible Sections**
+- Files: `today-screen.tsx`, `globals.css`
+- Wrap Exercise Queue and Live Console in `<details>` with `<summary>` headers
+- Open by default, collapsible on mobile only (<1024px)
+- Summary hidden on desktop. Chevron rotates on open/close
+
+### Phase 2: Level Up the Feel (ship individually)
+
+**2.1 — Glassmorphism on Cards**
+- Files: `globals.css`
+- `backdrop-filter: blur(6px)` on `.card` with semi-transparent rgba bg
+- Faint white edge border for frosted-glass effect
+- `.card-elevated` variant (stronger blur) for runtime tray and live console
+
+**2.2 — Workout In-Progress Color State**
+- Files: `today-screen.tsx`, `globals.css`
+- `.screen--active` class: subtle cyan gradient wash at top when session is live
+- Status chip gets 3s breathing pulse with glow
+- Runtime tray gets accent border. Visual "battle mode" vs idle browsing
+
+**2.3 — Enhanced Rest Timer Dial (SVG Arc)**
+- Files: `rest-timer-dial.tsx`, `globals.css`
+- Replace `conic-gradient` with SVG circle + `stroke-dashoffset` for smooth animation
+- Color phases: idle (muted) → >50% remaining (cyan) → <50% (yellow) → complete (orange)
+- Completion pulse glow. All driven through CSS custom properties
+
+**2.4 — Toast Notifications**
+- Files: new `toast.tsx`, `globals.css`, `today-screen.tsx`, `app-shell.tsx`
+- `ToastProvider` + `useToast()` hook
+- Events: "Set logged" (green), "Exercise complete" (orange), "NEW PR!" (pink)
+- Auto-dismiss 2.5s, max 3 visible, positioned above mobile nav
+- PR detection: compare logged set volume vs all previous sessions
+
+**2.5 — Swipe Gestures on Mobile Exercise Cards**
+- Files: `exercise-queue-card.tsx`, `globals.css`, `today-screen.tsx`
+- Touch handlers for horizontal swipe (>80px threshold)
+- Swipe right → mark complete, swipe left → skip to next
+- Background labels revealed during swipe ("DONE" / "SKIP")
+- Vertical dead zone to avoid scroll conflicts
+
+### Phase 3: Bigger Redesign (ship sequentially)
+
+**3.1 — Mobile Single-Card Focus Mode**
+- Files: `today-screen.tsx`, `globals.css`, new `exercise-focus-card.tsx`
+- On mobile (<1024px): single-exercise view replacing scrollable two-col layout
+- Combines exercise name + progress ring, smaller timer, set entry, collapsible logged sets
+- Left/right arrows + dot indicator carousel for queue navigation
+- Desktop keeps two-column layout (CSS-hidden toggle between views)
+- **Biggest single UX improvement** — one exercise at a time matches gym workflow
+
+**3.2 — Dashboard Stats Strip**
+- Files: `today-screen.tsx`, `globals.css`
+- 4-stat grid above workout area: Progress (ring), Sets Logged, Total Volume (lbs), Elapsed Time
+- Large Teko display numbers. 2x2 mobile, 4-col desktop
+- 64px progress ring showing completed/total exercises
+- "Scoreboard" feel on app open
+
+### Implementation Order
+- Phase 1: all items as one batch → commit + deploy
+- Phase 2: each item individually → commit + deploy after each
+- Phase 3: 3.1 first, then 3.2
+
+### Risk Notes
+- `backdrop-filter: blur()` can lag on old Android — keep values at 6-12px, fallback to solid rgba
+- SVG progress rings lightweight but use `will-change` only on active card
+- Swipe gestures must not conflict with browser back-swipe (vertical dead zone + 10px threshold)
+
+### Key Files Summary
+| File | Phases |
+|------|--------|
+| `web/src/app/globals.css` | All phases |
+| `web/src/components/screens/today-screen.tsx` | 1.5, 2.2, 2.4, 3.1, 3.2 |
+| `web/src/components/exercise-queue-card.tsx` | 1.1, 2.5 |
+| `web/src/components/rest-timer-dial.tsx` | 2.3 |
+| `web/src/components/app-shell.tsx` | 1.3, 2.4 |
+
+### Verification After Each Phase
+1. `npm run build` in `web/` — must compile clean
+2. Desktop screenshot check (1280x800)
+3. Mobile screenshot check (390x844)
+4. Deploy: `npx vercel --prod --public --yes` from `web/`
+5. Verify live at https://web-blush-phi.vercel.app
+
+---
+
+## 15. Not Implementing Yet
 
 This document is planning only. No code implementation is performed yet.
 

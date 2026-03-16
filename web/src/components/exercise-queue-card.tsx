@@ -10,6 +10,40 @@ type ExerciseQueueCardProps = {
   onSelect: () => void;
 };
 
+function ProgressRing({ completed, total, isDone }: { completed: number; total: number; isDone: boolean }) {
+  const size = 28;
+  const stroke = 3;
+  const radius = (size - stroke) / 2;
+  const circumference = 2 * Math.PI * radius;
+  const progress = total > 0 ? completed / total : 0;
+  const offset = circumference * (1 - progress);
+
+  return (
+    <svg className="progress-ring" width={size} height={size} viewBox={`0 0 ${size} ${size}`}>
+      <circle
+        className="progress-ring__bg"
+        cx={size / 2}
+        cy={size / 2}
+        r={radius}
+        strokeWidth={stroke}
+        fill="none"
+      />
+      <circle
+        className={`progress-ring__fill${isDone ? " progress-ring__fill--done" : ""}`}
+        cx={size / 2}
+        cy={size / 2}
+        r={radius}
+        strokeWidth={stroke}
+        fill="none"
+        strokeDasharray={circumference}
+        strokeDashoffset={offset}
+        strokeLinecap="round"
+        transform={`rotate(-90 ${size / 2} ${size / 2})`}
+      />
+    </svg>
+  );
+}
+
 export function ExerciseQueueCard({
   orderLabel,
   name,
@@ -36,17 +70,15 @@ export function ExerciseQueueCard({
           </span>
           <h3 className="exercise-name">{name}</h3>
         </div>
-        <span className={`track-chip ${track}`}>{track}</span>
+        <div style={{ display: "flex", alignItems: "center", gap: "0.45rem" }}>
+          <ProgressRing completed={completedSets} total={targetSets} isDone={isDone} />
+          <span className={`track-chip ${track}`}>{track}</span>
+        </div>
       </div>
       <div className="exercise-line">
         <span className="mono">{scheme}</span>
         <span className="page-note" style={{ margin: 0 }}>
           Last: {lastPerformance}
-        </span>
-      </div>
-      <div className="exercise-line">
-        <span className="page-note" style={{ margin: 0 }}>
-          Logged {completedSets} of {targetSets} sets
         </span>
       </div>
       <div className="completion-dots" aria-label={`${completedSets}/${targetSets} sets complete`}>

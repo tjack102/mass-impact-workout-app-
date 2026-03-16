@@ -532,203 +532,215 @@ export function TodayScreen() {
       />
 
       <div className="two-col">
-        <article className="card panel reveal">
-          <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", gap: "0.5rem" }}>
-            <div>
-              <p className="subtle-label" style={{ margin: 0 }}>
-                Exercise Queue
-              </p>
-              <h2 className="section-title" style={{ marginTop: "0.25rem" }}>
-                Today Pipeline
-              </h2>
-            </div>
-            <div className="cycle-toolbar">
-              <label className="compact-field">
-                <span className="subtle-label">Week</span>
-                <select
-                  className="compact-select"
-                  value={prefs.currentWeek}
-                  onChange={(event) => applyDaySelection(Number(event.target.value), prefs.currentDay)}
-                >
-                  {program.weeks.map((week) => (
-                    <option key={week.weekNumber} value={week.weekNumber}>
-                      Week {week.weekNumber}
-                    </option>
-                  ))}
-                </select>
-              </label>
-              <label className="compact-field">
-                <span className="subtle-label">Day</span>
-                <select
-                  className="compact-select"
-                  value={prefs.currentDay}
-                  onChange={(event) => applyDaySelection(prefs.currentWeek, Number(event.target.value))}
-                >
-                  {(currentWeekData?.days ?? []).map((day) => (
-                    <option key={day.dayNumber} value={day.dayNumber}>
-                      Day {day.dayNumber} - {day.title}
-                    </option>
-                  ))}
-                </select>
-              </label>
-              <div className="compact-stepper">
-                <button type="button" className="ghost-btn" style={{ height: "36px" }} onClick={() => handleShiftDay(-1)}>
-                  {"<"}
-                </button>
-                <button type="button" className="ghost-btn" style={{ height: "36px" }} onClick={() => handleShiftDay(1)}>
-                  {">"}
-                </button>
-              </div>
-            </div>
-          </div>
-
-          <div className="queue-action-row">
-            <button
-              type="button"
-              className="ghost-btn"
-              disabled={!canEditTemplate || !activeProgramExercise}
-              title={!canEditTemplate ? "Unlock Coach Mode in Templates to edit" : ""}
-              onClick={() => {
-                setTemplateDraft(buildTemplateDraft(activeProgramExercise));
-                setTemplateEditorOpen((current) => !current);
-              }}
-            >
-              {templateEditorOpen ? "Close Exercise Edit" : "Edit Selected"}
-            </button>
-            <button
-              type="button"
-              className="ghost-btn"
-              disabled={!activeProgramExercise}
-              onClick={() =>
-                router.push(`/templates?week=${prefs.currentWeek}&day=${prefs.currentDay}&exercise=${safeActiveIndex}`)
-              }
-            >
-              Open in Templates
-            </button>
-          </div>
-
-          {templateEditorOpen && activeProgramExercise ? (
-            <ExerciseTemplateInlineEditor
-              draft={templateDraft}
-              canEdit={canEditTemplate}
-              onDraftChange={setTemplateDraft}
-              onSave={handleSaveTemplateEdit}
-              onCancel={() => {
-                setTemplateDraft(buildTemplateDraft(activeProgramExercise));
-                setTemplateEditorOpen(false);
-              }}
-            />
-          ) : null}
-
-          <div className="queue-list">
-            {queueExercises.map((exercise, index) => (
-              <ExerciseQueueCard
-                key={exercise.id}
-                orderLabel={exercise.orderLabel}
-                name={exercise.name}
-                scheme={exercise.scheme}
-                track={exercise.track}
-                targetSets={exercise.targetSets}
-                completedSets={exercise.completedSets}
-                lastPerformance={exercise.lastPerformance}
-                isActive={index === safeActiveIndex}
-                onSelect={() => handleSelectExercise(index)}
-              />
-            ))}
-          </div>
-        </article>
-
-        <article className="card panel reveal live-console">
-          <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", gap: "0.7rem" }}>
-            <div>
-              <p className="subtle-label" style={{ margin: 0 }}>
-                Live Set Console
-              </p>
-              <h2 className="section-title" style={{ marginTop: "0.2rem" }}>
-                {activeExercise?.name ?? "No exercise selected"}
-              </h2>
-            </div>
-            <SyncStateIndicator state={syncState} />
-          </div>
-
-          <RestTimerDial
-            targetSeconds={targetSeconds}
-            remainingSeconds={remainingSeconds}
-            isRunning={timerRunning}
-            targetReached={targetReached}
-            onToggle={() => {
-              if (!activeExercise) {
-                return;
-              }
-              if (timerRunning) {
-                stopTimer();
-                return;
-              }
-              startTimer(remainingSeconds > 0 ? remainingSeconds : targetSeconds);
-            }}
-            onSkip={stopTimer}
-            onAdjustDuration={(delta) => setTimerTarget(targetSeconds + delta)}
-            onSetDuration={setTimerTarget}
-          />
-
-          <SetEntryRow
-            setIndex={nextSetIndex}
-            draft={draft}
-            lastSet={lastSet}
-            saveFlash={saveFlash}
-            onDraftChange={setDraft}
-            onSave={handleSaveSet}
-          />
-
-          <section className="surface logged-set-panel">
-            <div className="exercise-line">
+        <details className="collapsible-section" open>
+          <summary className="collapsible-summary">
+            <span className="collapsible-title">Exercise Queue</span>
+            <span className="collapsible-chevron" />
+          </summary>
+          <article className="card panel reveal">
+            <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", gap: "0.5rem" }}>
               <div>
                 <p className="subtle-label" style={{ margin: 0 }}>
-                  Logged Sets
+                  Exercise Queue
                 </p>
-                <p className="page-note" style={{ marginTop: "0.2rem" }}>
-                  {activeExercise
-                    ? `${activeExerciseSets.length} of ${activeExercise.targetSets} sets complete`
-                    : "Select an exercise to start logging"}
-                </p>
+                <h2 className="section-title" style={{ marginTop: "0.25rem" }}>
+                  Today Pipeline
+                </h2>
               </div>
-              {activeExercise ? <span className="mono">{activeExerciseSets.length}/{activeExercise.targetSets}</span> : null}
+              <div className="cycle-toolbar">
+                <label className="compact-field">
+                  <span className="subtle-label">Week</span>
+                  <select
+                    className="compact-select"
+                    value={prefs.currentWeek}
+                    onChange={(event) => applyDaySelection(Number(event.target.value), prefs.currentDay)}
+                  >
+                    {program.weeks.map((week) => (
+                      <option key={week.weekNumber} value={week.weekNumber}>
+                        Week {week.weekNumber}
+                      </option>
+                    ))}
+                  </select>
+                </label>
+                <label className="compact-field">
+                  <span className="subtle-label">Day</span>
+                  <select
+                    className="compact-select"
+                    value={prefs.currentDay}
+                    onChange={(event) => applyDaySelection(prefs.currentWeek, Number(event.target.value))}
+                  >
+                    {(currentWeekData?.days ?? []).map((day) => (
+                      <option key={day.dayNumber} value={day.dayNumber}>
+                        Day {day.dayNumber} - {day.title}
+                      </option>
+                    ))}
+                  </select>
+                </label>
+                <div className="compact-stepper">
+                  <button type="button" className="ghost-btn" style={{ height: "36px" }} onClick={() => handleShiftDay(-1)}>
+                    {"<"}
+                  </button>
+                  <button type="button" className="ghost-btn" style={{ height: "36px" }} onClick={() => handleShiftDay(1)}>
+                    {">"}
+                  </button>
+                </div>
+              </div>
             </div>
-            {activeExerciseSets.length === 0 ? (
-              <p className="page-note" style={{ marginTop: "0.75rem" }}>
-                Save each completed set here so the workout queue and progress charts stay accurate.
-              </p>
-            ) : (
-              <div className="logged-set-list">
-                {activeExerciseSets.map((set) => (
-                  <div key={`${set.exerciseName}-${set.setIndex}-${set.timestamp}`} className="logged-set-chip">
-                    <div>
-                      <p className="mono" style={{ margin: 0 }}>
-                        Set {set.setIndex}
-                      </p>
-                      <p style={{ margin: "0.18rem 0 0" }}>
-                        {set.weight} lb x {set.reps}
-                        {set.rpe ? ` @ ${set.rpe}` : ""}
-                      </p>
-                    </div>
-                    <span className="page-note" style={{ margin: 0 }}>
-                      {formatSetTimestamp(set.timestamp)}
-                    </span>
-                  </div>
-                ))}
-              </div>
-            )}
-          </section>
 
-          <div style={{ display: "flex", justifyContent: "space-between", gap: "0.55rem", flexWrap: "wrap" }}>
-            <button type="button" className="ghost-btn" onClick={() => setDraft({ weight: "", reps: "", rpe: "" })}>
-              Clear Inputs
-            </button>
-            <button type="button" className="ghost-btn danger-btn" onClick={handleFinishExercise}>
-              Finish Exercise
-            </button>
-          </div>
-        </article>
+            <div className="queue-action-row">
+              <button
+                type="button"
+                className="ghost-btn"
+                disabled={!canEditTemplate || !activeProgramExercise}
+                title={!canEditTemplate ? "Unlock Coach Mode in Templates to edit" : ""}
+                onClick={() => {
+                  setTemplateDraft(buildTemplateDraft(activeProgramExercise));
+                  setTemplateEditorOpen((current) => !current);
+                }}
+              >
+                {templateEditorOpen ? "Close Exercise Edit" : "Edit Selected"}
+              </button>
+              <button
+                type="button"
+                className="ghost-btn"
+                disabled={!activeProgramExercise}
+                onClick={() =>
+                  router.push(`/templates?week=${prefs.currentWeek}&day=${prefs.currentDay}&exercise=${safeActiveIndex}`)
+                }
+              >
+                Open in Templates
+              </button>
+            </div>
+
+            {templateEditorOpen && activeProgramExercise ? (
+              <ExerciseTemplateInlineEditor
+                draft={templateDraft}
+                canEdit={canEditTemplate}
+                onDraftChange={setTemplateDraft}
+                onSave={handleSaveTemplateEdit}
+                onCancel={() => {
+                  setTemplateDraft(buildTemplateDraft(activeProgramExercise));
+                  setTemplateEditorOpen(false);
+                }}
+              />
+            ) : null}
+
+            <div className="queue-list">
+              {queueExercises.map((exercise, index) => (
+                <ExerciseQueueCard
+                  key={exercise.id}
+                  orderLabel={exercise.orderLabel}
+                  name={exercise.name}
+                  scheme={exercise.scheme}
+                  track={exercise.track}
+                  targetSets={exercise.targetSets}
+                  completedSets={exercise.completedSets}
+                  lastPerformance={exercise.lastPerformance}
+                  isActive={index === safeActiveIndex}
+                  onSelect={() => handleSelectExercise(index)}
+                />
+              ))}
+            </div>
+          </article>
+        </details>
+
+        <details className="collapsible-section" open>
+          <summary className="collapsible-summary">
+            <span className="collapsible-title">Live Console</span>
+            <span className="collapsible-chevron" />
+          </summary>
+          <article className="card panel reveal live-console">
+            <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", gap: "0.7rem" }}>
+              <div>
+                <p className="subtle-label" style={{ margin: 0 }}>
+                  Live Set Console
+                </p>
+                <h2 className="section-title" style={{ marginTop: "0.2rem" }}>
+                  {activeExercise?.name ?? "No exercise selected"}
+                </h2>
+              </div>
+              <SyncStateIndicator state={syncState} />
+            </div>
+
+            <RestTimerDial
+              targetSeconds={targetSeconds}
+              remainingSeconds={remainingSeconds}
+              isRunning={timerRunning}
+              targetReached={targetReached}
+              onToggle={() => {
+                if (!activeExercise) {
+                  return;
+                }
+                if (timerRunning) {
+                  stopTimer();
+                  return;
+                }
+                startTimer(remainingSeconds > 0 ? remainingSeconds : targetSeconds);
+              }}
+              onSkip={stopTimer}
+              onAdjustDuration={(delta) => setTimerTarget(targetSeconds + delta)}
+              onSetDuration={setTimerTarget}
+            />
+
+            <SetEntryRow
+              setIndex={nextSetIndex}
+              draft={draft}
+              lastSet={lastSet}
+              saveFlash={saveFlash}
+              onDraftChange={setDraft}
+              onSave={handleSaveSet}
+            />
+
+            <section className="surface logged-set-panel">
+              <div className="exercise-line">
+                <div>
+                  <p className="subtle-label" style={{ margin: 0 }}>
+                    Logged Sets
+                  </p>
+                  <p className="page-note" style={{ marginTop: "0.2rem" }}>
+                    {activeExercise
+                      ? `${activeExerciseSets.length} of ${activeExercise.targetSets} sets complete`
+                      : "Select an exercise to start logging"}
+                  </p>
+                </div>
+                {activeExercise ? <span className="mono">{activeExerciseSets.length}/{activeExercise.targetSets}</span> : null}
+              </div>
+              {activeExerciseSets.length === 0 ? (
+                <p className="page-note" style={{ marginTop: "0.75rem" }}>
+                  Save each completed set here so the workout queue and progress charts stay accurate.
+                </p>
+              ) : (
+                <div className="logged-set-list">
+                  {activeExerciseSets.map((set) => (
+                    <div key={`${set.exerciseName}-${set.setIndex}-${set.timestamp}`} className="logged-set-chip">
+                      <div>
+                        <p className="mono" style={{ margin: 0 }}>
+                          Set {set.setIndex}
+                        </p>
+                        <p style={{ margin: "0.18rem 0 0" }}>
+                          {set.weight} lb x {set.reps}
+                          {set.rpe ? ` @ ${set.rpe}` : ""}
+                        </p>
+                      </div>
+                      <span className="page-note" style={{ margin: 0 }}>
+                        {formatSetTimestamp(set.timestamp)}
+                      </span>
+                    </div>
+                  ))}
+                </div>
+              )}
+            </section>
+
+            <div style={{ display: "flex", justifyContent: "space-between", gap: "0.55rem", flexWrap: "wrap" }}>
+              <button type="button" className="ghost-btn" onClick={() => setDraft({ weight: "", reps: "", rpe: "" })}>
+                Clear Inputs
+              </button>
+              <button type="button" className="ghost-btn danger-btn" onClick={handleFinishExercise}>
+                Finish Exercise
+              </button>
+            </div>
+          </article>
+        </details>
       </div>
 
       {exerciseSummary ? (

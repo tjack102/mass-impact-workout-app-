@@ -87,7 +87,7 @@ export function AppShell({ children }: AppShellProps) {
           </div>
         </div>
 
-        <nav className="mobile-nav card" aria-label="Bottom navigation">
+        <nav className="mobile-nav" aria-label="Bottom navigation">
           {navItems.map((item) => {
             const active = pathname === item.href;
             return (
@@ -96,7 +96,8 @@ export function AppShell({ children }: AppShellProps) {
                 href={item.href}
                 className={`mobile-link${active ? " active" : ""}`}
               >
-                {item.label}
+                <span className="mobile-link-icon">{item.short}</span>
+                <span className="mobile-link-label">{item.label}</span>
               </Link>
             );
           })}
