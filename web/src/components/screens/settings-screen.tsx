@@ -11,6 +11,24 @@ import {
   importSnapshot,
   type WorkoutSnapshot,
 } from "@/lib/workout-store";
+import { useAccess } from "@/components/access-context";
+import { TRACKED_MUSCLES } from "@/lib/types";
+import type { VolumeLandmarks } from "@/lib/types";
+import {
+  getVolumeLandmarks,
+  saveVolumeLandmarks,
+  resetVolumeLandmarks,
+  getMesoState,
+  saveMesoState,
+  initMesoState,
+} from "@/lib/volume-store";
+import { getStoredPrefsFromLocalStorage } from "@/lib/household-profiles";
+import { getProgramMeta } from "@/lib/program-registry";
+
+// Convert snake_case muscle names (e.g. "side_delts") to "Side Delts"
+function muscleName(key: string): string {
+  return key.replace(/_/g, " ").replace(/\b\w/g, (c) => c.toUpperCase());
+}
 
 type InstallPromptEvent = Event & {
   prompt: () => Promise<void>;
@@ -50,6 +68,78 @@ export function SettingsScreen() {
   );
   const [snapshotStats, setSnapshotStats] = useState(() => buildSnapshotStats());
   const [feedback, setFeedback] = useState("");
+
+  // --- Hypertrophy Hub additions ---
+  const { activeUser } = useAccess();
+
+  // Determine if active profile's program has auto-regulation
+  const storedPrefs = typeof window !== "undefined" ? getStoredPrefsFromLocalStorage() : null;
+  const selectedProgram = storedPrefs?.profiles[activeUser]?.selectedProgram ?? "mass-impact";
+  const programMeta = getProgramMeta(selectedProgram);
+  const isAutoReg = programMeta?.hasAutoRegulation ?? false;
+
+  // Volume landmarks — lazy-init from store
+  const [landmarks, setLandmarks] = useState<VolumeLandmarks>(() =>
+    typeof window !== "undefined" ? getVolumeLandmarks(activeUser) : ({} as VolumeLandmarks),
+  );
+
+  // Meso state — lazy-init; create if missing for auto-reg programs
+  const [mesoLength, setMesoLength] = useState<number>(() => {
+    if (typeof window === "undefined") return 5;
+    const existing = getMesoState(activeUser);
+    if (existing) return existing.mesoLength;
+    if (isAutoReg) {
+      const fresh = initMesoState(activeUser, 5);
+      return fresh.mesoLength;
+    }
+    return 5;
+  });
+
+  // When the active user changes, reload both stores
+  useEffect(() => {
+    setLandmarks(getVolumeLandmarks(activeUser));
+    const existing = getMesoState(activeUser);
+    if (existing) {
+      setMesoLength(existing.mesoLength);
+    } else if (isAutoReg) {
+      const fresh = initMesoState(activeUser, 5);
+      setMesoLength(fresh.mesoLength);
+    } else {
+      setMesoLength(5);
+    }
+  }, [activeUser, isAutoReg]);
+
+  function handleMesoLengthChange(newLength: number) {
+    setMesoLength(newLength);
+    const existing = getMesoState(activeUser);
+    if (existing) {
+      saveMesoState(activeUser, { ...existing, mesoLength: newLength });
+    } else {
+      initMesoState(activeUser, newLength);
+    }
+  }
+
+  function handleLandmarkChange(
+    muscle: (typeof TRACKED_MUSCLES)[number],
+    field: keyof VolumeLandmarks[typeof muscle],
+    raw: string,
+  ) {
+    const value = parseInt(raw, 10);
+    if (isNaN(value) || value < 0) return;
+    const updated: VolumeLandmarks = {
+      ...landmarks,
+      [muscle]: { ...landmarks[muscle], [field]: value },
+    };
+    setLandmarks(updated);
+    saveVolumeLandmarks(activeUser, updated);
+  }
+
+  function handleResetLandmarks() {
+    const confirmed = window.confirm("Reset volume landmarks to defaults for this profile?");
+    if (!confirmed) return;
+    const defaults = resetVolumeLandmarks(activeUser);
+    setLandmarks(defaults);
+  }
 
   useEffect(() => {
     const handler = (event: Event) => {
@@ -261,6 +351,152 @@ export function SettingsScreen() {
             {feedback}
           </p>
         ) : null}
+      </article>
+
+      {/* Mesocycle Settings — only visible for programs with auto-regulation */}
+      {isAutoReg ? (
+        <article className="card panel reveal">
+          <p className="subtle-label" style={{ margin: 0 }}>
+            Periodization
+          </p>
+          <h2 className="section-title" style={{ marginTop: "0.2rem" }}>
+            Mesocycle Settings
+          </h2>
+          <p className="page-note">
+            Set the number of training weeks per mesocycle before a deload. Applies to{" "}
+            {programMeta?.name ?? selectedProgram}.
+          </p>
+          <div style={{ display: "flex", alignItems: "center", gap: "0.75rem", marginTop: "0.75rem" }}>
+            <label className="subtle-label" style={{ margin: 0 }} htmlFor="meso-length-select">
+              Meso length
+            </label>
+            <select
+              id="meso-length-select"
+              value={mesoLength}
+              onChange={(e) => handleMesoLengthChange(Number(e.target.value))}
+              style={{
+                background: "var(--bg-2)",
+                border: "1px solid var(--border)",
+                color: "var(--text-1)",
+                fontFamily: "var(--font-mono), monospace",
+                fontSize: "0.9rem",
+                padding: "0.3rem 0.5rem",
+                borderRadius: "4px",
+              }}
+            >
+              <option value={4}>4 weeks</option>
+              <option value={5}>5 weeks</option>
+            </select>
+          </div>
+        </article>
+      ) : null}
+
+      {/* Volume Landmarks editor — always visible */}
+      <article className="card panel reveal">
+        <p className="subtle-label" style={{ margin: 0 }}>
+          RP Auto-Regulation
+        </p>
+        <h2 className="section-title" style={{ marginTop: "0.2rem" }}>
+          Volume Landmarks
+        </h2>
+        <p className="page-note">
+          Weekly set targets per muscle group. MEV = minimum effective volume. MAV = maximum adaptive
+          volume range. MRV = maximum recoverable volume range. Changes save immediately.
+        </p>
+
+        {/* Horizontal scroll wrapper for compact table on mobile */}
+        <div style={{ overflowX: "auto", marginTop: "0.75rem" }}>
+          <table
+            style={{
+              width: "100%",
+              borderCollapse: "collapse",
+              fontSize: "0.82rem",
+              fontFamily: "var(--font-mono), monospace",
+            }}
+          >
+            <thead>
+              <tr>
+                {["Muscle", "MEV", "MAV Lo", "MAV Hi", "MRV Lo", "MRV Hi"].map((h) => (
+                  <th
+                    key={h}
+                    style={{
+                      textAlign: h === "Muscle" ? "left" : "center",
+                      padding: "0.3rem 0.4rem",
+                      borderBottom: "1px solid var(--border)",
+                      color: "var(--text-1)",
+                      fontWeight: 600,
+                      whiteSpace: "nowrap",
+                    }}
+                  >
+                    {h}
+                  </th>
+                ))}
+              </tr>
+            </thead>
+            <tbody>
+              {TRACKED_MUSCLES.map((muscle) => {
+                const entry = landmarks[muscle];
+                if (!entry) return null;
+                const fields: Array<[keyof typeof entry, string]> = [
+                  ["mev", "MEV"],
+                  ["mavLow", "MAV Lo"],
+                  ["mavHigh", "MAV Hi"],
+                  ["mrvLow", "MRV Lo"],
+                  ["mrvHigh", "MRV Hi"],
+                ];
+                return (
+                  <tr key={muscle}>
+                    <td
+                      style={{
+                        padding: "0.3rem 0.4rem",
+                        borderBottom: "1px solid var(--border)",
+                        color: "var(--text-1)",
+                        whiteSpace: "nowrap",
+                      }}
+                    >
+                      {muscleName(muscle)}
+                    </td>
+                    {fields.map(([field, label]) => (
+                      <td
+                        key={field}
+                        style={{
+                          padding: "0.25rem 0.3rem",
+                          borderBottom: "1px solid var(--border)",
+                          textAlign: "center",
+                        }}
+                      >
+                        <input
+                          type="number"
+                          aria-label={`${muscleName(muscle)} ${label}`}
+                          value={entry[field]}
+                          min={0}
+                          onChange={(e) => handleLandmarkChange(muscle, field, e.target.value)}
+                          style={{
+                            width: "4ch",
+                            background: "var(--bg-2)",
+                            border: "1px solid var(--border)",
+                            color: "var(--text-1)",
+                            fontFamily: "var(--font-mono), monospace",
+                            fontSize: "0.82rem",
+                            textAlign: "center",
+                            padding: "0.2rem",
+                            borderRadius: "3px",
+                          }}
+                        />
+                      </td>
+                    ))}
+                  </tr>
+                );
+              })}
+            </tbody>
+          </table>
+        </div>
+
+        <div style={{ marginTop: "0.85rem" }}>
+          <button type="button" className="ghost-btn danger-btn" onClick={handleResetLandmarks}>
+            Reset to Defaults
+          </button>
+        </div>
       </article>
     </section>
   );
