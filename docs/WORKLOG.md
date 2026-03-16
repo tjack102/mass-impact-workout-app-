@@ -61,20 +61,77 @@ Create `web/src/lib/exercise-library.ts` with ~80 tagged exercises covering Mass
 
 ---
 
+---
+
+## 2026-03-16 — Task 3: Program Registry
+
+### Goal
+Create the adapter layer (program-registry.ts) that maps program IDs to their data sources and produces canonical `ProgramExercise[]` for all programs.
+
+### What was done
+- [x] Verified exports from program-data.ts
+  - All required exports already present: ExerciseSet, ProgramExercise, ProgramDay, ProgramWeek, Program, formatScheme, getTotalSets, getDefaultRestSeconds, getRestSecondsForExercise
+  - getDayForWeek already exported — needed for Mass Impact adapter
+- [x] Created `web/src/lib/program-registry.ts` (100 lines)
+  - PROGRAM_REGISTRY: metadata for 5 programs (Mass Impact, RAVAGE, LULUL, PPLPP, Custom)
+  - getAvailablePrograms(profile): filter registry by profile
+  - getProgramMeta(id): lookup metadata
+  - getExercisesForDay(programId, dayNumber, weekNumber): adapter that returns ProgramExercise[]
+    - Mass Impact: delegates to getDayForWeek()
+    - RAVAGE, Hers: stubs for Tasks 7 and 18
+  - getDayTitle(programId, dayNumber): display title
+  - getDaysInCycle(programId): cycle length
+- [x] Build verified (Next.js compiled successfully)
+- [x] Committed with message: "feat: add program registry with adapter pattern"
+
+### Notes
+- File: `web/src/lib/program-registry.ts`
+- Imports from: program-data.ts, types.ts, household-profiles.ts
+- All programs have uniform ProgramExercise[] return type
+- Mass Impact fully functional, others stubbed
+
+---
+
+---
+
+## 2026-03-16 — Task 4: Workout Store Extensions
+
+### Goal
+Add `programId` to `WorkoutSession`, `selectedProgram` to `ProfilePrefs`, and migration logic for existing localStorage data.
+
+### What was done
+- [x] Added `selectedProgram?: string` to `ProfilePrefs` type
+- [x] Updated `getDefaultProfilePrefs()` to include `selectedProgram: "mass-impact"`
+- [x] Updated `getDefaultStoredPrefs()` to set per-user defaults: "mass-impact" for his, "hers-lulul" for hers
+- [x] Fixed `sanitizeProfilePrefs()` to preserve `selectedProgram` from stored data (was stripping it)
+- [x] Fixed legacy path in `parseStoredPrefs()` to include `selectedProgram` from fallback defaults
+- [x] Added `programId: string` to `WorkoutSession` type
+- [x] Updated `startSession()` to accept `programId` param (4th arg, default "mass-impact"); new ID format: `{programId}-w{week}-d{day}-{timestamp}`
+- [x] Fixed `savePrefs()` in workout-store.ts to preserve `selectedProgram` when updating week/day (was silently stripping it)
+- [x] Added `migrateSessionData()` with SSR guard, once-per-load flag, backfills `programId: "mass-impact"` on old sessions
+- [x] Wired migration into `getAllSessions()` and `getActiveSession()` (lazy, not at module load)
+- [x] Build verified (Next.js compiled successfully, all routes prerendered)
+- [x] Committed
+
+---
+
 ## HANDOFF
 
 ### Current State
-- Task 1 complete: types.ts created and committed
-- Task 2 complete: exercise-library.ts created and committed
+- Tasks 1–4 complete and committed
 - Build passing
-- Ready for Task 3
+- Ready for Task 5
 
 ### Next Steps
-1. Continue with Chunk 1 tasks (3-6)
+1. Task 5: Program Selector + App Shell Integration
+2. Task 6: Volume Route Placeholder
 
 ### Key Files
 - Spec: `docs/superpowers/specs/2026-03-16-hypertrophy-hub-design.md`
 - Plan: `docs/superpowers/plans/2026-03-16-hypertrophy-hub.md`
-- New types: `web/src/lib/types.ts`
+- Types: `web/src/lib/types.ts`
 - Exercise library: `web/src/lib/exercise-library.ts`
+- Program registry: `web/src/lib/program-registry.ts`
+- Household profiles: `web/src/lib/household-profiles.ts` (now has selectedProgram)
+- Workout store: `web/src/lib/workout-store.ts` (now has programId + migration)
 - RAVAGE raw data: `ravage.md` at project root

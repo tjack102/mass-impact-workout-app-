@@ -27,6 +27,7 @@ export type LoggedSet = {
 
 export type WorkoutSession = {
   id: string;
+  programId: string;
   weekNumber: number;
   dayNumber: number;
   startedAt: number;
@@ -166,6 +167,63 @@ function resolveUser(user?: HouseholdUser): HouseholdUser {
   return user ?? getStoredPrefs().activeUser;
 }
 
+// Run once per page load to backfill programId on sessions created before it existed
+let migrated = false;
+
+function migrateSessionData(): void {
+  if (typeof window === "undefined") return;
+  if (migrated) return;
+  migrated = true;
+
+  // Migrate completed sessions
+  const rawSessions = readRaw(KEYS.SESSIONS);
+  if (rawSessions && typeof rawSessions === "object") {
+    const byUser = rawSessions as Partial<SessionsByUser>;
+    let changed = false;
+
+    const migrateList = (list: unknown): WorkoutSession[] => {
+      if (!Array.isArray(list)) return [];
+      return list.map((session: WorkoutSession) => {
+        if (!session.programId) {
+          changed = true;
+          return { ...session, programId: "mass-impact" };
+        }
+        return session;
+      });
+    };
+
+    const nextHis = migrateList(byUser.his);
+    const nextHers = migrateList(byUser.hers);
+
+    if (changed) {
+      writeSessionsByUser({ his: nextHis, hers: nextHers });
+    }
+  }
+
+  // Migrate active session
+  const rawActive = readRaw(KEYS.ACTIVE_SESSION);
+  if (rawActive && typeof rawActive === "object") {
+    const byUser = rawActive as Partial<ActiveSessionsByUser>;
+    let activeChanged = false;
+
+    const migrateOne = (session: WorkoutSession | null | undefined): WorkoutSession | null => {
+      if (!session) return null;
+      if (!session.programId) {
+        activeChanged = true;
+        return { ...session, programId: "mass-impact" };
+      }
+      return session;
+    };
+
+    const nextHisActive = migrateOne(byUser.his ?? null);
+    const nextHersActive = migrateOne(byUser.hers ?? null);
+
+    if (activeChanged) {
+      writeActiveSessionsByUser({ his: nextHisActive, hers: nextHersActive });
+    }
+  }
+}
+
 export function getPrefs(): UserPrefs {
   return toUserPrefs(getStoredPrefs());
 }
@@ -182,6 +240,8 @@ export function savePrefs(prefs: Partial<UserPrefs>): UserPrefs {
       [nextActiveUser]: {
         currentWeek: prefs.currentWeek ?? currentProfile.currentWeek,
         currentDay: prefs.currentDay ?? currentProfile.currentDay,
+        // Preserve selectedProgram — savePrefs only manages week/day progression
+        selectedProgram: currentProfile.selectedProgram,
       },
     },
   };
@@ -190,13 +250,20 @@ export function savePrefs(prefs: Partial<UserPrefs>): UserPrefs {
 }
 
 export function getActiveSession(user?: HouseholdUser): WorkoutSession | null {
+  migrateSessionData();
   return readActiveSessionsByUser()[resolveUser(user)];
 }
 
-export function startSession(weekNumber: number, dayNumber: number, user?: HouseholdUser): WorkoutSession {
+export function startSession(
+  weekNumber: number,
+  dayNumber: number,
+  user?: HouseholdUser,
+  programId: string = "mass-impact",
+): WorkoutSession {
   const targetUser = resolveUser(user);
   const session: WorkoutSession = {
-    id: `w${weekNumber}-d${dayNumber}-${Date.now()}`,
+    id: `${programId}-w${weekNumber}-d${dayNumber}-${Date.now()}`,
+    programId,
     weekNumber,
     dayNumber,
     startedAt: Date.now(),
@@ -261,6 +328,7 @@ export function clearActiveSession(user?: HouseholdUser): void {
 }
 
 export function getAllSessions(user?: HouseholdUser): WorkoutSession[] {
+  migrateSessionData();
   return readSessionsByUser()[resolveUser(user)];
 }
 

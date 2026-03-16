@@ -5,6 +5,7 @@ export const HOUSEHOLD_USERS: HouseholdUser[] = ["his", "hers"];
 export type ProfilePrefs = {
   currentWeek: number;
   currentDay: number;
+  selectedProgram?: string;
 };
 
 export type StoredPrefs = {
@@ -15,15 +16,15 @@ export type StoredPrefs = {
 export const PREFS_STORAGE_KEY = "mi_prefs";
 
 export function getDefaultProfilePrefs(): ProfilePrefs {
-  return { currentWeek: 1, currentDay: 1 };
+  return { currentWeek: 1, currentDay: 1, selectedProgram: "mass-impact" };
 }
 
 export function getDefaultStoredPrefs(): StoredPrefs {
   return {
     activeUser: "his",
     profiles: {
-      his: getDefaultProfilePrefs(),
-      hers: getDefaultProfilePrefs(),
+      his: { currentWeek: 1, currentDay: 1, selectedProgram: "mass-impact" },
+      hers: { currentWeek: 1, currentDay: 1, selectedProgram: "hers-lulul" },
     },
   };
 }
@@ -47,6 +48,8 @@ function sanitizeProfilePrefs(value: unknown, fallback: ProfilePrefs): ProfilePr
       typeof profile.currentDay === "number" && Number.isFinite(profile.currentDay)
         ? profile.currentDay
         : fallback.currentDay,
+    // Preserve selectedProgram from stored data; fall back to per-user default
+    selectedProgram: typeof profile.selectedProgram === "string" ? profile.selectedProgram : fallback.selectedProgram,
   };
 }
 
@@ -86,8 +89,9 @@ export function parseStoredPrefs(value: unknown): StoredPrefs {
   return {
     activeUser: isHouseholdUser(raw.activeUser) ? raw.activeUser : fallback.activeUser,
     profiles: {
-      his: { currentWeek: legacyWeek, currentDay: legacyDay },
-      hers: { currentWeek: legacyWeek, currentDay: legacyDay },
+      // Legacy format had no per-user selectedProgram; use per-user defaults from fallback
+      his: { currentWeek: legacyWeek, currentDay: legacyDay, selectedProgram: fallback.profiles.his.selectedProgram },
+      hers: { currentWeek: legacyWeek, currentDay: legacyDay, selectedProgram: fallback.profiles.hers.selectedProgram },
     },
   };
 }
