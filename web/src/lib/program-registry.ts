@@ -1,5 +1,6 @@
 import type { ProgramExercise } from "./program-data";
 import { getDayForWeek, getDefaultRestSeconds } from "./program-data";
+import { RAVAGE_PROGRAM, getRavageDayTemplate } from "./program-data-ravage";
 import type { ProgramMeta } from "./types";
 import type { HouseholdUser } from "./household-profiles";
 
@@ -79,7 +80,26 @@ export function getExercisesForDay(
     const day = getDayForWeek(weekNumber, dayNumber);
     return day?.exercises ?? [];
   }
-  // RAVAGE and Hers stubs — will be filled in Tasks 7 and 18
+  if (programId === "ravage") {
+    const template = getRavageDayTemplate(dayNumber);
+    if (!template) return [];
+    const isDeload =
+      RAVAGE_PROGRAM.weeks.find((w) => w.weekNumber === weekNumber)?.isDeload ?? false;
+    return template.exercises.map((ex, i) => {
+      // On deload weeks reduce every set group to 1 set to lower volume
+      const setGroups = isDeload
+        ? ex.setGroups.map((sg) => ({ ...sg, sets: 1 }))
+        : ex.setGroups;
+      return {
+        order: i + 1,
+        orderLabel: ex.orderLabel,
+        name: ex.name,
+        setGroups,
+        restSeconds: getDefaultRestSeconds(ex.name),
+      } satisfies ProgramExercise;
+    });
+  }
+  // Hers stubs — will be filled in Task 18
   return [];
 }
 
@@ -90,7 +110,10 @@ export function getDayTitle(programId: string, dayNumber: number): string {
     const titles = ["Pull", "Push", "Legs / Density", "Pull", "Push"];
     return titles[dayNumber - 1] ?? `Day ${dayNumber}`;
   }
-  // Stubs for other programs
+  if (programId === "ravage") {
+    return getRavageDayTemplate(dayNumber)?.title ?? `Day ${dayNumber}`;
+  }
+  // Stubs for Hers programs
   return `Day ${dayNumber}`;
 }
 
