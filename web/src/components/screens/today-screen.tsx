@@ -37,6 +37,10 @@ import {
   type UserPrefs,
   type WorkoutSession,
 } from "@/lib/workout-store";
+import { RecoveryRatingPrompt } from "@/components/recovery-rating-prompt";
+import { findExercise } from "@/lib/exercise-library";
+import { TRACKED_MUSCLES, type MuscleGroup } from "@/lib/types";
+import { saveRecoveryRating } from "@/lib/volume-store";
 
 type SessionStatus = "Not Started" | "In Progress" | "Completed";
 
@@ -140,7 +144,7 @@ function clampDayPrefs(prefs: UserPrefs, daysPerCycle: number, totalWeeks: numbe
 
 export function TodayScreen() {
   const router = useRouter();
-  const { ownerPinEnabled, ownerUnlocked } = useAccess();
+  const { ownerPinEnabled, ownerUnlocked, activeUser } = useAccess();
 
   // Read selectedProgram for the active profile
   const storedPrefs = getStoredPrefsFromLocalStorage();
@@ -170,6 +174,9 @@ export function TodayScreen() {
   const [workoutRestSeconds, setWorkoutRestSeconds] = useState(0);
   const [exerciseSummary, setExerciseSummary] = useState<ExerciseSummary | null>(null);
   const [nowMs, setNowMs] = useState<number | null>(null);
+  // Captures session data when "Finish Workout" is tapped, before actually completing the session.
+  // This lets the recovery prompt read the sets without the session being nulled out.
+  const [pendingCompletion, setPendingCompletion] = useState<{ sessionId: string; sets: LoggedSet[] } | null>(null);
   const flashTimeout = useRef<number | null>(null);
   const restStartedAtRef = useRef<number | null>(null);
   const restTargetRef = useRef<number>(90);
@@ -501,11 +508,21 @@ export function TodayScreen() {
     }
   }, [activeExercise, exerciseRestSeconds, exerciseStartedAt, handleSelectExercise, queueExercises, safeActiveIndex, stopTimer]);
 
+  // Step 1: Stop the timer and capture current session data.
+  // Completion is deferred until the user submits or skips the recovery prompt.
   const handleFinishWorkout = useCallback(() => {
     if (!matchingActiveSession) {
       return;
     }
     stopTimer();
+    setPendingCompletion({
+      sessionId: matchingActiveSession.id,
+      sets: matchingActiveSession.sets,
+    });
+  }, [matchingActiveSession, stopTimer]);
+
+  // Shared teardown after the recovery prompt is resolved (submit or skip).
+  const finalizeCompletion = useCallback(() => {
     setSyncState("pending");
     const completed = completeSession();
     if (completed) {
@@ -515,8 +532,29 @@ export function TodayScreen() {
     setExerciseSummary(null);
     setExerciseRestSeconds(0);
     setDraft({ weight: "", reps: "", rpe: "" });
+    setPendingCompletion(null);
     window.setTimeout(() => setSyncState("synced"), 620);
-  }, [matchingActiveSession, stopTimer]);
+  }, []);
+
+  // Step 2a: User submitted ratings — save them, then complete the session.
+  const handleRecoverySubmit = useCallback(
+    (ratings: Partial<Record<MuscleGroup, number>>) => {
+      if (pendingCompletion) {
+        saveRecoveryRating(activeUser, {
+          date: Date.now(),
+          sessionId: pendingCompletion.sessionId,
+          ratings,
+        });
+      }
+      finalizeCompletion();
+    },
+    [activeUser, finalizeCompletion, pendingCompletion],
+  );
+
+  // Step 2b: User skipped — complete the session without saving a rating.
+  const handleRecoverySkip = useCallback(() => {
+    finalizeCompletion();
+  }, [finalizeCompletion]);
 
   const handleSaveTemplateEdit = useCallback(() => {
     if (!activeProgramExercise) {
@@ -584,6 +622,18 @@ export function TodayScreen() {
   }, [activeProgramExercise, matchingActiveSession, prefs.currentDay, prefs.currentWeek, safeActiveIndex, templateDraft]);
 
   const nextSetIndex = activeExerciseSets.length + 1;
+
+  // Derive trained muscle groups from the pending (captured) session sets.
+  // Only muscles in TRACKED_MUSCLES are included — matches the volume engine's scope.
+  const musclesTrained = useMemo<MuscleGroup[]>(() => {
+    if (!pendingCompletion?.sets.length) return [];
+    const muscles = new Set<MuscleGroup>();
+    for (const set of pendingCompletion.sets) {
+      const def = findExercise(set.exerciseName);
+      if (def) muscles.add(def.primaryMuscle);
+    }
+    return [...muscles].filter((m) => TRACKED_MUSCLES.includes(m));
+  }, [pendingCompletion]);
 
   return (
     <section className="screen">
@@ -842,6 +892,14 @@ export function TodayScreen() {
             <SessionStatPill label="Active" value={formatDuration(exerciseSummary.activeSeconds)} />
           </div>
         </section>
+      ) : null}
+
+      {pendingCompletion ? (
+        <RecoveryRatingPrompt
+          musclesTrained={musclesTrained}
+          onSubmit={handleRecoverySubmit}
+          onSkip={handleRecoverySkip}
+        />
       ) : null}
 
       <section className="runtime-tray card reveal">
