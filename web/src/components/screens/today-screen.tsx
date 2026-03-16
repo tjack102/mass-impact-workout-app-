@@ -67,6 +67,24 @@ function buildTemplateDraft(exercise?: ProgramExercise): ExerciseTemplateDraft {
   };
 }
 
+// Parse the upper bound of a rep range string like "8-12", "8-12 reps", "12", "12 reps"
+function parseRepCeiling(repsStr: string): number | null {
+  const match = repsStr.match(/(\d+)\s*(?:reps?)?$/i);
+  if (!match) return null;
+  // If there's a dash range (e.g. "8-12"), the last number is the ceiling
+  return Number.parseInt(match[1], 10);
+}
+
+// Returns true when every logged set for this exercise hit the top of the rep range.
+// False if no sets logged yet.
+function isRepCeilingHit(exercise: ProgramExercise, loggedSets: LoggedSet[]): boolean {
+  if (loggedSets.length === 0) return false;
+  const repsStr = exercise.setGroups[0]?.reps ?? "";
+  const ceiling = parseRepCeiling(repsStr);
+  if (ceiling === null) return false;
+  return loggedSets.every((set) => set.reps >= ceiling);
+}
+
 function formatDuration(totalSeconds: number) {
   const minutes = Math.floor(totalSeconds / 60);
   const seconds = totalSeconds % 60;
@@ -739,6 +757,24 @@ export function TodayScreen() {
               onDraftChange={setDraft}
               onSave={handleSaveSet}
             />
+
+            {programMeta?.periodizationType === "double-progression" &&
+             activeExerciseSets.length > 0 &&
+             activeProgramExercise &&
+             isRepCeilingHit(activeProgramExercise, activeExerciseSets) && (
+              <div style={{
+                background: "var(--accent-power)",
+                color: "var(--bg-0)",
+                padding: "8px 16px",
+                borderRadius: "var(--radius-sm)",
+                fontFamily: "var(--font-display)",
+                fontSize: "1.1rem",
+                textAlign: "center",
+                marginTop: "8px",
+              }}>
+                All sets hit top of range — bump weight next session
+              </div>
+            )}
 
             <section className="surface logged-set-panel">
               <div className="exercise-line">
