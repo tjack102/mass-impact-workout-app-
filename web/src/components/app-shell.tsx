@@ -5,6 +5,7 @@ import { usePathname } from "next/navigation";
 import { useState } from "react";
 import { AccessContext } from "@/components/access-context";
 import { ProfileToggle } from "@/components/profile-toggle";
+import { ProgramSelector } from "@/components/program-selector";
 import type { HouseholdUser } from "@/lib/household-profiles";
 import { getPrefs, savePrefs } from "@/lib/workout-store";
 
@@ -12,6 +13,7 @@ const navItems = [
   { href: "/", label: "Today", short: "TD" },
   { href: "/planner", label: "Planner", short: "PL" },
   { href: "/progress", label: "Progress", short: "PR" },
+  { href: "/volume", label: "Volume", short: "VL" },
   { href: "/templates", label: "Templates", short: "TP" },
   { href: "/settings", label: "Settings", short: "ST" },
 ];
@@ -68,18 +70,25 @@ export function AppShell({ children }: AppShellProps) {
               <div style={{ marginTop: "0.75rem" }}>
                 <ProfileToggle activeUser={activeUser} onChange={setActiveUser} />
               </div>
+              <div style={{ marginTop: "0.75rem" }}>
+                <p className="subtle-label" style={{ marginBottom: "0.3rem" }}>Program</p>
+                <ProgramSelector activeUser={activeUser} />
+              </div>
             </div>
           </aside>
 
           <div className="content-pane">
             <section className="profile-banner card panel reveal">
-              <div>
+              <div style={{ flex: 1 }}>
                 <p className="subtle-label" style={{ margin: 0 }}>
                   Active Profile
                 </p>
                 <p className="page-note" style={{ marginTop: "0.2rem" }}>
                   Switch workouts, templates, and progress with one toggle.
                 </p>
+                <div style={{ marginTop: "0.5rem" }}>
+                  <ProgramSelector activeUser={activeUser} />
+                </div>
               </div>
               <ProfileToggle activeUser={activeUser} onChange={setActiveUser} />
             </section>
