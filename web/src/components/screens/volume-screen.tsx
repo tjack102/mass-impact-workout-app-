@@ -3,7 +3,7 @@
 import { useState, useEffect, useMemo } from "react";
 import type { MuscleGroup } from "@/lib/types";
 import { TRACKED_MUSCLES } from "@/lib/types";
-import { calculateWeeklyVolume, calculateRecoveryAverage, getVolumeRecommendation, suggestSetPlacement } from "@/lib/volume-engine";
+import { calculateWeeklyVolume, calculateRecoveryAverage, getVolumeRecommendation, suggestSetPlacement, isDeloadDue } from "@/lib/volume-engine";
 import { getVolumeLandmarks, getMesoState } from "@/lib/volume-store";
 import { EXERCISE_LIBRARY } from "@/lib/exercise-library";
 import { getAllSessions } from "@/lib/workout-store";
@@ -338,13 +338,12 @@ export function VolumeScreen() {
       }
     } else if (isAutoReg && mesoState) {
       progressLine = `Meso ${mesoState.mesoNumber} — Week ${mesoState.weekInMeso} of ${mesoState.mesoLength}`;
-      const weeksLeft = mesoState.mesoLength - mesoState.weekInMeso;
-      if (weeksLeft <= 1) {
+      if (isDeloadDue(mesoState)) {
         deloadBadge = (
           <span
             style={{
-              border: "1px solid color-mix(in srgb, var(--warn), transparent 42%)",
-              color: "var(--warn)",
+              border: "1px solid color-mix(in srgb, var(--accent-power), transparent 42%)",
+              color: "var(--accent-power)",
               borderRadius: "999px",
               padding: "0.2rem 0.6rem",
               fontSize: "0.7rem",
@@ -354,9 +353,30 @@ export function VolumeScreen() {
               marginLeft: "0.5rem",
             }}
           >
-            Deload Soon
+            Deload
           </span>
         );
+      } else {
+        const weeksLeft = mesoState.mesoLength - mesoState.weekInMeso;
+        if (weeksLeft <= 1) {
+          deloadBadge = (
+            <span
+              style={{
+                border: "1px solid color-mix(in srgb, var(--warn), transparent 42%)",
+                color: "var(--warn)",
+                borderRadius: "999px",
+                padding: "0.2rem 0.6rem",
+                fontSize: "0.7rem",
+                fontFamily: "var(--font-mono), monospace",
+                textTransform: "uppercase",
+                letterSpacing: "0.07em",
+                marginLeft: "0.5rem",
+              }}
+            >
+              Deload Soon
+            </span>
+          );
+        }
       }
     } else {
       progressLine = `Week ${currentWeek}`;
@@ -474,6 +494,44 @@ export function VolumeScreen() {
           );
         })}
       </div>
+
+      {/* Next Week Recommendations — auto-regulated programs only */}
+      {programMeta?.hasAutoRegulation && mesoState && (
+        <div className="card panel" style={{ display: "grid", gap: "0.65rem" }}>
+          <p className="subtle-label" style={{ margin: 0 }}>Next Week Recommendations</p>
+          <div style={{ display: "grid", gap: "0.35rem" }}>
+            {TRACKED_MUSCLES.map((muscle) => {
+              const rec = buildRecommendation(muscle);
+              if (rec === null) return null;
+              return (
+                <div
+                  key={muscle}
+                  style={{
+                    display: "flex",
+                    justifyContent: "space-between",
+                    alignItems: "center",
+                    padding: "0.3rem 0",
+                    borderBottom: "1px solid var(--border)",
+                  }}
+                >
+                  <span className="subtle-label">{toTitleCase(muscle)}</span>
+                  <span
+                    className="mono"
+                    style={{
+                      fontSize: "0.78rem",
+                      color: rec.startsWith("+") ? "var(--ok)"
+                        : rec.startsWith("-") ? "var(--danger)"
+                        : "var(--text-1)",
+                    }}
+                  >
+                    {rec}
+                  </span>
+                </div>
+              );
+            })}
+          </div>
+        </div>
+      )}
 
       {/* Meso history — collapsed by default */}
       <details

@@ -38,9 +38,23 @@ import {
   type WorkoutSession,
 } from "@/lib/workout-store";
 import { RecoveryRatingPrompt } from "@/components/recovery-rating-prompt";
-import { findExercise } from "@/lib/exercise-library";
+import { findExercise, EXERCISE_LIBRARY } from "@/lib/exercise-library";
 import { TRACKED_MUSCLES, type MuscleGroup } from "@/lib/types";
-import { saveRecoveryRating } from "@/lib/volume-store";
+import {
+  saveRecoveryRating,
+  getMesoState,
+  saveMesoState,
+  initMesoState,
+  getRecoveryRatings,
+  getVolumeLandmarks,
+} from "@/lib/volume-store";
+import {
+  calculateWeeklyVolume,
+  calculateRecoveryAverage,
+  getVolumeRecommendation,
+  isDeloadDue,
+  advanceMeso,
+} from "@/lib/volume-engine";
 
 type SessionStatus = "Not Started" | "In Progress" | "Completed";
 
@@ -177,6 +191,8 @@ export function TodayScreen() {
   // Captures session data when "Finish Workout" is tapped, before actually completing the session.
   // This lets the recovery prompt read the sets without the session being nulled out.
   const [pendingCompletion, setPendingCompletion] = useState<{ sessionId: string; sets: LoggedSet[] } | null>(null);
+  // Meso advancement notification — shown briefly after session completion
+  const [mesoNotification, setMesoNotification] = useState<string | null>(null);
   // Override editor state — inline form shown when user taps the scheme text
   const [overrideEditorOpen, setOverrideEditorOpen] = useState(false);
   const [overrideDraftSets, setOverrideDraftSets] = useState("");
@@ -547,7 +563,57 @@ export function TodayScreen() {
     setDraft({ weight: "", reps: "", rpe: "" });
     setPendingCompletion(null);
     window.setTimeout(() => setSyncState("synced"), 620);
-  }, []);
+
+    // Meso advancement — only for programs with auto-regulation
+    if (programMeta?.hasAutoRegulation) {
+      let meso = getMesoState(activeUser) ?? initMesoState(activeUser);
+      // Re-read all sessions now that the new one is committed
+      const allSessions = getAllSessions(activeUser);
+      const sessionsInMeso = allSessions.filter(
+        (s) => s.completedAt && s.completedAt >= meso.startDate,
+      );
+
+      // Determine which week we should be in based on session count
+      const expectedWeek = Math.floor((sessionsInMeso.length - 1) / daysPerCycle) + 1;
+
+      if (expectedWeek > meso.weekInMeso) {
+        // Week boundary crossed — recalculate volume targets for the new week
+        const ratings = getRecoveryRatings(activeUser);
+        const lm = getVolumeLandmarks(activeUser);
+        const vol = calculateWeeklyVolume(allSessions, EXERCISE_LIBRARY, 7);
+        const newTargets: Partial<Record<MuscleGroup, number>> = {};
+        for (const muscle of TRACKED_MUSCLES) {
+          const recoveryAvg = calculateRecoveryAverage(ratings, muscle);
+          const currentTarget = meso.weeklyTargets[muscle] ?? lm[muscle]?.mev ?? 0;
+          const currentVol = vol[muscle]?.direct ?? 0;
+          newTargets[muscle] = getVolumeRecommendation(currentVol, recoveryAvg, lm[muscle], currentTarget);
+        }
+        meso = { ...meso, weekInMeso: expectedWeek, weeklyTargets: newTargets };
+        saveMesoState(activeUser, meso);
+      }
+
+      if (isDeloadDue(meso)) {
+        // Count how many sessions fall in the deload week (beyond mesoLength)
+        const deloadWeekSessions = sessionsInMeso.length - meso.mesoLength * daysPerCycle;
+        if (deloadWeekSessions >= daysPerCycle) {
+          // Deload week complete — start new meso
+          const ratings = getRecoveryRatings(activeUser);
+          const lm = getVolumeLandmarks(activeUser);
+          const recoveryAverages: Partial<Record<MuscleGroup, number>> = {};
+          for (const muscle of TRACKED_MUSCLES) {
+            recoveryAverages[muscle] = calculateRecoveryAverage(ratings, muscle);
+          }
+          const newMeso = advanceMeso(meso, recoveryAverages, lm);
+          saveMesoState(activeUser, newMeso);
+          setMesoNotification("New Mesocycle Started — Volume targets updated");
+        } else {
+          setMesoNotification("Deload Week — reduce volume to MEV levels");
+        }
+        // Auto-dismiss after 8 seconds
+        window.setTimeout(() => setMesoNotification(null), 8000);
+      }
+    }
+  }, [activeUser, daysPerCycle, programMeta]);
 
   // Step 2a: User submitted ratings — save them, then complete the session.
   const handleRecoverySubmit = useCallback(
@@ -1060,6 +1126,31 @@ export function TodayScreen() {
           onSubmit={handleRecoverySubmit}
           onSkip={handleRecoverySkip}
         />
+      ) : null}
+
+      {mesoNotification ? (
+        <button
+          type="button"
+          onClick={() => setMesoNotification(null)}
+          style={{
+            display: "block",
+            width: "100%",
+            padding: "10px 16px",
+            borderRadius: "var(--radius-sm)",
+            border: "none",
+            cursor: "pointer",
+            fontFamily: "var(--font-display)",
+            fontSize: "1.05rem",
+            textAlign: "center",
+            // Orange for deload, cyan for new meso
+            background: mesoNotification.startsWith("New Meso")
+              ? "var(--accent-primary)"
+              : "var(--accent-power)",
+            color: "var(--bg-0)",
+          }}
+        >
+          {mesoNotification}
+        </button>
       ) : null}
 
       <section className="runtime-tray card reveal">
