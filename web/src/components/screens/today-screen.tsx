@@ -177,6 +177,10 @@ export function TodayScreen() {
   // Captures session data when "Finish Workout" is tapped, before actually completing the session.
   // This lets the recovery prompt read the sets without the session being nulled out.
   const [pendingCompletion, setPendingCompletion] = useState<{ sessionId: string; sets: LoggedSet[] } | null>(null);
+  // Override editor state — inline form shown when user taps the scheme text
+  const [overrideEditorOpen, setOverrideEditorOpen] = useState(false);
+  const [overrideDraftSets, setOverrideDraftSets] = useState("");
+  const [overrideDraftReps, setOverrideDraftReps] = useState("");
   const flashTimeout = useRef<number | null>(null);
   const restStartedAtRef = useRef<number | null>(null);
   const restTargetRef = useRef<number>(90);
@@ -219,13 +223,20 @@ export function TodayScreen() {
         : 0;
       const lastPerformance = getLastPerformanceFromSessions(sessionHistory, exercise.name);
 
+      // Apply session-only override if present for this exercise
+      const override = matchingActiveSession?.overrides?.[exercise.name];
+      const effectiveSets = override?.sets ?? getTotalSets(exercise);
+      const effectiveScheme = override
+        ? `${override.sets ?? getTotalSets(exercise)} x ${override.reps ?? exercise.setGroups[0]?.reps ?? "?"}`
+        : formatScheme(exercise);
+
       return {
         id: `${prefs.currentWeek}-${prefs.currentDay}-${exercise.orderLabel}-${index}`,
         orderLabel: exercise.orderLabel,
         name: exercise.name,
-        scheme: formatScheme(exercise),
+        scheme: effectiveScheme,
         lastPerformance: formatLastSet(lastPerformance),
-        targetSets: getTotalSets(exercise),
+        targetSets: effectiveSets,
         completedSets,
         restTargetSeconds: getRestSecondsForExercise(exercise),
         track: prefs.activeUser,
@@ -391,6 +402,7 @@ export function TodayScreen() {
       setExerciseStartedAt(null);
       setExerciseRestSeconds(0);
       setTemplateEditorOpen(false);
+      setOverrideEditorOpen(false);
       stopTimer();
 
       // Get first exercise for the next day to pre-set the template draft and rest timer
@@ -422,6 +434,7 @@ export function TodayScreen() {
       setExerciseRestSeconds(0);
       setExerciseSummary(null);
       setTemplateEditorOpen(false);
+      setOverrideEditorOpen(false);
       const selected = queueExercises[index];
       setTemplateDraft(buildTemplateDraft(exercises[index]));
       const rest = selected ? selected.restTargetSeconds : 90;
@@ -778,6 +791,153 @@ export function TodayScreen() {
               </div>
               <SyncStateIndicator state={syncState} />
             </div>
+
+            {activeExercise ? (
+              <div style={{ marginBottom: "0.5rem" }}>
+                {/* Scheme text — tap to open the override editor */}
+                <button
+                  type="button"
+                  style={{
+                    background: "none",
+                    border: "none",
+                    padding: 0,
+                    cursor: "pointer",
+                    display: "inline-flex",
+                    alignItems: "center",
+                    gap: "0.35rem",
+                  }}
+                  title="Tap to override sets/reps for this session"
+                  onClick={() => {
+                    if (overrideEditorOpen) {
+                      setOverrideEditorOpen(false);
+                      return;
+                    }
+                    // Pre-fill with current effective values (override if set, else template)
+                    const currentOverride = matchingActiveSession?.overrides?.[activeExercise.name];
+                    setOverrideDraftSets(
+                      String(currentOverride?.sets ?? (activeProgramExercise ? getTotalSets(activeProgramExercise) : activeExercise.targetSets))
+                    );
+                    setOverrideDraftReps(
+                      currentOverride?.reps ?? activeProgramExercise?.setGroups[0]?.reps ?? ""
+                    );
+                    setOverrideEditorOpen(true);
+                  }}
+                >
+                  <span
+                    className="mono"
+                    style={{
+                      // Highlight in accent color when an override is active, otherwise muted
+                      color: matchingActiveSession?.overrides?.[activeExercise.name]
+                        ? "var(--accent-primary)"
+                        : "var(--text-1)",
+                      fontSize: "0.92rem",
+                    }}
+                  >
+                    {activeExercise.scheme}
+                  </span>
+                  {matchingActiveSession?.overrides?.[activeExercise.name] ? (
+                    <span style={{ color: "var(--accent-primary)", fontSize: "0.75rem" }}>*</span>
+                  ) : (
+                    <span style={{ color: "var(--text-1)", fontSize: "0.75rem", opacity: 0.6 }}>[edit]</span>
+                  )}
+                </button>
+
+                {overrideEditorOpen ? (
+                  <div
+                    style={{
+                      marginTop: "0.6rem",
+                      padding: "0.75rem",
+                      background: "var(--bg-2)",
+                      border: "1px solid var(--border)",
+                      borderRadius: "var(--radius-sm)",
+                      display: "flex",
+                      flexDirection: "column",
+                      gap: "0.6rem",
+                    }}
+                  >
+                    <p className="subtle-label" style={{ margin: 0 }}>
+                      Override for this session only
+                    </p>
+                    <div style={{ display: "flex", gap: "0.75rem", alignItems: "flex-end", flexWrap: "wrap" }}>
+                      <label style={{ display: "flex", flexDirection: "column", gap: "0.2rem" }}>
+                        <span className="subtle-label" style={{ fontFamily: "var(--font-ui)", fontSize: "0.78rem" }}>
+                          Sets
+                        </span>
+                        <input
+                          type="number"
+                          min={1}
+                          max={10}
+                          value={overrideDraftSets}
+                          onChange={(e) => setOverrideDraftSets(e.target.value)}
+                          style={{
+                            width: "4.5rem",
+                            background: "var(--bg-0)",
+                            border: "1px solid var(--border)",
+                            color: "var(--text-0)",
+                            fontFamily: "var(--font-mono)",
+                            fontSize: "1rem",
+                            padding: "0.3rem 0.5rem",
+                            borderRadius: "var(--radius-sm)",
+                          }}
+                        />
+                      </label>
+                      <label style={{ display: "flex", flexDirection: "column", gap: "0.2rem" }}>
+                        <span className="subtle-label" style={{ fontFamily: "var(--font-ui)", fontSize: "0.78rem" }}>
+                          Reps
+                        </span>
+                        <input
+                          type="text"
+                          value={overrideDraftReps}
+                          onChange={(e) => setOverrideDraftReps(e.target.value)}
+                          placeholder="e.g. 6-8 reps"
+                          style={{
+                            width: "8rem",
+                            background: "var(--bg-0)",
+                            border: "1px solid var(--border)",
+                            color: "var(--text-0)",
+                            fontFamily: "var(--font-mono)",
+                            fontSize: "1rem",
+                            padding: "0.3rem 0.5rem",
+                            borderRadius: "var(--radius-sm)",
+                          }}
+                        />
+                      </label>
+                      <div style={{ display: "flex", gap: "0.4rem" }}>
+                        <button
+                          type="button"
+                          className="ghost-btn"
+                          onClick={() => {
+                            const setsNum = Number.parseInt(overrideDraftSets, 10);
+                            if (Number.isNaN(setsNum) || setsNum < 1) return;
+                            const repsStr = overrideDraftReps.trim();
+                            const session = ensureActiveSession();
+                            const updatedSession: WorkoutSession = {
+                              ...session,
+                              overrides: {
+                                ...session.overrides,
+                                [activeExercise.name]: { sets: setsNum, reps: repsStr || undefined },
+                              },
+                            };
+                            saveActiveSession(updatedSession);
+                            setActiveSession(updatedSession);
+                            setOverrideEditorOpen(false);
+                          }}
+                        >
+                          Apply
+                        </button>
+                        <button
+                          type="button"
+                          className="ghost-btn"
+                          onClick={() => setOverrideEditorOpen(false)}
+                        >
+                          Cancel
+                        </button>
+                      </div>
+                    </div>
+                  </div>
+                ) : null}
+              </div>
+            ) : null}
 
             <RestTimerDial
               targetSeconds={targetSeconds}
