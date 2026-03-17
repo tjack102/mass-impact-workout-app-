@@ -96,6 +96,7 @@ export function SettingsScreen() {
   });
 
   // When the active user changes, reload both stores
+  /* eslint-disable react-hooks/set-state-in-effect -- SSR guard: reload localStorage on profile change */
   useEffect(() => {
     setLandmarks(getVolumeLandmarks(activeUser));
     const existing = getMesoState(activeUser);
@@ -108,6 +109,7 @@ export function SettingsScreen() {
       setMesoLength(5);
     }
   }, [activeUser, isAutoReg]);
+  /* eslint-enable react-hooks/set-state-in-effect */
 
   function handleMesoLengthChange(newLength: number) {
     setMesoLength(newLength);

@@ -260,6 +260,7 @@ export function VolumeScreen() {
   const [landmarks, setLandmarks] = useState<ReturnType<typeof getVolumeLandmarks> | null>(null);
   const [recoveryRatings, setRecoveryRatings] = useState<ReturnType<typeof getRecoveryRatings>>([]);
 
+  /* eslint-disable react-hooks/set-state-in-effect -- SSR guard: hydrate from localStorage on mount */
   useEffect(() => {
     const prefs = getStoredPrefsFromLocalStorage();
     setStoredPrefs(prefs);
@@ -269,6 +270,7 @@ export function VolumeScreen() {
     setRecoveryRatings(getRecoveryRatings(activeUser));
     setReady(true);
   }, [activeUser]);
+  /* eslint-enable react-hooks/set-state-in-effect */
 
   const profilePrefs = storedPrefs.profiles[activeUser];
   const currentWeek = profilePrefs.currentWeek;

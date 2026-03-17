@@ -1,5 +1,5 @@
 import type { HouseholdUser } from "./household-profiles";
-import type { MuscleGroup, VolumeLandmarks, MesocycleState, RecoveryRating } from "./types";
+import type { VolumeLandmarks, MesocycleState, RecoveryRating } from "./types";
 import { TRACKED_MUSCLES } from "./types";
 
 const KEYS = {
