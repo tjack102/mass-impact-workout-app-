@@ -37,7 +37,7 @@ export function RestTimerDial({
       : "var(--text-1)";
 
   const dialStyle: CSSProperties = {
-    background: `conic-gradient(${color} ${progress * 360}deg, #10151b 0deg)`,
+    background: `conic-gradient(${color} ${progress * 360}deg, var(--bg-index) 0deg)`,
     boxShadow: `0 0 34px color-mix(in srgb, ${color}, transparent 78%)`,
   };
 

@@ -143,7 +143,7 @@ function MuscleCard({
             padding: "2px",
             borderRadius: "999px",
             border: "1px solid var(--border)",
-            background: "#0f141a",
+            background: "var(--bg-input)",
           }}
         >
           {(["direct", "total"] as VolumeMode[]).map((m) => (
@@ -160,7 +160,7 @@ function MuscleCard({
                 cursor: "pointer",
                 fontFamily: "var(--font-mono), monospace",
                 background: mode === m ? "var(--accent-primary)" : "transparent",
-                color: mode === m ? "#03201f" : "var(--text-1)",
+                color: mode === m ? "var(--text-on-accent)" : "var(--text-1)",
                 transition: "background 180ms, color 180ms",
               }}
             >
@@ -230,8 +230,8 @@ function MuscleCard({
                 color: recommendation.startsWith("+") ? "var(--ok)"
                   : recommendation.startsWith("-") ? "var(--danger)"
                   : "var(--text-1)",
-                background: recommendation.startsWith("+") ? "rgba(52, 211, 153, 0.08)"
-                  : recommendation.startsWith("-") ? "rgba(248, 113, 113, 0.08)"
+                background: recommendation.startsWith("+") ? "color-mix(in srgb, var(--ok), transparent 92%)"
+                  : recommendation.startsWith("-") ? "color-mix(in srgb, var(--danger), transparent 92%)"
                   : "transparent",
                 whiteSpace: "nowrap",
               }}

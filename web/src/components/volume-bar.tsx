@@ -19,13 +19,13 @@ export function VolumeBar({ current, mev, mavLow, mavHigh, mrvLow, mrvHigh }: Vo
   const currentPercent = (current / mrvHigh) * 100;
 
   // Determine color fill based on where current falls
-  let fillColor = "#6b7280"; // gray (below MEV)
+  let fillColor = "var(--text-2)"; // gray (below MEV)
   if (current >= mev && current <= (mavLow + mavHigh) / 2) {
-    fillColor = "#34d399"; // green (MEV to MAV midpoint)
+    fillColor = "var(--ok)"; // green (MEV to MAV midpoint)
   } else if (current > (mavLow + mavHigh) / 2 && current <= mavHigh) {
-    fillColor = "#fbbf24"; // yellow (MAV midpoint to high)
+    fillColor = "var(--warn)"; // yellow (MAV midpoint to high)
   } else if (current > mavHigh) {
-    fillColor = "#f87171"; // red (above MAV high)
+    fillColor = "var(--danger)"; // red (above MAV high)
   }
 
   return (
@@ -38,9 +38,9 @@ export function VolumeBar({ current, mev, mavLow, mavHigh, mrvLow, mrvHigh }: Vo
           top: 0,
           width: "100%",
           height: "100%",
-          backgroundColor: "#1a2028",
+          backgroundColor: "var(--bg-2)",
           borderRadius: "6px",
-          border: "1px solid #2a3340",
+          border: "1px solid var(--border)",
         }}
       />
 
@@ -52,7 +52,7 @@ export function VolumeBar({ current, mev, mavLow, mavHigh, mrvLow, mrvHigh }: Vo
           top: 0,
           width: `${mevPercent}%`,
           height: "100%",
-          backgroundColor: "#6b7280",
+          backgroundColor: "var(--text-2)",
           borderRadius: "6px 0 0 6px",
         }}
       />
@@ -66,7 +66,7 @@ export function VolumeBar({ current, mev, mavLow, mavHigh, mrvLow, mrvHigh }: Vo
             top: 0,
             width: `${mavMidPercent - mevPercent}%`,
             height: "100%",
-            backgroundColor: "#34d399",
+            backgroundColor: "var(--ok)",
           }}
         />
       )}
@@ -80,7 +80,7 @@ export function VolumeBar({ current, mev, mavLow, mavHigh, mrvLow, mrvHigh }: Vo
             top: 0,
             width: `${mavHighPercent - mavMidPercent}%`,
             height: "100%",
-            backgroundColor: "#fbbf24",
+            backgroundColor: "var(--warn)",
           }}
         />
       )}
@@ -94,7 +94,7 @@ export function VolumeBar({ current, mev, mavLow, mavHigh, mrvLow, mrvHigh }: Vo
             top: 0,
             width: `${100 - mavHighPercent}%`,
             height: "100%",
-            backgroundColor: "#f87171",
+            backgroundColor: "var(--danger)",
             borderRadius: "0 6px 6px 0",
           }}
         />
@@ -108,7 +108,7 @@ export function VolumeBar({ current, mev, mavLow, mavHigh, mrvLow, mrvHigh }: Vo
           top: 0,
           width: "1px",
           height: "100%",
-          backgroundColor: "#8891a4",
+          backgroundColor: "var(--text-2)",
           opacity: 0.5,
         }}
       />
@@ -121,7 +121,7 @@ export function VolumeBar({ current, mev, mavLow, mavHigh, mrvLow, mrvHigh }: Vo
           top: 0,
           width: "1px",
           height: "100%",
-          backgroundColor: "#8891a4",
+          backgroundColor: "var(--text-2)",
           opacity: 0.5,
         }}
       />
@@ -134,7 +134,7 @@ export function VolumeBar({ current, mev, mavLow, mavHigh, mrvLow, mrvHigh }: Vo
           top: 0,
           width: "1px",
           height: "100%",
-          backgroundColor: "#8891a4",
+          backgroundColor: "var(--text-2)",
           opacity: 0.5,
         }}
       />
@@ -147,7 +147,7 @@ export function VolumeBar({ current, mev, mavLow, mavHigh, mrvLow, mrvHigh }: Vo
           top: 0,
           width: "1px",
           height: "100%",
-          backgroundColor: "#8891a4",
+          backgroundColor: "var(--text-2)",
           opacity: 0.5,
         }}
       />
@@ -163,7 +163,7 @@ export function VolumeBar({ current, mev, mavLow, mavHigh, mrvLow, mrvHigh }: Vo
           height: "10px",
           borderRadius: "50%",
           backgroundColor: fillColor,
-          border: "2px solid #f4f7fa",
+          border: "2px solid var(--text-0)",
           boxShadow: `0 0 8px ${fillColor}`,
         }}
       />

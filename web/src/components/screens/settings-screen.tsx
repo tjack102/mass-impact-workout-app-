@@ -2,6 +2,7 @@
 
 import { useEffect, useRef, useState } from "react";
 import { SyncStateIndicator } from "@/components/sync-state-indicator";
+import { ThemePicker } from "@/components/theme-picker";
 import {
   clearAllData,
   exportSnapshot,
@@ -235,6 +236,21 @@ export function SettingsScreen() {
         </div>
         <SyncStateIndicator state="synced" />
       </header>
+
+      <article className="card panel reveal">
+        <p className="subtle-label" style={{ margin: 0 }}>
+          Theme
+        </p>
+        <h2 className="section-title" style={{ marginTop: "0.2rem" }}>
+          Visual System
+        </h2>
+        <p className="page-note">
+          Switch the app&apos;s visual identity. Changes apply immediately and persist on this device.
+        </p>
+        <div style={{ marginTop: "0.85rem" }}>
+          <ThemePicker />
+        </div>
+      </article>
 
       <section className="grid-3">
         <article className="card panel reveal">
