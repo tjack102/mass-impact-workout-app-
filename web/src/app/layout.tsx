@@ -65,7 +65,7 @@ export default function RootLayout({
   children: React.ReactNode;
 }>) {
   return (
-    <html lang="en">
+    <html lang="en" suppressHydrationWarning>
       <body
         className={`${teko.variable} ${sourceSans.variable} ${jetbrainsMono.variable} ${blackOpsOne.variable} ${barlowCondensed.variable} ${shareTechMono.variable} ${orbitron.variable} ${exo2.variable} ${bebasNeue.variable} ${dmSans.variable} ${ibmPlexMono.variable}`}
       >

@@ -2,7 +2,8 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { useState } from "react";
+import { useEffect, useState } from "react";
+import { getTheme, setTheme } from "@/lib/theme-store";
 import { AccessContext } from "@/components/access-context";
 import { ProfileToggle } from "@/components/profile-toggle";
 import { ProgramSelector } from "@/components/program-selector";
@@ -27,6 +28,11 @@ export function AppShell({ children }: AppShellProps) {
   const initialPrefs = getPrefs();
   const [activeUser, setActiveUserState] = useState<HouseholdUser>(initialPrefs.activeUser);
   const currentWeek = getPrefs().currentWeek;
+
+  // Re-apply stored theme after React hydration (hydration strips the data-theme attribute)
+  useEffect(() => {
+    setTheme(getTheme());
+  }, []);
 
   function setActiveUser(nextUser: HouseholdUser) {
     const updated = getPrefs().activeUser === nextUser ? getPrefs() : savePrefs({ activeUser: nextUser });
