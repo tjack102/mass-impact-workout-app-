@@ -4,6 +4,40 @@ _History through Hypertrophy Hub (all 22 tasks) archived in `docs/WORKLOG-ARCHIV
 
 ---
 
+## 2026-03-25 — Add RAMPAGE + 4-Day Upper/Lower Programs
+
+### Goal
+Add two new programs to the workout app: RAMPAGE (3x/week full body, GVS) and 4-Day Upper/Lower (4x/week, Zepeda modified).
+
+### Steps
+- [x] Add 18 exercises to `exercise-library.ts` (Arnold Press, Pec Deck, Skiers, Hanging Leg Raise, Front Squat, Spider Curl, Platz Squat, Yates Row, Klokov Press, Good Morning, Lateral Raise (Dumbbell), Pallof Press, Incline Bench Press (Barbell), Preacher Curl, Skull Crusher, Cable Chest Fly, Hack Squat, Seated Wide-Grip Row)
+- [x] Create `program-data-rampage.ts` (3 day templates, weeks 5+10 deload)
+- [x] Create `program-data-upper-lower.ts` (4 day templates, week 7 deload)
+- [x] Register both in `program-registry.ts` with correct deload logic
+- [x] Verify all 48 exercise names resolve in library
+
+### Deload Logic Difference
+- RAMPAGE: sets → 1 (weeks 5 & 10) -- same as RAVAGE
+- Upper/Lower: sets → Math.ceil(sets/2) (week 7) -- half-volume, not zero
+
+### Status: COMPLETE
+
+---
+
+## 2026-03-19 — Fix Vercel Deployment
+
+### Goal
+Deploy theme system to Vercel (webhook broken) and fix branch naming (local `master` vs remote `main`).
+
+### Steps
+- [x] Deploy via `vercel --prod` from web/ — deployed to https://web-blush-phi.vercel.app
+- [x] Rename local `master` → `main`, push to origin — tracking set
+- [x] Verify theme picker visible on live site — confirmed via Playwright
+
+### Status: COMPLETE
+
+---
+
 ## 2026-03-18 — Theme System
 
 ### Goal
