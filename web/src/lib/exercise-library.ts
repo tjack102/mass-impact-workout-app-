@@ -13,6 +13,22 @@ export const EXERCISE_LIBRARY: ExerciseDefinition[] = [
   // BACK
   // ─────────────────────────────────────────────
   {
+    id: "yates-row",
+    name: "Yates Row",
+    primaryMuscle: "back",
+    type: "compound",
+    equipment: "barbell",
+    secondaryMuscles: [{ muscle: "biceps", factor: 0.5 }],
+  },
+  {
+    id: "seated-wide-grip-row-cable",
+    name: "Seated Wide-Grip Row (Cable)",
+    primaryMuscle: "back",
+    type: "compound",
+    equipment: "cable",
+    secondaryMuscles: [{ muscle: "biceps", factor: 0.5 }],
+  },
+  {
     id: "single-arm-row-cable",
     name: "Single Arm Row (Cable)",
     primaryMuscle: "back",
@@ -139,6 +155,33 @@ export const EXERCISE_LIBRARY: ExerciseDefinition[] = [
   // CHEST
   // ─────────────────────────────────────────────
   {
+    id: "pec-deck-machine",
+    name: "Pec Deck (Machine)",
+    primaryMuscle: "chest",
+    type: "isolation",
+    equipment: "machine",
+    secondaryMuscles: [],
+  },
+  {
+    id: "incline-bench-press-barbell",
+    name: "Incline Bench Press (Barbell)",
+    primaryMuscle: "chest",
+    type: "compound",
+    equipment: "barbell",
+    secondaryMuscles: [
+      { muscle: "triceps", factor: 0.5 },
+      { muscle: "front_delts", factor: 0.5 },
+    ],
+  },
+  {
+    id: "cable-chest-fly",
+    name: "Cable Chest Fly",
+    primaryMuscle: "chest",
+    type: "isolation",
+    equipment: "cable",
+    secondaryMuscles: [],
+  },
+  {
     id: "dip-weighted",
     name: "Dip (Weighted)",
     primaryMuscle: "chest",
@@ -233,6 +276,25 @@ export const EXERCISE_LIBRARY: ExerciseDefinition[] = [
   // SIDE DELTS
   // ─────────────────────────────────────────────
   {
+    id: "arnold-press",
+    name: "Arnold Press",
+    primaryMuscle: "side_delts",
+    type: "compound",
+    equipment: "dumbbell",
+    secondaryMuscles: [
+      { muscle: "triceps", factor: 0.5 },
+      { muscle: "front_delts", factor: 0.5 },
+    ],
+  },
+  {
+    id: "lateral-raise-dumbbell",
+    name: "Lateral Raise (Dumbbell)",
+    primaryMuscle: "side_delts",
+    type: "isolation",
+    equipment: "dumbbell",
+    secondaryMuscles: [],
+  },
+  {
     id: "lu-raise",
     name: "Lu Raise",
     primaryMuscle: "side_delts",
@@ -280,6 +342,14 @@ export const EXERCISE_LIBRARY: ExerciseDefinition[] = [
   // REAR DELTS
   // ─────────────────────────────────────────────
   {
+    id: "skiers",
+    name: "Skiers",
+    primaryMuscle: "rear_delts",
+    type: "isolation",
+    equipment: "cable",
+    secondaryMuscles: [{ muscle: "traps", factor: 0.5 }],
+  },
+  {
     id: "rear-delt-fly-cable",
     name: "Rear Delt Fly (Cable)",
     primaryMuscle: "rear_delts",
@@ -300,6 +370,22 @@ export const EXERCISE_LIBRARY: ExerciseDefinition[] = [
   // ─────────────────────────────────────────────
   // BICEPS
   // ─────────────────────────────────────────────
+  {
+    id: "spider-curl",
+    name: "Spider Curl",
+    primaryMuscle: "biceps",
+    type: "isolation",
+    equipment: "machine",
+    secondaryMuscles: [],
+  },
+  {
+    id: "preacher-curl-barbell",
+    name: "Preacher Curl (Barbell)",
+    primaryMuscle: "biceps",
+    type: "isolation",
+    equipment: "barbell",
+    secondaryMuscles: [],
+  },
   {
     id: "incline-curl-dumbbell",
     name: "Incline Curl (Dumbbell)",
@@ -337,6 +423,14 @@ export const EXERCISE_LIBRARY: ExerciseDefinition[] = [
   // TRICEPS
   // ─────────────────────────────────────────────
   {
+    id: "skull-crusher",
+    name: "Skull Crusher",
+    primaryMuscle: "triceps",
+    type: "compound",
+    equipment: "barbell",
+    secondaryMuscles: [],
+  },
+  {
     id: "overhead-tricep-extension-cable",
     name: "Overhead Tricep Extension (Cable)",
     primaryMuscle: "triceps",
@@ -367,6 +461,22 @@ export const EXERCISE_LIBRARY: ExerciseDefinition[] = [
     type: "stretch",
     equipment: "cable",
     secondaryMuscles: [],
+  },
+
+  // ─────────────────────────────────────────────
+  // FRONT DELTS
+  // ─────────────────────────────────────────────
+  {
+    id: "klokov-press",
+    name: "Klokov Press",
+    primaryMuscle: "front_delts",
+    type: "compound",
+    equipment: "barbell",
+    // Behind-the-neck press; upper traps and side delts assist
+    secondaryMuscles: [
+      { muscle: "side_delts", factor: 0.5 },
+      { muscle: "triceps", factor: 0.5 },
+    ],
   },
 
   // ─────────────────────────────────────────────
@@ -466,6 +576,31 @@ export const EXERCISE_LIBRARY: ExerciseDefinition[] = [
     equipment: "dumbbell",
     secondaryMuscles: [{ muscle: "glutes", factor: 0.5 }],
   },
+  {
+    id: "front-squat-barbell",
+    name: "Front Squat (Barbell)",
+    primaryMuscle: "quads",
+    type: "compound",
+    equipment: "barbell",
+    secondaryMuscles: [{ muscle: "glutes", factor: 0.5 }],
+  },
+  {
+    id: "platz-squat",
+    name: "Platz Squat",
+    primaryMuscle: "quads",
+    type: "compound",
+    equipment: "barbell",
+    // Narrow stance, heels elevated — extreme quad bias, minimal glute contribution
+    secondaryMuscles: [],
+  },
+  {
+    id: "hack-squat",
+    name: "Hack Squat",
+    primaryMuscle: "quads",
+    type: "compound",
+    equipment: "machine",
+    secondaryMuscles: [{ muscle: "glutes", factor: 0.5 }],
+  },
 
   // ─────────────────────────────────────────────
   // HAMSTRINGS
@@ -509,6 +644,14 @@ export const EXERCISE_LIBRARY: ExerciseDefinition[] = [
     type: "compound",
     equipment: "bodyweight",
     secondaryMuscles: [],
+  },
+  {
+    id: "good-morning",
+    name: "Good Morning",
+    primaryMuscle: "hamstrings",
+    type: "compound",
+    equipment: "barbell",
+    secondaryMuscles: [{ muscle: "glutes", factor: 0.5 }],
   },
 
   // ─────────────────────────────────────────────
@@ -578,6 +721,22 @@ export const EXERCISE_LIBRARY: ExerciseDefinition[] = [
   // ─────────────────────────────────────────────
   // ABS
   // ─────────────────────────────────────────────
+  {
+    id: "hanging-leg-raise",
+    name: "Hanging Leg Raise",
+    primaryMuscle: "abs",
+    type: "isolation",
+    equipment: "bodyweight",
+    secondaryMuscles: [],
+  },
+  {
+    id: "pallof-press",
+    name: "Pallof Press",
+    primaryMuscle: "abs",
+    type: "isolation",
+    equipment: "cable",
+    secondaryMuscles: [],
+  },
   {
     id: "cable-crunch",
     name: "Cable Crunch",
