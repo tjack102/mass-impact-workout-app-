@@ -1,7 +1,6 @@
 type StrengthPoint = {
-  date: number;       // session.startedAt timestamp
-  weight: number;     // best set weight
-  reps: number;       // best set reps
+  weight: number;
+  reps: number;
 };
 
 type StrengthChartCardProps = {
@@ -83,9 +82,9 @@ export function StrengthChartCard({ title, subtitle, points }: StrengthChartCard
         aria-hidden="true"
       >
         {/* Y-axis labels */}
-        {yLabels.map((lbl) => (
+        {yLabels.map((lbl, i) => (
           <text
-            key={lbl.value}
+            key={i}
             x={PADDING.left - 4}
             y={lbl.y + 4}
             textAnchor="end"

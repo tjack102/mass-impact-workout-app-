@@ -49,17 +49,14 @@ export function ProgressScreen() {
 
   // Convert exercise history to StrengthPoint arrays
   const squatPoints = squatHistory.map((item) => ({
-    date: item.date,
     weight: item.bestSet.weight,
     reps: item.bestSet.reps,
   }));
   const inclinePoints = inclineHistory.map((item) => ({
-    date: item.date,
     weight: item.bestSet.weight,
     reps: item.bestSet.reps,
   }));
   const pullupPoints = pullupHistory.map((item) => ({
-    date: item.date,
     weight: item.bestSet.weight,
     reps: item.bestSet.reps,
   }));
