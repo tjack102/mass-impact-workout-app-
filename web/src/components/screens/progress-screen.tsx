@@ -1,7 +1,8 @@
 "use client";
 
 import { TrendChartCard } from "@/components/trend-chart-card";
-import { getAllSessions, getExerciseHistory, getWeeklyVolume } from "@/lib/workout-store";
+import { StrengthChartCard } from "@/components/strength-chart-card";
+import { getAllSessions, getExerciseHistory } from "@/lib/workout-store";
 
 type PrEntry = {
   exerciseName: string;
@@ -10,19 +11,58 @@ type PrEntry = {
   volume: number;
 };
 
-function toPoints(values: number[]) {
-  if (values.length === 0) {
-    return [0];
-  }
-  return values;
+/**
+ * Returns ISO 8601 year-week key like "2026-W12" for any timestamp.
+ *
+ * Limitation: uses local date for day extraction, then passes to UTC Date.UTC().
+ * Sessions logged near midnight in timezones behind UTC may be binned to the
+ * prior ISO week. This is an acceptable tradeoff -- no date-fns dependency.
+ */
+function isoWeekKey(ts: number): string {
+  const d = new Date(ts);
+  const thu = new Date(Date.UTC(d.getFullYear(), d.getMonth(), d.getDate()));
+  thu.setUTCDate(thu.getUTCDate() + 4 - (thu.getUTCDay() || 7));
+  const yearStart = new Date(Date.UTC(thu.getUTCFullYear(), 0, 1));
+  const week = Math.ceil(((thu.getTime() - yearStart.getTime()) / 86400000 + 1) / 7);
+  return `${thu.getUTCFullYear()}-W${String(week).padStart(2, "0")}`;
 }
 
 export function ProgressScreen() {
   const sessions = getAllSessions();
-  const weeklyVolume = getWeeklyVolume();
   const squatHistory = getExerciseHistory("Squat (Barbell)");
   const inclineHistory = getExerciseHistory("Incline Bench Press (Dumbbell)");
   const pullupHistory = getExerciseHistory("Pull-Up (Bodyweight)");
+
+  // Aggregate sessions by ISO calendar week instead of program week number
+  const weeklyVolumeMap = new Map<string, number>();
+  for (const session of sessions) {
+    const key = isoWeekKey(session.startedAt);
+    weeklyVolumeMap.set(key, (weeklyVolumeMap.get(key) ?? 0) + session.sets.length);
+  }
+  // Sort by key (ISO keys sort correctly as strings), take last 12 weeks
+  const sortedWeekKeys = Array.from(weeklyVolumeMap.keys()).sort();
+  const last12 = sortedWeekKeys.slice(-12);
+  const weeklyVolumePoints = last12.map((key) => ({
+    label: key.split("-W")[1] ? `W${key.split("-W")[1]}` : key,
+    value: weeklyVolumeMap.get(key) ?? 0,
+  }));
+
+  // Convert exercise history to StrengthPoint arrays
+  const squatPoints = squatHistory.map((item) => ({
+    date: item.date,
+    weight: item.bestSet.weight,
+    reps: item.bestSet.reps,
+  }));
+  const inclinePoints = inclineHistory.map((item) => ({
+    date: item.date,
+    weight: item.bestSet.weight,
+    reps: item.bestSet.reps,
+  }));
+  const pullupPoints = pullupHistory.map((item) => ({
+    date: item.date,
+    weight: item.bestSet.weight,
+    reps: item.bestSet.reps,
+  }));
 
   const bestByExercise = new Map<string, PrEntry>();
   for (const session of sessions) {
@@ -84,20 +124,22 @@ export function ProgressScreen() {
         <TrendChartCard
           title="Weekly Volume"
           subtitle="Total logged sets per week"
-          points={toPoints(weeklyVolume.map((item) => item.totalSets))}
+          points={weeklyVolumePoints.length > 0 ? weeklyVolumePoints : [{ label: "—", value: 0 }]}
         />
-        <TrendChartCard
+        <StrengthChartCard
           title="Squat Strength"
-          subtitle="Best top set load (lb)"
-          points={toPoints(squatHistory.map((item) => item.bestSet.weight))}
+          subtitle="Best set weight (lb)"
+          points={squatPoints}
         />
-        <TrendChartCard
-          title="Upper Progress"
-          subtitle="Incline/Pull-Up trend"
-          points={toPoints([
-            ...inclineHistory.map((item) => item.bestSet.weight),
-            ...pullupHistory.map((item) => item.bestSet.weight),
-          ])}
+        <StrengthChartCard
+          title="Incline Progress"
+          subtitle="Best set weight (lb)"
+          points={inclinePoints}
+        />
+        <StrengthChartCard
+          title="Pull-Up Progress"
+          subtitle="Best set weight (lb)"
+          points={pullupPoints}
         />
       </section>
 
