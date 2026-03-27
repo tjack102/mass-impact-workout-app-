@@ -1,5 +1,6 @@
 import type { ProgramExercise } from "./program-data";
 import { getDayForWeek, getDefaultRestSeconds } from "./program-data";
+import { getDayForWeekMaxVolume } from "./program-data-mass-impact-max-volume";
 import { RAVAGE_PROGRAM, getRavageDayTemplate } from "./program-data-ravage";
 import { RAMPAGE_PROGRAM, getRampageDayTemplate } from "./program-data-rampage";
 import { UPPER_LOWER_PROGRAM, getUpperLowerDayTemplate } from "./program-data-upper-lower";
@@ -12,6 +13,16 @@ export const PROGRAM_REGISTRY: ProgramMeta[] = [
   {
     id: "mass-impact",
     name: "Mass Impact",
+    profile: "his",
+    daysPerCycle: 5,
+    cycleLength: 12,
+    periodizationType: "block",
+    hasAutoRegulation: false,
+    hasVolumeTracking: true,
+  },
+  {
+    id: "mass-impact-max-volume",
+    name: "Mass Impact (Max Volume)",
     profile: "his",
     daysPerCycle: 5,
     cycleLength: 12,
@@ -103,6 +114,10 @@ export function getExercisesForDay(
     const day = getDayForWeek(weekNumber, dayNumber);
     return day?.exercises ?? [];
   }
+  if (programId === "mass-impact-max-volume") {
+    const day = getDayForWeekMaxVolume(weekNumber, dayNumber);
+    return day?.exercises ?? [];
+  }
   if (programId === "ravage") {
     const template = getRavageDayTemplate(dayNumber);
     if (!template) return [];
@@ -180,6 +195,10 @@ export function getExercisesForDay(
 export function getDayTitle(programId: string, dayNumber: number): string {
   // Mass Impact titles (from program-data.ts)
   if (programId === "mass-impact") {
+    const titles = ["Pull", "Push", "Legs / Density", "Pull", "Push"];
+    return titles[dayNumber - 1] ?? `Day ${dayNumber}`;
+  }
+  if (programId === "mass-impact-max-volume") {
     const titles = ["Pull", "Push", "Legs / Density", "Pull", "Push"];
     return titles[dayNumber - 1] ?? `Day ${dayNumber}`;
   }
