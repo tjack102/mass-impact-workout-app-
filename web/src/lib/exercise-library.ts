@@ -366,6 +366,14 @@ export const EXERCISE_LIBRARY: ExerciseDefinition[] = [
     // Traps assist on the retraction portion
     secondaryMuscles: [{ muscle: "traps", factor: 0.5 }],
   },
+  {
+    id: "reverse-pec-dec",
+    name: "Reverse Pec Dec",
+    primaryMuscle: "rear_delts",
+    type: "isolation",
+    equipment: "machine",
+    secondaryMuscles: [],
+  },
 
   // ─────────────────────────────────────────────
   // BICEPS
