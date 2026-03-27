@@ -55,6 +55,7 @@ import {
   isDeloadDue,
   advanceMeso,
 } from "@/lib/volume-engine";
+import { detectPR } from "@/lib/pr-engine";
 
 type SessionStatus = "Not Started" | "In Progress" | "Completed";
 
@@ -184,6 +185,9 @@ export function TodayScreen() {
   const [templateEditorOpen, setTemplateEditorOpen] = useState(false);
   const [templateDraft, setTemplateDraft] = useState<ExerciseTemplateDraft>(buildTemplateDraft());
   const [saveFlash, setSaveFlash] = useState(false);
+  // Track PR exercises by name for badge display during this session
+  const [prExercises, setPrExercises] = useState<Set<string>>(new Set());
+  const [prFlash, setPrFlash] = useState(false);
   const [syncState, setSyncState] = useState<"synced" | "pending" | "retrying">("synced");
   const [targetSeconds, setTargetSeconds] = useState(90);
   const [remainingSeconds, setRemainingSeconds] = useState(90);
@@ -499,6 +503,19 @@ export function TodayScreen() {
     if (updated) {
       setActiveSession(updated);
     }
+
+    // PR detection -- runs against completed session history (not the active session)
+    const prResult = detectPR(activeExercise.name, weight, reps, sessionHistory);
+    if (prResult.isPR) {
+      setPrExercises((prev) => new Set([...prev, activeExercise.name]));
+      setPrFlash(true);
+      window.setTimeout(() => setPrFlash(false), 400);
+      // Haptic feedback -- double pulse; silently no-ops on iOS and desktop
+      if (typeof navigator.vibrate === "function") {
+        navigator.vibrate([80, 40, 80]);
+      }
+    }
+
     setDraft({ weight: draft.weight, reps: draft.reps, rpe: "" });
     window.setTimeout(() => setSyncState("synced"), 520);
 
@@ -519,7 +536,7 @@ export function TodayScreen() {
     }
 
     startTimer(targetSeconds);
-  }, [activeExercise, draft, ensureActiveSession, handleSelectExercise, queueExercises, safeActiveIndex, startTimer, targetSeconds]);
+  }, [activeExercise, draft, ensureActiveSession, handleSelectExercise, queueExercises, safeActiveIndex, sessionHistory, startTimer, targetSeconds]);
 
   const handleFinishExercise = useCallback(() => {
     if (!activeExercise) {
@@ -841,6 +858,7 @@ export function TodayScreen() {
                   isActive={index === safeActiveIndex}
                   onSelect={() => handleSelectExercise(index)}
                   supersetGroup={exercise.supersetGroup}
+                  prFlash={index === safeActiveIndex ? prFlash : false}
                 />
               ))}
             </div>
@@ -1085,9 +1103,10 @@ export function TodayScreen() {
                         <p className="mono" style={{ margin: 0 }}>
                           Set {set.setIndex}
                         </p>
-                        <p style={{ margin: "0.18rem 0 0" }}>
+                        <p style={{ margin: "0.18rem 0 0", display: "flex", alignItems: "center", gap: "0.4rem" }}>
                           {set.weight} lb x {set.reps}
                           {set.rpe ? ` @ ${set.rpe}` : ""}
+                          {prExercises.has(set.exerciseName) && <span className="pr-badge">PR</span>}
                         </p>
                       </div>
                       <span className="page-note" style={{ margin: 0 }}>

@@ -1464,6 +1464,40 @@ a {
   }
 }
 
+/* ============================================
+   PR DETECTION — badge + card pulse
+   ============================================ */
+.pr-badge {
+  display: inline-flex;
+  align-items: center;
+  padding: 0.1rem 0.45rem;
+  border-radius: 999px;
+  background: color-mix(in srgb, var(--ok), transparent 75%);
+  border: 1px solid var(--ok);
+  color: var(--ok);
+  font-family: var(--font-display), sans-serif;
+  font-size: 0.7rem;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  animation: pr-pop 150ms var(--ease-standard);
+}
+
+@keyframes pr-pop {
+  from { transform: scale(0.6); opacity: 0; }
+  to   { transform: scale(1);   opacity: 1; }
+}
+
+/* Target the actual element class -- ExerciseQueueCard renders as <button class="surface exercise-card ..."> */
+.exercise-card.pr-pulse {
+  animation: pr-pulse 400ms var(--ease-standard);
+}
+
+@keyframes pr-pulse {
+  0%   { border-color: var(--ok); box-shadow: 0 0 0 2px color-mix(in srgb, var(--ok), transparent 60%); }
+  60%  { border-color: var(--ok); box-shadow: 0 0 0 4px color-mix(in srgb, var(--ok), transparent 80%); }
+  100% { border-color: var(--border); box-shadow: none; }
+}
+
 @media (prefers-reduced-motion: reduce) {
   *,
   *::before,

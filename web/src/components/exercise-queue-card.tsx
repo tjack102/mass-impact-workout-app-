@@ -9,6 +9,7 @@ type ExerciseQueueCardProps = {
   isActive: boolean;
   onSelect: () => void;
   supersetGroup?: string;
+  prFlash?: boolean;
 };
 
 function ProgressRing({ completed, total, isDone }: { completed: number; total: number; isDone: boolean }) {
@@ -56,13 +57,14 @@ export function ExerciseQueueCard({
   isActive,
   onSelect,
   supersetGroup,
+  prFlash,
 }: ExerciseQueueCardProps) {
   const isDone = completedSets >= targetSets;
 
   return (
     <button
       type="button"
-      className={`surface exercise-card${isActive ? " active" : ""}${isDone ? " done" : ""}${supersetGroup ? " superset-grouped" : ""}`}
+      className={`surface exercise-card${isActive ? " active" : ""}${isDone ? " done" : ""}${supersetGroup ? " superset-grouped" : ""}${prFlash ? " pr-pulse" : ""}`}
       onClick={onSelect}
     >
       <div className="exercise-line">
