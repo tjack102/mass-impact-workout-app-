@@ -13,7 +13,7 @@ export const PROGRAM_REGISTRY: ProgramMeta[] = [
   {
     id: "mass-impact",
     name: "Mass Impact",
-    profile: "his",
+    profile: "both",
     daysPerCycle: 5,
     cycleLength: 12,
     periodizationType: "block",
@@ -23,7 +23,7 @@ export const PROGRAM_REGISTRY: ProgramMeta[] = [
   {
     id: "mass-impact-max-volume",
     name: "Mass Impact (Max Volume)",
-    profile: "his",
+    profile: "both",
     daysPerCycle: 5,
     cycleLength: 12,
     periodizationType: "block",
