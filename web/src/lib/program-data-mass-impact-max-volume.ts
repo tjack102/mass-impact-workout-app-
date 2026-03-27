@@ -6,8 +6,8 @@ export type { ProgramDay, ProgramExercise };
 import type { Program, ProgramWeek } from "./program-data";
 
 export const MASS_IMPACT_MAX_VOLUME_PROGRAM: Program = {
-  name: "Mass Impact — Max Volume",
-  description: "Geoff Verity Schofield's PPLPP Program — Max Volume variant with extra sets and accessory work",
+  name: "Mass Impact (Max Volume)",
+  description: "Geoff Verity Schofield's PPLPP Program -- Max Volume variant with extra sets and accessory work",
   duration: "12 weeks",
   daysPerWeek: 5,
   timePerWorkout: "75 minutes",
