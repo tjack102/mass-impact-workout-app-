@@ -338,13 +338,13 @@ function buildDay5Push(week: number): ProgramDay {
         order: 2,
         orderLabel: "2",
         name: "Incline Bench Press (Dumbbell)",
-        setGroups: [{ sets: 1, reps: "6-8 reps" }, { sets: 2, reps: "8-10 reps" }],
+        setGroups: [{ sets: 3, reps: "8-10 reps" }],
       },
       {
         order: 3,
         orderLabel: "3",
         name: "Seated Shoulder Press (Dumbbell)",
-        setGroups: [{ sets: 1, reps: "6-8 reps" }, { sets: 2, reps: "8-10 reps" }],
+        setGroups: [{ sets: 3, reps: "8-10 reps" }],
       },
       {
         order: 4,
