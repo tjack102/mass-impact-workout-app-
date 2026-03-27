@@ -208,6 +208,7 @@ export function TodayScreen() {
   const [overrideDraftSets, setOverrideDraftSets] = useState("");
   const [overrideDraftReps, setOverrideDraftReps] = useState("");
   const flashTimeout = useRef<number | null>(null);
+  const prFlashTimeout = useRef<number | null>(null);
   const restStartedAtRef = useRef<number | null>(null);
   const restTargetRef = useRef<number>(90);
 
@@ -386,6 +387,9 @@ export function TodayScreen() {
       if (flashTimeout.current) {
         window.clearTimeout(flashTimeout.current);
       }
+      if (prFlashTimeout.current) {
+        window.clearTimeout(prFlashTimeout.current);
+      }
       finalizeRest();
     };
   }, [finalizeRest]);
@@ -509,9 +513,12 @@ export function TodayScreen() {
     if (prResult.isPR) {
       setPrExercises((prev) => new Set([...prev, activeExercise.name]));
       setPrFlash(true);
-      window.setTimeout(() => setPrFlash(false), 400);
+      if (prFlashTimeout.current) {
+        window.clearTimeout(prFlashTimeout.current);
+      }
+      prFlashTimeout.current = window.setTimeout(() => setPrFlash(false), 400);
       // Haptic feedback -- double pulse; silently no-ops on iOS and desktop
-      if (typeof navigator.vibrate === "function") {
+      if ("vibrate" in navigator) {
         navigator.vibrate([80, 40, 80]);
       }
     }
