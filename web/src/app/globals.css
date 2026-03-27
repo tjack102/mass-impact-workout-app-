@@ -425,6 +425,25 @@ a {
   gap: 0.8rem;
 }
 
+.settings-gear-btn {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 36px;
+  height: 36px;
+  border-radius: var(--radius-sm);
+  border: var(--border-width) solid var(--border);
+  background: var(--bg-2);
+  color: var(--text-1);
+  font-size: 1.1rem;
+  transition: color 220ms var(--ease-standard), border-color 220ms var(--ease-standard);
+}
+
+.settings-gear-btn:hover {
+  color: var(--text-0);
+  border-color: var(--accent-primary);
+}
+
 .profile-toggle {
   display: inline-grid;
   grid-template-columns: repeat(2, minmax(0, 1fr));
@@ -1158,6 +1177,7 @@ a {
   display: none;
   grid-template-columns: repeat(5, minmax(0, 1fr));
   gap: 0.2rem;
+  min-height: 56px;
   border-radius: var(--radius-xl);
   border: var(--border-width) solid color-mix(in srgb, var(--border), transparent 20%);
   background: var(--nav-bg);
@@ -1180,6 +1200,7 @@ a {
   align-items: center;
   gap: 0.18rem;
   position: relative;
+  min-height: 56px;
   transition: color 220ms var(--ease-standard);
 }
 
@@ -1196,6 +1217,11 @@ a {
 .mobile-link.active {
   color: var(--text-0);
   background: color-mix(in srgb, var(--accent-primary), transparent 90%);
+}
+
+.mobile-link.active .mobile-link-icon,
+.mobile-link.active .mobile-link-label {
+  color: var(--accent-primary);
 }
 
 .mobile-link.active::before {

@@ -16,7 +16,6 @@ const navItems = [
   { href: "/progress", label: "Progress", short: "PR" },
   { href: "/volume", label: "Volume", short: "VL" },
   { href: "/templates", label: "Templates", short: "TP" },
-  { href: "/settings", label: "Settings", short: "ST" },
 ];
 
 type AppShellProps = {
@@ -96,7 +95,12 @@ export function AppShell({ children }: AppShellProps) {
                   <ProgramSelector activeUser={activeUser} />
                 </div>
               </div>
-              <ProfileToggle activeUser={activeUser} onChange={setActiveUser} />
+              <div style={{ display: "flex", flexDirection: "column", alignItems: "flex-end", gap: "0.5rem" }}>
+                <Link href="/settings" className="settings-gear-btn" aria-label="Settings">
+                  ⚙
+                </Link>
+                <ProfileToggle activeUser={activeUser} onChange={setActiveUser} />
+              </div>
             </section>
             <main key={`${pathname}-${activeUser}`}>{children}</main>
           </div>
