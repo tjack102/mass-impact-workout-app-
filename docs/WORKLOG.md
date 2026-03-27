@@ -4,6 +4,42 @@ _History through Hypertrophy Hub (all 22 tasks) archived in `docs/WORKLOG-ARCHIV
 
 ---
 
+## 2026-03-27 — UX Overhaul Design + Plan
+
+### Goal
+Research fitness UX best practices, design a 4-feature UX overhaul, and write an implementation plan ready for execution.
+
+### Status: COMPLETE
+- Research done 2026-03-25 (see archived entries)
+- Spec: `docs/superpowers/specs/2026-03-27-ux-overhaul-design.md` (approved after 2 reviewer passes)
+- Plan: `docs/superpowers/plans/2026-03-27-ux-overhaul.md` (approved after 2 reviewer passes)
+
+### Features planned (execution order)
+1. Nav Polish -- 5 items, full labels, Settings gear in profile banner
+2. Active Workout Mode -- hide nav, show status bar during live session, 52px+ touch targets
+3. PR Detection -- `detectPR()` in `pr-engine.ts`, green badge, haptic feedback
+4. Progress & Data Viz -- ISO weekly aggregation, SVG strength charts, e1RM trend line
+
+### Key spec fixes made during review
+- Active session detection: use `getActiveSession() !== null` (not key existence -- key stores object)
+- Reactive sync: custom `workout-session-change` DOM event dispatched from workout-store functions
+- Type: `WorkoutSession[]` not `SessionLog[]`; sets are `LoggedSet[]` with `.exerciseName/.weight/.reps`
+- ISO week: inline helper (no date-fns), with UTC/local caveat documented
+
+---
+
+## 2026-03-25 — UX/UI Research Session
+
+### Goal
+Research fitness app UX best practices from validated, citable sources (academic, HCI, major app case studies). Findings to inform future UI improvements.
+
+### Status: COMPLETE
+- Searched PMC, Springer, NN/G, Smashing Magazine, arXiv, and app-specific case studies
+- Findings cover: retention/abandonment, workout logging patterns, gym-context mobile UX, dark mode, data viz, micro-interactions, navigation
+- Results returned directly to user as structured report
+
+---
+
 ## 2026-03-25 — Add RAMPAGE + 4-Day Upper/Lower Programs
 
 ### Goal
