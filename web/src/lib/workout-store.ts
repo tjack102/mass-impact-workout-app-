@@ -64,6 +64,8 @@ export const KEYS = {
   ACTIVE_SESSION: "mi_active_session",
 } as const;
 
+// Only dispatches on session lifecycle changes (null → session, session → null).
+// saveActiveSession and logSet mutate within an existing session and don't need to fire.
 function dispatchSessionChange(): void {
   if (typeof window !== "undefined") {
     window.dispatchEvent(new CustomEvent("workout-session-change"));

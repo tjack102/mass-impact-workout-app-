@@ -896,16 +896,13 @@ a {
   min-height: 52px;
 }
 
-.set-save-btn {
-  min-height: 56px;
-}
-
 .rest-dial-wrap .ghost-btn {
   min-height: 48px;
 }
 
 .set-save-btn {
   height: 42px;
+  min-height: 56px;
   border: var(--border-width) solid color-mix(in srgb, var(--accent-power), transparent 48%);
   color: var(--text-on-power);
   background: linear-gradient(140deg, color-mix(in srgb, var(--accent-power), white 40%), var(--accent-power));

@@ -1179,7 +1179,7 @@ export function TodayScreen() {
     </section>
 
     {matchingActiveSession ? (
-      <div className="workout-status-bar">
+      <div className="workout-status-bar" role="status" aria-label="Active workout status">
         <span className="workout-status-time">{formatElapsed(workoutElapsedSeconds)}</span>
         <span className="workout-status-sets">{matchingActiveSession.sets.length} sets</span>
         <span className="workout-status-exercise">
