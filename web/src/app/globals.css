@@ -1200,7 +1200,6 @@ a {
   align-items: center;
   gap: 0.18rem;
   position: relative;
-  min-height: 56px;
   transition: color 220ms var(--ease-standard);
 }
 
