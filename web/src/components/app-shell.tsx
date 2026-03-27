@@ -8,7 +8,7 @@ import { AccessContext } from "@/components/access-context";
 import { ProfileToggle } from "@/components/profile-toggle";
 import { ProgramSelector } from "@/components/program-selector";
 import type { HouseholdUser } from "@/lib/household-profiles";
-import { getPrefs, savePrefs } from "@/lib/workout-store";
+import { getActiveSession, getPrefs, savePrefs } from "@/lib/workout-store";
 
 const navItems = [
   { href: "/", label: "Today", short: "TD" },
@@ -27,11 +27,19 @@ export function AppShell({ children }: AppShellProps) {
   const initialPrefs = getPrefs();
   const [activeUser, setActiveUserState] = useState<HouseholdUser>(initialPrefs.activeUser);
   const currentWeek = getPrefs().currentWeek;
+  const [hasSession, setHasSession] = useState(false);
 
   // Re-apply stored theme after React hydration (hydration strips the data-theme attribute)
   useEffect(() => {
     setTheme(getTheme());
   }, []);
+
+  useEffect(() => {
+    const sync = () => setHasSession(getActiveSession() !== null);
+    sync(); // initial read after hydration
+    window.addEventListener("workout-session-change", sync);
+    return () => window.removeEventListener("workout-session-change", sync);
+  }, [activeUser]); // re-sync on profile switch
 
   function setActiveUser(nextUser: HouseholdUser) {
     const updated = getPrefs().activeUser === nextUser ? getPrefs() : savePrefs({ activeUser: nextUser });
@@ -40,7 +48,7 @@ export function AppShell({ children }: AppShellProps) {
 
   return (
     <AccessContext.Provider value={{ activeUser, setActiveUser, ownerPinEnabled: false, ownerUnlocked: true, unlockOwner: () => true, lockOwner: () => {} }}>
-      <div className="app-shell">
+      <div className={`app-shell${hasSession ? " workout-active" : ""}`}>
         <div className="shell-grid">
           <aside className="side-rail card panel reveal">
             <div>
@@ -106,21 +114,23 @@ export function AppShell({ children }: AppShellProps) {
           </div>
         </div>
 
-        <nav className="mobile-nav" aria-label="Bottom navigation">
-          {navItems.map((item) => {
-            const active = pathname === item.href;
-            return (
-              <Link
-                key={item.href}
-                href={item.href}
-                className={`mobile-link${active ? " active" : ""}`}
-              >
-                <span className="mobile-link-icon">{item.short}</span>
-                <span className="mobile-link-label">{item.label}</span>
-              </Link>
-            );
-          })}
-        </nav>
+        {!hasSession && (
+          <nav className="mobile-nav" aria-label="Bottom navigation">
+            {navItems.map((item) => {
+              const active = pathname === item.href;
+              return (
+                <Link
+                  key={item.href}
+                  href={item.href}
+                  className={`mobile-link${active ? " active" : ""}`}
+                >
+                  <span className="mobile-link-icon">{item.short}</span>
+                  <span className="mobile-link-label">{item.label}</span>
+                </Link>
+              );
+            })}
+          </nav>
+        )}
       </div>
     </AccessContext.Provider>
   );

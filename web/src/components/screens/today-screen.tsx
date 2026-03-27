@@ -78,6 +78,12 @@ type QueueExercise = {
   supersetGroup?: string;
 };
 
+function formatElapsed(seconds: number): string {
+  const m = Math.floor(seconds / 60);
+  const s = seconds % 60;
+  return `${m}:${String(s).padStart(2, "0")}`;
+}
+
 function buildTemplateDraft(exercise?: ProgramExercise): ExerciseTemplateDraft {
   return {
     name: exercise?.name ?? "",
@@ -715,6 +721,7 @@ export function TodayScreen() {
   }, [pendingCompletion]);
 
   return (
+    <>
     <section className="screen">
       <WorkoutHeader
         dayLabel={`Week ${prefs.currentWeek} - Day ${prefs.currentDay}  |  ${getDayTitle(programId, prefs.currentDay)}`}
@@ -1142,7 +1149,6 @@ export function TodayScreen() {
             fontFamily: "var(--font-display)",
             fontSize: "1.05rem",
             textAlign: "center",
-            // Orange for deload, cyan for new meso
             background: mesoNotification.startsWith("New Meso")
               ? "var(--accent-primary)"
               : "var(--accent-power)",
@@ -1171,5 +1177,27 @@ export function TodayScreen() {
         </div>
       </section>
     </section>
+
+    {matchingActiveSession ? (
+      <div className="workout-status-bar">
+        <span className="workout-status-time">{formatElapsed(workoutElapsedSeconds)}</span>
+        <span className="workout-status-sets">{matchingActiveSession.sets.length} sets</span>
+        <span className="workout-status-exercise">
+          {activeExercise?.name
+            ? activeExercise.name.length > 20
+              ? activeExercise.name.slice(0, 18) + "…"
+              : activeExercise.name
+            : "—"}
+        </span>
+        <button
+          type="button"
+          className="workout-status-end-btn"
+          onClick={handleFinishWorkout}
+        >
+          End Workout
+        </button>
+      </div>
+    ) : null}
+    </>
   );
 }

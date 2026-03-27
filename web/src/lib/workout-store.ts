@@ -64,6 +64,12 @@ export const KEYS = {
   ACTIVE_SESSION: "mi_active_session",
 } as const;
 
+function dispatchSessionChange(): void {
+  if (typeof window !== "undefined") {
+    window.dispatchEvent(new CustomEvent("workout-session-change"));
+  }
+}
+
 function readRaw(key: string): unknown {
   if (typeof window === "undefined") {
     return null;
@@ -274,6 +280,7 @@ export function startSession(
   const activeSessions = readActiveSessionsByUser();
   activeSessions[targetUser] = session;
   writeActiveSessionsByUser(activeSessions);
+  dispatchSessionChange();
   return session;
 }
 
@@ -313,6 +320,7 @@ export function completeSession(user?: HouseholdUser): WorkoutSession | null {
 
   activeSessions[targetUser] = null;
   writeActiveSessionsByUser(activeSessions);
+  dispatchSessionChange();
   return session;
 }
 
@@ -322,11 +330,13 @@ export function clearActiveSession(user?: HouseholdUser): void {
   }
   if (!user) {
     window.localStorage.removeItem(KEYS.ACTIVE_SESSION);
+    dispatchSessionChange();
     return;
   }
   const activeSessions = readActiveSessionsByUser();
   activeSessions[user] = null;
   writeActiveSessionsByUser(activeSessions);
+  dispatchSessionChange();
 }
 
 export function getAllSessions(user?: HouseholdUser): WorkoutSession[] {
