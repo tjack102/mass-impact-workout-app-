@@ -1,7 +1,7 @@
 # Warm-Up Calculator — Design Spec
 
 **Date:** 2026-03-29
-**Status:** Review Pass 2
+**Status:** Approved
 **Approach:** Overlay Modal, Dual Trigger (Approach C)
 
 ## Overview
@@ -18,9 +18,10 @@ Pure function, no side effects, no imports from app state.
 
 ```typescript
 export type WarmupSet = {
-  weight: number;    // rounded to increment
-  reps: number;
-  label: string;     // "Light", "Intermediate 1", "Intermediate 2", "Potentiation"
+  weight: number;       // rounded to increment
+  reps: number;         // single value (e.g. 10, 5, 3)
+  repsDisplay: string;  // display string (e.g. "10", "5", "2-3" for potentiation)
+  label: string;        // "Light", "Intermediate 1", "Intermediate 2", "Potentiation"
 };
 
 export type WarmupOptions = {
@@ -54,7 +55,7 @@ Evaluate edge cases first, then apply the standard protocol:
 2. **Intermediate sets**: evenly spaced between light weight and working weight, ~5 reps each. Count determined by working weight:
    - 66-200 lbs: 2 intermediates
    - 201-400 lbs: 3 intermediates
-   - 400+ lbs: 4 intermediates
+   - 401+ lbs: 4 intermediates
 3. **Potentiation set**: working weight, 2-3 reps (display as "2-3")
 
 **Deduplication:** If two adjacent warm-up sets round to the same weight, collapse them into a single set (keep the higher rep count).
@@ -90,7 +91,7 @@ type ModalProps = {
 - Max-width 400px, auto height, `--radius-lg` border-radius
 - Escape key dismisses
 - `role="dialog"`, `aria-modal="true"`, `aria-labelledby` on title
-- Focus management: on open, set `inert` attribute on the root app element (`#__next` or equivalent) to trap focus inside the modal. On close, remove `inert` and restore focus to the trigger element.
+- Focus management: on open, set `inert` attribute on the `.app-shell` wrapper div to trap focus inside the modal. On close, remove `inert` and restore focus to the trigger element.
 - Body scroll lock: `document.body.style.overflow = "hidden"` on open, restore original value on close
 - No animation -- instant open/close
 
