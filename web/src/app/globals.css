@@ -1688,3 +1688,22 @@ a {
   margin: 0.5rem 0 0;
   opacity: 0.6;
 }
+
+/* ── Warmup Standalone Card ── */
+.warmup-standalone-card {
+  display: flex;
+  align-items: center;
+  gap: 0.6rem;
+  width: 100%;
+  padding: 0.8rem 1rem;
+  margin-bottom: 0.75rem;
+  font-family: var(--font-ui);
+  font-size: 0.95rem;
+  color: var(--text-0);
+  cursor: pointer;
+  text-align: left;
+}
+
+.warmup-standalone-icon {
+  font-size: 1.2rem;
+}

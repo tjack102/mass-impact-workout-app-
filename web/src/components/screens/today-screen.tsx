@@ -794,6 +794,19 @@ export function TodayScreen() {
         }}
       />
 
+      {!matchingActiveSession && (
+        <button
+          className="surface warmup-standalone-card"
+          onClick={() => {
+            setWarmupProps({});
+            setWarmupOpen(true);
+          }}
+        >
+          <span className="warmup-standalone-icon">🔥</span>
+          <span>Warm-Up Calculator</span>
+        </button>
+      )}
+
       <div className="two-col">
         <details className="collapsible-section" open>
           <summary className="collapsible-summary">
