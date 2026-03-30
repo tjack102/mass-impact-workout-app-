@@ -4,6 +4,91 @@ _History through Hypertrophy Hub (all 22 tasks) archived in `docs/WORKLOG-ARCHIV
 
 ---
 
+## 2026-03-29 — Warmup Engine — Task 1: Types + Tests
+
+### Goal
+Create warmup calculation engine with full test suite. This is TDD-style: write types, write tests (all failing), then implement.
+
+### Files to touch
+- Create: `web/src/lib/warmup-engine.ts` (types + stub)
+- Create: `web/src/lib/__tests__/warmup-engine.test.ts` (full test suite)
+
+### Status: COMPLETE
+- [x] Create engine file with types and stub
+- [x] Create test file with full suite
+- [x] Run tests (expect all to fail except 0/negative weight edge cases)
+- [x] Commit
+
+### Test results
+- 7 passed (edge cases: 0 weight, negative weight, rounding increment, clamping, deduplication)
+- 15 failed (all main logic tests -- expected, stub returns empty array)
+
+### What was done
+- Created `web/src/lib/warmup-engine.ts` with `WarmupSet` and `WarmupOptions` types + `calculateWarmupSets()` stub
+- Created `web/src/lib/__tests__/warmup-engine.test.ts` with 22-test suite covering:
+  - Edge cases (0 weight, negative, <=45 lbs)
+  - Standard protocol (light + intermediates + potentiation by weight tier)
+  - Threshold boundaries (66/200/201/400/401 lbs)
+  - Rounding (2.5, 5, 10 lb increments)
+  - Bar weight clamping (45 lb minimum)
+  - Custom start percent
+  - Potentiation set specs
+  - Abbreviated mode
+  - Weight deduplication
+- Test suite validates behavior spec: ~25 lbs light set, 50-75% intermediate sets, full working weight on potentiation, 2-3 reps final set
+
+---
+
+## 2026-03-27 — Mass Impact Program Updates — COMPLETE
+
+### Changes
+- `9e88997` fix: mass impact vanilla day 5 wk1-4 incline/shoulder to 3x8-10 straight sets
+- `b0be872` feat: add Reverse Pec Dec to exercise library
+- `734ddaf` feat: add mass impact max volume program data (12-week, EOD variant)
+- `ff6d687` feat: register mass impact max volume in program registry
+- `bf21f9a` fix: em dashes in program strings
+
+### What changed
+- Fixed a bug in vanilla Mass Impact: Day 5 weeks 1-4, Incline Bench and Seated Shoulder Press were incorrectly showing the weeks 5-8 scheme (1x6-8+2x8-10) instead of 3x8-10 straight sets
+- Added "Mass Impact (Max Volume)" as a new selectable program -- same split/periodization as vanilla but with higher set counts (+1 set on most accessories) and new exercises (Leg Extension, Lying Leg Curl, Reverse Pec Dec, Spider Curl, extra Lateral Raise slots)
+- Deployed to https://web-blush-phi.vercel.app
+
+---
+
+## 2026-03-27 — UX Overhaul — COMPLETE
+
+### Status: All 4 features implemented, reviewed, committed
+
+### Commits
+- `7a25761` feat: nav polish -- 5-item mobile nav, labels, settings gear in banner
+- `344599a` fix: remove redundant min-height from .mobile-link
+- `67db85a` feat: active workout mode -- hide nav, show status bar during live session
+- `5078597` fix: workout mode code quality
+- `531278a` feat: PR detection -- Epley e1RM comparison, green badge, haptic feedback
+- `7877e74` fix: cleanup prFlash timeout, consistent vibrate guard
+- `721717f` feat: progress chart rework -- weekly ISO aggregation, SVG strength charts, e1RM trend
+- `fdf950e` fix: strength chart y-axis key collision, remove unused date field
+
+### What was built
+1. **Nav Polish** -- 5-item mobile nav (Settings removed, relocated to profile banner gear icon), min-height 56px, active state uses `--accent-primary`
+2. **Active Workout Mode** -- `workout-session-change` custom DOM event from workout-store; app-shell hides nav when `hasSession`; status bar (elapsed time, set count, exercise name, End Workout button) in today-screen; touch target overrides (52-56px)
+3. **PR Detection** -- Pure `detectPR()` in `pr-engine.ts` (Epley e1RM); green PR badge in logged set row; green border pulse on queue card; double haptic; 29/29 Vitest tests passing
+4. **Progress & Data Viz** -- TrendChartCard updated for labeled WeekPoint data + SVG trend polyline; new StrengthChartCard with SVG non-zero y-axis, rep labels, dashed e1RM trend, moving average; ISO week aggregation in progress-screen
+
+### Final state
+- TypeScript: 0 errors
+- Tests: 29/29 pass
+- Branch: main
+
+### What was done
+- Replaced `TrendChartCard` `points: number[]` API with `WeekPoint[] = { label, value }` + SVG overlay trend line connecting bar midpoints
+- Created `web/src/components/strength-chart-card.tsx`: full inline SVG chart with raw weight dots, dashed e1RM trend (Epley formula), 3-session moving average, y-axis labels, and rep annotations per dot
+- Added `isoWeekKey()` helper to bin sessions by real ISO calendar week (no date-fns dependency); caveat on midnight/UTC edge documented inline
+- Updated `progress-screen.tsx`: removed `getWeeklyVolume` + `toPoints` helper; ISO aggregation replaces program-week binning; squat/incline/pullup now use `StrengthChartCard` individually (4 cards total in grid-3)
+- Type check: 0 errors. Tests: 29/29 pass.
+
+---
+
 ## 2026-03-27 — UX Overhaul Design + Plan
 
 ### Goal
