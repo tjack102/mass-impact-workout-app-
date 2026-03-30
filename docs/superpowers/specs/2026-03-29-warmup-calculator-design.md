@@ -1,7 +1,7 @@
 # Warm-Up Calculator — Design Spec
 
 **Date:** 2026-03-29
-**Status:** Draft
+**Status:** Review Pass 2
 **Approach:** Overlay Modal, Dual Trigger (Approach C)
 
 ## Overview
@@ -41,13 +41,23 @@ export function calculateWarmupSets(
 
 ### Protocol
 
+Evaluate edge cases first, then apply the standard protocol:
+
+**Edge cases (evaluated first):**
+- Working weight = 0 or empty: return empty array
+- Working weight <= 45 lbs: return only the potentiation set
+- Working weight 46-65 lbs: light set + potentiation only (no intermediates)
+
+**Standard protocol (working weight > 65 lbs):**
+
 1. **Light set**: `startPercent`% of working weight (default 45%), 10 reps
 2. **Intermediate sets**: evenly spaced between light weight and working weight, ~5 reps each. Count determined by working weight:
-   - 0-50 lbs: 1 intermediate
-   - 51-200 lbs: 2 intermediates
+   - 66-200 lbs: 2 intermediates
    - 201-400 lbs: 3 intermediates
    - 400+ lbs: 4 intermediates
 3. **Potentiation set**: working weight, 2-3 reps (display as "2-3")
+
+**Deduplication:** If two adjacent warm-up sets round to the same weight, collapse them into a single set (keep the higher rep count).
 
 ### Abbreviated Mode
 
@@ -55,13 +65,7 @@ For subsequent exercises hitting the same muscle group. Skips the light set, use
 
 ### Rounding
 
-All calculated weights round to the nearest `roundingIncrement` (default 5 lbs). If a calculated weight rounds to 45 lbs or below, clamp to 45 (bar weight).
-
-### Edge Cases
-
-- Working weight <= 45 lbs: return only the potentiation set
-- Working weight 46-65 lbs: light set + potentiation only (no intermediates)
-- Working weight = 0 or empty: return empty array
+All calculated weights round to the nearest `roundingIncrement` (default 5 lbs). If a calculated weight rounds to 45 lbs or below, clamp to 45 (bar weight). All weights are in lbs -- no kg support (consistent with rest of app).
 
 ## Overlay Modal Component
 
@@ -86,8 +90,8 @@ type ModalProps = {
 - Max-width 400px, auto height, `--radius-lg` border-radius
 - Escape key dismisses
 - `role="dialog"`, `aria-modal="true"`, `aria-labelledby` on title
-- Focus trap: tab cycles within modal while open
-- Body scroll lock while open
+- Focus management: on open, set `inert` attribute on the root app element (`#__next` or equivalent) to trap focus inside the modal. On close, remove `inert` and restore focus to the trigger element.
+- Body scroll lock: `document.body.style.overflow = "hidden"` on open, restore original value on close
 - No animation -- instant open/close
 
 ## Warmup Calculator Component
@@ -99,7 +103,7 @@ Renders inside the generic Modal.
 ### Layout (top to bottom)
 
 1. **Header row**: Title "Warm-Up Calculator" + gear icon (toggles settings row) + X close button
-2. **Settings row** (collapsed by default): Rounding increment selector (2.5 / 5 / 10 lbs), start percentage input (default 45%)
+2. **Settings row** (collapsed by default): Rounding increment as 3-option radio group (2.5 / 5 / 10 lbs), start percentage as number input with stepper (default 45%)
 3. **Input area**:
    - Exercise name (display-only when auto-filled from workout; text input when standalone -- optional, doesn't affect calculation)
    - Working weight number input (auto-filled from exercise history when triggered from workout)
@@ -133,18 +137,20 @@ Read on modal open, written immediately on settings change.
 
 ### Entry Point 1: Active Workout (Live Console)
 
-**Location:** New "Warm Up" button in the Live Console header area, next to the active exercise name.
+**Location:** New "Warm Up" button in the Live Console header flex row (alongside the exercise name `h2` and `SyncStateIndicator`), styled as a small `ghost-btn`.
 
 **Visibility:** Only when a workout session is active AND an exercise is selected.
 
 **Auto-fill logic:**
 - Exercise name: from the active exercise
-- Working weight: pull from `getExerciseHistory()` for that exercise (last logged weight). If no history, leave blank for manual entry
-- Abbreviated toggle: auto-ON if the current exercise shares a primary muscle group with any previously completed exercise in the same session
+- Working weight: pull from `getLastPerformance(exerciseName)` which returns the heaviest set from the most recent session containing that exercise. If no history, leave blank for manual entry.
+- Abbreviated toggle: auto-ON if the current exercise shares a primary muscle group with any previously completed exercise in the same session. Uses `findExercise()` from `exercise-library.ts` to look up `primaryMuscle` for both the current and completed exercises.
+
+**Dependencies:** `getLastPerformance()` from `workout-store.ts`, `findExercise()` from `exercise-library.ts`.
 
 ### Entry Point 2: Standalone (No Active Workout)
 
-**Location:** "Warm-Up Calculator" card on the today-screen, visible when no workout session is active.
+**Location:** "Warm-Up Calculator" card on the today-screen, placed between the WorkoutHeader and the `two-col` div. Visible when `matchingActiveSession === null` (no active session for the currently viewed day).
 
 **Styling:** `surface` card with icon + label, tappable.
 
@@ -181,7 +187,8 @@ Unit tests (Vitest) for the pure calculation function:
 - Custom start percent: verify light set weight changes accordingly
 - Bar weight clamping: calculated weights below 45 clamp to 45
 - Empty/zero input: returns empty array
-- Threshold boundaries: 50, 51, 200, 201, 400, 401
+- Threshold boundaries: 66, 200, 201, 400, 401
+- Deduplication: adjacent sets rounding to same weight collapse into one
 
 No component tests (consistent with existing app testing approach).
 
