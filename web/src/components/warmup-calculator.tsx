@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect, useMemo } from "react";
+import { useState, useMemo } from "react";
 import { calculateWarmupSets, type WarmupOptions } from "../lib/warmup-engine";
 
 type WarmupSettings = {
@@ -44,16 +44,11 @@ export function WarmupCalculator({
   initialWeight,
   autoAbbreviated = false,
 }: WarmupCalculatorProps) {
-  const [settings, setSettings] = useState<WarmupSettings>(DEFAULT_SETTINGS);
+  const [settings, setSettings] = useState<WarmupSettings>(() => loadSettings());
   const [settingsOpen, setSettingsOpen] = useState(false);
   const [weight, setWeight] = useState(initialWeight?.toString() ?? "");
   const [abbreviated, setAbbreviated] = useState(autoAbbreviated);
   const [manualName, setManualName] = useState("");
-
-  // Load settings from localStorage on mount
-  useEffect(() => {
-    setSettings(loadSettings());
-  }, []);
 
   const workingWeight = parseFloat(weight) || 0;
 

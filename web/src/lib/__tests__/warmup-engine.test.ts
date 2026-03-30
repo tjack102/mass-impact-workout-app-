@@ -1,6 +1,5 @@
 import { describe, it, expect } from "vitest";
 import { calculateWarmupSets } from "../warmup-engine";
-import type { WarmupSet } from "../warmup-engine";
 
 describe("calculateWarmupSets", () => {
   // --- Edge cases (evaluated first) ---
