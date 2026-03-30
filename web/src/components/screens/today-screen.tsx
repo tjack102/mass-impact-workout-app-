@@ -14,6 +14,8 @@ import { RestTimerDial } from "@/components/rest-timer-dial";
 import { SessionStatPill } from "@/components/session-stat-pill";
 import { SyncStateIndicator } from "@/components/sync-state-indicator";
 import { WorkoutHeader } from "@/components/workout-header";
+import { Modal } from "../modal";
+import { WarmupCalculator } from "../warmup-calculator";
 import type { ProgramExercise } from "@/lib/program-data";
 import { formatScheme, getRestSecondsForExercise, getTotalSets } from "@/lib/program-data";
 import { getProgram, getProgramDay, saveProgram } from "@/lib/program-store";
@@ -28,6 +30,7 @@ import {
   completeSession,
   getActiveSession,
   getAllSessions,
+  getLastPerformance,
   getPrefs,
   logSet,
   saveActiveSession,
@@ -207,6 +210,12 @@ export function TodayScreen() {
   const [overrideEditorOpen, setOverrideEditorOpen] = useState(false);
   const [overrideDraftSets, setOverrideDraftSets] = useState("");
   const [overrideDraftReps, setOverrideDraftReps] = useState("");
+  const [warmupOpen, setWarmupOpen] = useState(false);
+  const [warmupProps, setWarmupProps] = useState<{
+    exerciseName?: string;
+    initialWeight?: number;
+    autoAbbreviated?: boolean;
+  }>({});
   const flashTimeout = useRef<number | null>(null);
   const prFlashTimeout = useRef<number | null>(null);
   const restStartedAtRef = useRef<number | null>(null);
@@ -730,6 +739,36 @@ export function TodayScreen() {
     setTemplateEditorOpen(false);
   }, [activeProgramExercise, matchingActiveSession, prefs.currentDay, prefs.currentWeek, safeActiveIndex, templateDraft]);
 
+  const openWarmupFromConsole = () => {
+    if (!activeExercise) return;
+
+    const name = activeExercise.name;
+    const lastPerf = getLastPerformance(name);
+    const initialWeight = lastPerf?.weight;
+
+    // Check if same primary muscle was already worked in this session
+    let autoAbbreviated = false;
+    if (matchingActiveSession) {
+      const currentDef = findExercise(name);
+      if (currentDef) {
+        const completedNames = new Set(
+          matchingActiveSession.sets.map((s) => s.exerciseName),
+        );
+        completedNames.delete(name);
+        for (const completedName of completedNames) {
+          const completedDef = findExercise(completedName);
+          if (completedDef && completedDef.primaryMuscle === currentDef.primaryMuscle) {
+            autoAbbreviated = true;
+            break;
+          }
+        }
+      }
+    }
+
+    setWarmupProps({ exerciseName: name, initialWeight, autoAbbreviated });
+    setWarmupOpen(true);
+  };
+
   const nextSetIndex = activeExerciseSets.length + 1;
 
   // Derive trained muscle groups from the pending (captured) session sets.
@@ -887,6 +926,15 @@ export function TodayScreen() {
                   {activeExercise?.name ?? "No exercise selected"}
                 </h2>
               </div>
+              {activeExercise && (
+                <button
+                  className="ghost-btn"
+                  style={{ fontSize: "0.75rem", whiteSpace: "nowrap" }}
+                  onClick={openWarmupFromConsole}
+                >
+                  Warm Up
+                </button>
+              )}
               <SyncStateIndicator state={syncState} />
             </div>
 
@@ -1203,6 +1251,14 @@ export function TodayScreen() {
         </div>
       </section>
     </section>
+
+    <Modal open={warmupOpen} onClose={() => setWarmupOpen(false)} title="Warm-Up Calculator">
+      <WarmupCalculator
+        exerciseName={warmupProps.exerciseName}
+        initialWeight={warmupProps.initialWeight}
+        autoAbbreviated={warmupProps.autoAbbreviated}
+      />
+    </Modal>
 
     {matchingActiveSession ? (
       <div className="workout-status-bar" role="status" aria-label="Active workout status">
