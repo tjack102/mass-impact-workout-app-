@@ -35,6 +35,7 @@ export type WorkoutSession = {
   sets: LoggedSet[];
   // Session-only overrides: keyed by exercise name, values replace template scheme for this session
   overrides?: Record<string, { sets?: number; reps?: string }>;
+  substitutions?: Record<string, string>;  // originalExerciseName -> replacementExerciseName
 };
 
 export type UserPrefs = {

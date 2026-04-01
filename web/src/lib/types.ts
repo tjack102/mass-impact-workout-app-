@@ -14,6 +14,8 @@ export interface ExerciseDefinition {
   secondaryMuscles: { muscle: MuscleGroup; factor: number }[];
   type: ExerciseType;
   equipment: Equipment;
+  tier?: "S" | "A";
+  exrxUrl?: string;
 }
 
 export interface ProgramMeta {
