@@ -43,7 +43,7 @@ import {
 import { RecoveryRatingPrompt } from "@/components/recovery-rating-prompt";
 import { findExercise, EXERCISE_LIBRARY } from "@/lib/exercise-library";
 import { TRACKED_MUSCLES, type MuscleGroup, type ExerciseDefinition } from "@/lib/types";
-import { getPermanentSub, setPermanentSub, clearPermanentSub } from "@/lib/exercise-substitutions";
+import { getPermanentSub, setPermanentSub } from "@/lib/exercise-substitutions";
 import { getAdditions } from "@/lib/exercise-additions";
 import { ExercisePickerModal } from "@/components/exercise-picker-modal";
 import {
@@ -302,6 +302,7 @@ export function TodayScreen() {
         supersetGroup: exercise.supersetGroup,
       };
     });
+  // eslint-disable-next-line react-hooks/exhaustive-deps -- subVersion is an intentional cache-buster for permanent substitution writes
   }, [exercises, matchingActiveSession, prefs.activeUser, prefs.currentDay, prefs.currentWeek, sessionHistory, programId, subVersion]);
 
   const safeActiveIndex =
