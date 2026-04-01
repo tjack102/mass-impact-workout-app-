@@ -16,6 +16,7 @@ const navItems = [
   { href: "/progress", label: "Progress", short: "PR" },
   { href: "/volume", label: "Volume", short: "VL" },
   { href: "/templates", label: "Templates", short: "TP" },
+  { href: "/library", label: "Library", short: "LB" },
 ];
 
 type AppShellProps = {

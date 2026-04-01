@@ -1295,7 +1295,7 @@ a {
 }
 
 .mobile-link-label {
-  font-size: 0.62rem;
+  font-size: 0.6rem;
 }
 
 .mobile-link.active {
@@ -1811,4 +1811,58 @@ a {
   font-size: 0.7rem;
   color: var(--accent-primary);
   font-style: italic;
+}
+
+/* ── Library Screen ── */
+.library-section {
+  margin-bottom: 0.5rem;
+}
+.library-section-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  width: 100%;
+  padding: 0.75rem 0.5rem;
+  background: none;
+  border: none;
+  border-bottom: 1px solid var(--border);
+  color: var(--text-primary);
+  cursor: pointer;
+  font-family: var(--font-display);
+}
+.library-section-header h2 {
+  font-size: 1.2rem;
+  margin: 0;
+}
+.library-chevron {
+  font-size: 1rem;
+  color: var(--text-muted);
+}
+.library-section-body {
+  padding-left: 0.25rem;
+}
+.library-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 0.5rem 0.5rem 0.5rem 1rem;
+  border-bottom: 1px solid var(--border);
+  gap: 0.5rem;
+}
+.library-row-info {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  flex: 1;
+  min-width: 0;
+}
+.library-row-name {
+  font-family: var(--font-body);
+  font-size: 0.9rem;
+}
+.library-add-btn {
+  font-size: 0.75rem;
+  padding: 0.2rem 0.5rem;
+  white-space: nowrap;
+  flex-shrink: 0;
 }
