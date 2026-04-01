@@ -42,7 +42,10 @@ import {
 } from "@/lib/workout-store";
 import { RecoveryRatingPrompt } from "@/components/recovery-rating-prompt";
 import { findExercise, EXERCISE_LIBRARY } from "@/lib/exercise-library";
-import { TRACKED_MUSCLES, type MuscleGroup } from "@/lib/types";
+import { TRACKED_MUSCLES, type MuscleGroup, type ExerciseDefinition } from "@/lib/types";
+import { getPermanentSub, setPermanentSub, clearPermanentSub } from "@/lib/exercise-substitutions";
+import { getAdditions } from "@/lib/exercise-additions";
+import { ExercisePickerModal } from "@/components/exercise-picker-modal";
 import {
   saveRecoveryRating,
   getMesoState,
@@ -73,6 +76,7 @@ type QueueExercise = {
   id: string;
   orderLabel: string;
   name: string;
+  originalName?: string;  // set when exercise has been substituted
   scheme: string;
   lastPerformance: string;
   targetSets: number;
@@ -216,6 +220,10 @@ export function TodayScreen() {
     initialWeight?: number;
     autoAbbreviated?: boolean;
   }>({});
+  const [swapTarget, setSwapTarget] = useState<{ index: number; muscleGroup: MuscleGroup; originalTemplateName: string } | null>(null);
+  const [swapConfirm, setSwapConfirm] = useState<{ exercise: ExerciseDefinition; originalTemplateName: string } | null>(null);
+  // Bumped whenever a permanent sub is written so queueExercises memo re-runs
+  const [subVersion, setSubVersion] = useState(0);
   const flashTimeout = useRef<number | null>(null);
   const prFlashTimeout = useRef<number | null>(null);
   const restStartedAtRef = useRef<number | null>(null);
@@ -253,14 +261,28 @@ export function TodayScreen() {
       : "Not Started";
 
   const queueExercises = useMemo<QueueExercise[]>(() => {
-    return exercises.map((exercise, index) => {
-      const completedSets = matchingActiveSession
-        ? matchingActiveSession.sets.filter((set) => set.exerciseName === exercise.name).length
-        : 0;
-      const lastPerformance = getLastPerformanceFromSessions(sessionHistory, exercise.name);
+    // Resolve additions for registry programs
+    const additions = programId !== "mass-impact"
+      ? getAdditions(prefs.activeUser, programId, prefs.currentDay)
+      : [];
+    const allExercises = additions.length > 0
+      ? [...exercises, ...additions]
+      : exercises;
 
-      // Apply session-only override if present for this exercise
-      const override = matchingActiveSession?.overrides?.[exercise.name];
+    return allExercises.map((exercise, index) => {
+      // Resolve substitution: session > permanent > original
+      const sessionSub = matchingActiveSession?.substitutions?.[exercise.name];
+      const permanentSub = getPermanentSub(prefs.activeUser, programId, prefs.currentDay, exercise.name);
+      const resolvedName = sessionSub ?? permanentSub ?? exercise.name;
+      const originalName = resolvedName !== exercise.name ? exercise.name : undefined;
+
+      const completedSets = matchingActiveSession
+        ? matchingActiveSession.sets.filter((set) => set.exerciseName === resolvedName).length
+        : 0;
+      const lastPerformance = getLastPerformanceFromSessions(sessionHistory, resolvedName);
+
+      // Apply session-only override keyed on RESOLVED name
+      const override = matchingActiveSession?.overrides?.[resolvedName];
       const effectiveSets = override?.sets ?? getTotalSets(exercise);
       const effectiveScheme = override
         ? `${override.sets ?? getTotalSets(exercise)} x ${override.reps ?? exercise.setGroups[0]?.reps ?? "?"}`
@@ -269,7 +291,8 @@ export function TodayScreen() {
       return {
         id: `${prefs.currentWeek}-${prefs.currentDay}-${exercise.orderLabel}-${index}`,
         orderLabel: exercise.orderLabel,
-        name: exercise.name,
+        name: resolvedName,
+        originalName,
         scheme: effectiveScheme,
         lastPerformance: formatLastSet(lastPerformance),
         targetSets: effectiveSets,
@@ -279,7 +302,7 @@ export function TodayScreen() {
         supersetGroup: exercise.supersetGroup,
       };
     });
-  }, [exercises, matchingActiveSession, prefs.activeUser, prefs.currentDay, prefs.currentWeek, sessionHistory]);
+  }, [exercises, matchingActiveSession, prefs.activeUser, prefs.currentDay, prefs.currentWeek, sessionHistory, programId, subVersion]);
 
   const safeActiveIndex =
     queueExercises.length === 0 ? 0 : Math.min(activeIndex, Math.max(0, queueExercises.length - 1));
@@ -739,6 +762,42 @@ export function TodayScreen() {
     setTemplateEditorOpen(false);
   }, [activeProgramExercise, matchingActiveSession, prefs.currentDay, prefs.currentWeek, safeActiveIndex, templateDraft]);
 
+  function handleOpenSwap(index: number) {
+    const qe = queueExercises[index];
+    if (!qe) return;
+    const templateName = qe.originalName ?? qe.name;
+    const def = findExercise(qe.name);
+    const muscle = def?.primaryMuscle ?? "back";
+    setSwapTarget({ index, muscleGroup: muscle, originalTemplateName: templateName });
+  }
+
+  function handleSwapSelect(exercise: ExerciseDefinition) {
+    if (!swapTarget) return;
+    setSwapConfirm({ exercise, originalTemplateName: swapTarget.originalTemplateName });
+    setSwapTarget(null);
+  }
+
+  function handleSwapConfirm(permanent: boolean) {
+    if (!swapConfirm) return;
+    const { exercise, originalTemplateName } = swapConfirm;
+
+    if (permanent) {
+      setPermanentSub(prefs.activeUser, programId, prefs.currentDay, originalTemplateName, exercise.name);
+      setSubVersion((v) => v + 1);
+    } else if (matchingActiveSession) {
+      const updated: WorkoutSession = {
+        ...matchingActiveSession,
+        substitutions: {
+          ...matchingActiveSession.substitutions,
+          [originalTemplateName]: exercise.name,
+        },
+      };
+      saveActiveSession(updated);
+      setActiveSession(updated);
+    }
+    setSwapConfirm(null);
+  }
+
   const openWarmupFromConsole = () => {
     if (!activeExercise) return;
 
@@ -904,19 +963,21 @@ export function TodayScreen() {
             ) : null}
 
             <div className="queue-list">
-              {queueExercises.map((exercise, index) => (
+              {queueExercises.map((qe, index) => (
                 <ExerciseQueueCard
-                  key={exercise.id}
-                  orderLabel={exercise.orderLabel}
-                  name={exercise.name}
-                  scheme={exercise.scheme}
-                  track={exercise.track}
-                  targetSets={exercise.targetSets}
-                  completedSets={exercise.completedSets}
-                  lastPerformance={exercise.lastPerformance}
+                  key={qe.id}
+                  orderLabel={qe.orderLabel}
+                  name={qe.name}
+                  originalName={qe.originalName}
+                  scheme={qe.scheme}
+                  track={qe.track}
+                  targetSets={qe.targetSets}
+                  completedSets={qe.completedSets}
+                  lastPerformance={qe.lastPerformance}
                   isActive={index === safeActiveIndex}
                   onSelect={() => handleSelectExercise(index)}
-                  supersetGroup={exercise.supersetGroup}
+                  onSwap={() => handleOpenSwap(index)}
+                  supersetGroup={qe.supersetGroup}
                   prFlash={index === safeActiveIndex ? prFlash : false}
                 />
               ))}
@@ -1272,6 +1333,41 @@ export function TodayScreen() {
         autoAbbreviated={warmupProps.autoAbbreviated}
       />
     </Modal>
+
+    {/* Exercise Swap Picker */}
+    <ExercisePickerModal
+      open={swapTarget !== null}
+      muscleGroup={swapTarget?.muscleGroup}
+      onSelect={handleSwapSelect}
+      onClose={() => setSwapTarget(null)}
+    />
+
+    {/* Swap Confirmation */}
+    {swapConfirm && (
+      <Modal open onClose={() => setSwapConfirm(null)} title="Swap Exercise">
+        <div style={{ padding: "1rem" }}>
+          <p>Replace with <strong>{swapConfirm.exercise.name}</strong>?</p>
+          <div style={{ display: "flex", gap: "0.5rem", marginTop: "1rem" }}>
+            {matchingActiveSession && (
+              <button
+                type="button"
+                className="ghost-btn"
+                onClick={() => handleSwapConfirm(false)}
+              >
+                Just this session
+              </button>
+            )}
+            <button
+              type="button"
+              className="ghost-btn"
+              onClick={() => handleSwapConfirm(true)}
+            >
+              All future sessions
+            </button>
+          </div>
+        </div>
+      </Modal>
+    )}
 
     {matchingActiveSession ? (
       <div className="workout-status-bar" role="status" aria-label="Active workout status">
