@@ -10,6 +10,8 @@ type ExerciseQueueCardProps = {
   onSelect: () => void;
   supersetGroup?: string;
   prFlash?: boolean;
+  originalName?: string;
+  onSwap?: () => void;
 };
 
 function ProgressRing({ completed, total, isDone }: { completed: number; total: number; isDone: boolean }) {
@@ -58,6 +60,8 @@ export function ExerciseQueueCard({
   onSelect,
   supersetGroup,
   prFlash,
+  originalName,
+  onSwap,
 }: ExerciseQueueCardProps) {
   const isDone = completedSets >= targetSets;
 
@@ -72,9 +76,24 @@ export function ExerciseQueueCard({
           <span className="track-chip mono" style={{ padding: "0.1rem 0.35rem" }}>
             {orderLabel}
           </span>
-          <h3 className="exercise-name">{name}</h3>
+          <div>
+            <h3 className="exercise-name">{name}</h3>
+            {originalName && (
+              <span className="swap-indicator">Replaces: {originalName}</span>
+            )}
+          </div>
         </div>
         <div style={{ display: "flex", alignItems: "center", gap: "0.45rem" }}>
+          {onSwap && (
+            <button
+              type="button"
+              className="swap-btn"
+              onClick={(e) => { e.stopPropagation(); onSwap(); }}
+              aria-label={`Swap ${name}`}
+            >
+              ⇄
+            </button>
+          )}
           <ProgressRing completed={completedSets} total={targetSets} isDone={isDone} />
           <span className={`track-chip ${track}`}>{track}</span>
         </div>

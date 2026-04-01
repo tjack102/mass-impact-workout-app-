@@ -1791,3 +1791,24 @@ a {
   text-align: center;
   color: var(--text-2);
 }
+
+/* ── Swap Icon ── */
+.swap-btn {
+  background: none;
+  border: 1px solid var(--border);
+  border-radius: 4px;
+  color: var(--text-muted);
+  font-size: 0.85rem;
+  padding: 0.15rem 0.35rem;
+  cursor: pointer;
+  line-height: 1;
+}
+.swap-btn:hover {
+  color: var(--accent-primary);
+  border-color: var(--accent-primary);
+}
+.swap-indicator {
+  font-size: 0.7rem;
+  color: var(--accent-primary);
+  font-style: italic;
+}
