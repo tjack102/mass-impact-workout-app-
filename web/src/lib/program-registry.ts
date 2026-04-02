@@ -197,6 +197,7 @@ export function getExercisesForDay(
       setGroups: ex.setGroups,
       restSeconds: getDefaultRestSeconds(ex.name),
       supersetGroup: ex.supersetGroup,
+      notes: ex.notes,
     } satisfies ProgramExercise));
   }
   if (programId.startsWith("hers-")) {

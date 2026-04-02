@@ -11,6 +11,7 @@ export type ProgramExercise = {
   restSeconds?: number;
   // Used by programs with paired exercises (e.g. "1A"/"1B"). Mass Impact doesn't use this.
   supersetGroup?: string;
+  notes?: string;
 };
 
 export type ProgramDay = {

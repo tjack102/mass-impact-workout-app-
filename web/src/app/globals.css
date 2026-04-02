@@ -1813,6 +1813,14 @@ a {
   font-style: italic;
 }
 
+.queue-exercise-notes {
+  font-family: var(--font-body);
+  font-size: 0.7rem;
+  color: var(--text-muted);
+  margin-top: 2px;
+  padding: 0 0.35rem;
+}
+
 /* ── Library Screen ── */
 .library-section {
   margin-bottom: 0.5rem;

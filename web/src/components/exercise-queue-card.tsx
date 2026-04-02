@@ -12,6 +12,7 @@ type ExerciseQueueCardProps = {
   prFlash?: boolean;
   originalName?: string;
   onSwap?: () => void;
+  notes?: string;
 };
 
 function ProgressRing({ completed, total, isDone }: { completed: number; total: number; isDone: boolean }) {
@@ -62,6 +63,7 @@ export function ExerciseQueueCard({
   prFlash,
   originalName,
   onSwap,
+  notes,
 }: ExerciseQueueCardProps) {
   const isDone = completedSets >= targetSets;
 
@@ -104,6 +106,9 @@ export function ExerciseQueueCard({
           Last: {lastPerformance}
         </span>
       </div>
+      {notes && (
+        <div className="queue-exercise-notes">{notes}</div>
+      )}
       <div className="completion-dots" aria-label={`${completedSets}/${targetSets} sets complete`}>
         {Array.from({ length: targetSets }).map((_, idx) => (
           <span
