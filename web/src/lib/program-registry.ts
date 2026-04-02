@@ -44,7 +44,7 @@ export const PROGRAM_REGISTRY: ProgramMeta[] = [
   {
     id: "rampage",
     name: "RAMPAGE",
-    profile: "his",
+    profile: "both",
     daysPerCycle: 3,
     cycleLength: 10,
     periodizationType: "double-progression",
