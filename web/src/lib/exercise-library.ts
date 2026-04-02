@@ -188,6 +188,17 @@ export const EXERCISE_LIBRARY: ExerciseDefinition[] = [
     secondaryMuscles: [{ muscle: "biceps", factor: 0.5 }],
   },
   {
+    id: "t-bar-row",
+    name: "T-Bar Row",
+    primaryMuscle: "back",
+    type: "compound",
+    equipment: "barbell",
+    secondaryMuscles: [
+      { muscle: "biceps", factor: 0.4 },
+      { muscle: "rear_delts", factor: 0.3 },
+    ],
+  },
+  {
     id: "cross-body-lat-pulldown",
     name: "Cross Body Lat Pulldown",
     primaryMuscle: "back",
@@ -829,6 +840,14 @@ export const EXERCISE_LIBRARY: ExerciseDefinition[] = [
     primaryMuscle: "hamstrings",
     type: "compound",
     equipment: "barbell",
+    secondaryMuscles: [{ muscle: "glutes", factor: 0.5 }],
+  },
+  {
+    id: "romanian-deadlift-dumbbell",
+    name: "Romanian Deadlift (Dumbbell)",
+    primaryMuscle: "hamstrings",
+    type: "compound",
+    equipment: "dumbbell",
     secondaryMuscles: [{ muscle: "glutes", factor: 0.5 }],
   },
   {
