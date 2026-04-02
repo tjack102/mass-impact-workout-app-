@@ -5,6 +5,7 @@ import { RAVAGE_PROGRAM, getRavageDayTemplate } from "./program-data-ravage";
 import { RAMPAGE_PROGRAM, getRampageDayTemplate } from "./program-data-rampage";
 import { UPPER_LOWER_PROGRAM, getUpperLowerDayTemplate } from "./program-data-upper-lower";
 import { getHersDayTemplate } from "./program-data-hers";
+import { getMinimalistDayTemplate } from "./program-data-nippard-minimalist";
 import type { ProgramMeta } from "./types";
 import type { HouseholdUser } from "./household-profiles";
 
@@ -58,6 +59,16 @@ export const PROGRAM_REGISTRY: ProgramMeta[] = [
     cycleLength: 12,
     periodizationType: "double-progression",
     hasAutoRegulation: false,
+    hasVolumeTracking: true,
+  },
+  {
+    id: "nippard-minimalist",
+    name: "Nippard Minimalist",
+    profile: "both",
+    daysPerCycle: 2,
+    cycleLength: 0,
+    periodizationType: "auto-regulated",
+    hasAutoRegulation: true,
     hasVolumeTracking: true,
   },
   {
@@ -176,6 +187,18 @@ export function getExercisesForDay(
       } satisfies ProgramExercise;
     });
   }
+  if (programId === "nippard-minimalist") {
+    const template = getMinimalistDayTemplate(dayNumber);
+    if (!template) return [];
+    return template.exercises.map((ex, i) => ({
+      order: i + 1,
+      orderLabel: ex.orderLabel,
+      name: ex.name,
+      setGroups: ex.setGroups,
+      restSeconds: getDefaultRestSeconds(ex.name),
+      supersetGroup: ex.supersetGroup,
+    } satisfies ProgramExercise));
+  }
   if (programId.startsWith("hers-")) {
     const template = getHersDayTemplate(programId, dayNumber);
     if (!template) return [];
@@ -210,6 +233,9 @@ export function getDayTitle(programId: string, dayNumber: number): string {
   }
   if (programId === "upper-lower") {
     return getUpperLowerDayTemplate(dayNumber)?.title ?? `Day ${dayNumber}`;
+  }
+  if (programId === "nippard-minimalist") {
+    return getMinimalistDayTemplate(dayNumber)?.title ?? `Day ${dayNumber}`;
   }
   if (programId.startsWith("hers-")) {
     return getHersDayTemplate(programId, dayNumber)?.title ?? `Day ${dayNumber}`;
