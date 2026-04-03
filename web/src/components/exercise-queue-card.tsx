@@ -84,16 +84,14 @@ export function ExerciseQueueCard({
             <h3 className="exercise-name">
               {name}
               {exrxUrl && (
-                <a
-                  href={exrxUrl}
-                  target="_blank"
-                  rel="noopener noreferrer"
+                <span
+                  role="link"
                   className="queue-exrx-link"
-                  onClick={(e) => e.stopPropagation()}
+                  onClick={(e) => { e.stopPropagation(); window.open(exrxUrl, "_blank", "noopener"); }}
                   aria-label={`How to: ${name}`}
                 >
                   ?
-                </a>
+                </span>
               )}
             </h3>
             {originalName && (

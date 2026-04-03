@@ -1853,6 +1853,8 @@ a {
   text-decoration: none;
   vertical-align: middle;
   line-height: 1;
+  cursor: pointer;
+  -webkit-tap-highlight-color: transparent;
 }
 
 /* ── Library Screen ── */
