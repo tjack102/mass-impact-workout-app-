@@ -63,6 +63,7 @@ import {
   advanceMeso,
 } from "@/lib/volume-engine";
 import { detectPR } from "@/lib/pr-engine";
+import { Flame } from "@/components/icons";
 
 type SessionStatus = "Not Started" | "In Progress" | "Completed";
 
@@ -874,7 +875,7 @@ export function TodayScreen() {
             setWarmupOpen(true);
           }}
         >
-          <span className="warmup-standalone-icon">🔥</span>
+          <Flame size={18} className="warmup-standalone-icon" aria-hidden="true" />
           <span>Warm-Up Calculator</span>
         </button>
       )}
@@ -925,10 +926,10 @@ export function TodayScreen() {
                   </select>
                 </label>
                 <div className="compact-stepper">
-                  <button type="button" className="ghost-btn" style={{ height: "36px" }} onClick={() => handleShiftDay(-1)}>
+                  <button type="button" className="ghost-btn" style={{ height: "36px" }} onClick={() => handleShiftDay(-1)} aria-label="Previous day">
                     {"<"}
                   </button>
-                  <button type="button" className="ghost-btn" style={{ height: "36px" }} onClick={() => handleShiftDay(1)}>
+                  <button type="button" className="ghost-btn" style={{ height: "36px" }} onClick={() => handleShiftDay(1)} aria-label="Next day">
                     {">"}
                   </button>
                 </div>
@@ -1041,6 +1042,7 @@ export function TodayScreen() {
                     alignItems: "center",
                     gap: "0.35rem",
                   }}
+                  aria-label="Override sets and reps for this session"
                   title="Tap to override sets/reps for this session"
                   onClick={() => {
                     if (overrideEditorOpen) {
@@ -1301,6 +1303,7 @@ export function TodayScreen() {
       {mesoNotification ? (
         <button
           type="button"
+          aria-label="Dismiss mesocycle notification"
           onClick={() => setMesoNotification(null)}
           style={{
             display: "block",
@@ -1334,7 +1337,7 @@ export function TodayScreen() {
             <SessionStatPill label="Workout Time" value={formatDuration(workoutElapsedSeconds)} />
             <SessionStatPill label="Total Rest" value={formatDuration(workoutRestSeconds)} />
           </div>
-          <button type="button" className="ghost-btn" onClick={handleFinishWorkout} disabled={!matchingActiveSession}>
+          <button type="button" className="ghost-btn" onClick={handleFinishWorkout} disabled={!matchingActiveSession} aria-label={matchingActiveSession ? "Finish workout and log session" : "Start a workout first"}>
             Finish Workout
           </button>
         </div>

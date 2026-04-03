@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useRef, useState } from "react";
+import { ConfirmDialog } from "@/components/confirm-dialog";
 import { SyncStateIndicator } from "@/components/sync-state-indicator";
 import { ThemePicker } from "@/components/theme-picker";
 import {
@@ -69,6 +70,8 @@ export function SettingsScreen() {
   );
   const [snapshotStats, setSnapshotStats] = useState(() => buildSnapshotStats());
   const [feedback, setFeedback] = useState("");
+  const [confirmReset, setConfirmReset] = useState(false);
+  const [confirmClear, setConfirmClear] = useState(false);
 
   // --- Hypertrophy Hub additions ---
   const { activeUser } = useAccess();
@@ -138,10 +141,9 @@ export function SettingsScreen() {
   }
 
   function handleResetLandmarks() {
-    const confirmed = window.confirm("Reset volume landmarks to defaults for this profile?");
-    if (!confirmed) return;
     const defaults = resetVolumeLandmarks(activeUser);
     setLandmarks(defaults);
+    setConfirmReset(false);
   }
 
   useEffect(() => {
@@ -218,13 +220,10 @@ export function SettingsScreen() {
   }
 
   function handleClearData() {
-    const confirmed = window.confirm("Clear all workout data and preferences? This cannot be undone.");
-    if (!confirmed) {
-      return;
-    }
     clearAllData();
     refreshStats();
     setFeedback("All local data cleared.");
+    setConfirmClear(false);
   }
 
   return (
@@ -305,6 +304,7 @@ export function SettingsScreen() {
             ref={importInputRef}
             type="file"
             accept="application/json"
+            aria-label="Import backup file"
             style={{ display: "none" }}
             onChange={(event) => {
               const file = event.target.files?.[0];
@@ -360,7 +360,7 @@ export function SettingsScreen() {
           <button type="button" className="ghost-btn" onClick={refreshStats}>
             Refresh Stats
           </button>
-          <button type="button" className="ghost-btn danger-btn" onClick={handleClearData}>
+          <button type="button" className="ghost-btn danger-btn" onClick={() => setConfirmClear(true)}>
             Clear All Data
           </button>
         </div>
@@ -511,11 +511,31 @@ export function SettingsScreen() {
         </div>
 
         <div style={{ marginTop: "0.85rem" }}>
-          <button type="button" className="ghost-btn danger-btn" onClick={handleResetLandmarks}>
+          <button type="button" className="ghost-btn danger-btn" onClick={() => setConfirmReset(true)}>
             Reset to Defaults
           </button>
         </div>
       </article>
+      <ConfirmDialog
+        open={confirmReset}
+        onClose={() => setConfirmReset(false)}
+        onConfirm={handleResetLandmarks}
+        title="Reset Volume Landmarks"
+        message="This will reset all volume landmarks to defaults. This cannot be undone."
+        confirmLabel="Reset"
+        destructive
+      />
+
+      <ConfirmDialog
+        open={confirmClear}
+        onClose={() => setConfirmClear(false)}
+        onConfirm={handleClearData}
+        title="Clear All Data"
+        message="This will permanently delete all workout data, settings, and progress. This cannot be undone."
+        confirmLabel="Delete Everything"
+        requireText="DELETE"
+        destructive
+      />
     </section>
   );
 }

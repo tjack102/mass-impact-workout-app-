@@ -1,5 +1,5 @@
-import { VolumeScreen } from "@/components/screens/volume-screen";
+import { redirect } from "next/navigation";
 
 export default function VolumePage() {
-  return <VolumeScreen />;
+  redirect("/progress?tab=volume");
 }

@@ -3,6 +3,7 @@
 import { useState } from "react";
 import { EXERCISE_LIBRARY } from "@/lib/exercise-library";
 import type { ExerciseDefinition, MuscleGroup } from "@/lib/types";
+import { ExternalLink, Pencil, Plus, ChevronRight, ChevronDown } from "@/components/icons";
 import { useAccess } from "@/components/access-context";
 import { getStoredPrefsFromLocalStorage } from "@/lib/household-profiles";
 import { getDaysInCycle, getDayTitle, getExercisesForDay } from "@/lib/program-registry";
@@ -46,18 +47,18 @@ function ExerciseRow({ exercise, onAdd, onEditUrl }: { exercise: ExerciseDefinit
               rel="noopener noreferrer"
               className="picker-exrx picker-exrx--active"
               onClick={(e) => e.stopPropagation()}
-              aria-label={`Demo for ${exercise.name}`}
+              aria-label="View demo video"
             >
-              ↗
+              <ExternalLink size={14} aria-hidden="true" />
             </a>
           ) : null}
           <button
             type="button"
             className={`picker-exrx-edit${url ? " has-url" : ""}`}
             onClick={(e) => { e.stopPropagation(); onEditUrl(exercise.name); }}
-            aria-label={url ? `Edit demo link for ${exercise.name}` : `Add demo link for ${exercise.name}`}
+            aria-label={url ? "Edit exercise URL" : "Add exercise URL"}
           >
-            {url ? "✎" : "+↗"}
+            {url ? <Pencil size={14} aria-hidden="true" /> : <Plus size={14} aria-hidden="true" />}
           </button>
         </span>
       </div>
@@ -98,9 +99,10 @@ function MuscleSection({
         type="button"
         className="library-section-header"
         onClick={() => setCollapsed(!collapsed)}
+        aria-label={`${collapsed ? "Expand" : "Collapse"} ${label} section`}
       >
         <h2>{label}</h2>
-        <span className="library-chevron">{collapsed ? "▸" : "▾"}</span>
+        <span className="library-chevron">{collapsed ? <ChevronRight size={16} aria-hidden="true" /> : <ChevronDown size={16} aria-hidden="true" />}</span>
       </button>
       {!collapsed && (
         <div className="library-section-body">
@@ -185,6 +187,7 @@ export function LibraryScreen() {
     <div className="screen-container">
       <h1 className="page-title">Exercise Library</h1>
       <input
+        aria-label="Search exercises"
         type="text"
         value={search}
         onChange={(e) => setSearch(e.target.value)}
@@ -213,6 +216,7 @@ export function LibraryScreen() {
                 type="button"
                 className="picker-row"
                 onClick={() => setSelectedDay(day)}
+                aria-label={`Select ${getDayTitle(programId, day)}`}
               >
                 {getDayTitle(programId, day)}
               </button>
@@ -225,10 +229,10 @@ export function LibraryScreen() {
       {addTarget && selectedDay && !addAction && (
         <Modal open onClose={() => { setSelectedDay(null); setAddTarget(null); }} title="How to add?">
           <div style={{ padding: "1rem", display: "flex", flexDirection: "column", gap: "0.5rem" }}>
-            <button type="button" className="ghost-btn" onClick={() => handleAppend()}>
+            <button type="button" className="ghost-btn" onClick={() => handleAppend()} aria-label="Add exercise to end of day">
               Add to end
             </button>
-            <button type="button" className="ghost-btn" onClick={() => setAddAction("replace")}>
+            <button type="button" className="ghost-btn" onClick={() => setAddAction("replace")} aria-label="Replace an existing exercise">
               Replace an exercise
             </button>
           </div>
@@ -245,6 +249,7 @@ export function LibraryScreen() {
                 type="button"
                 className="picker-row"
                 onClick={() => handleReplace(ex.name)}
+                aria-label={`Replace ${ex.name}`}
               >
                 {ex.name}
               </button>
@@ -258,6 +263,7 @@ export function LibraryScreen() {
         <Modal open onClose={() => setUrlEditName(null)} title={`Demo Link: ${urlEditName}`}>
           <div style={{ padding: "1rem", display: "flex", flexDirection: "column", gap: "0.75rem" }}>
             <input
+              aria-label="Exercise demo URL"
               type="url"
               value={urlDraft}
               onChange={(e) => setUrlDraft(e.target.value)}
@@ -286,6 +292,7 @@ export function LibraryScreen() {
                   setUrlEditName(null);
                   setUrlVersion((v) => v + 1);
                 }}
+                aria-label="Save demo URL"
               >
                 Save
               </button>
@@ -299,6 +306,7 @@ export function LibraryScreen() {
                     setUrlEditName(null);
                     setUrlVersion((v) => v + 1);
                   }}
+                  aria-label="Remove demo URL"
                 >
                   Remove
                 </button>

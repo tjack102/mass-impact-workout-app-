@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useMemo } from "react";
+import { Settings } from "@/components/icons";
 import { calculateWarmupSets, type WarmupOptions } from "../lib/warmup-engine";
 
 type WarmupSettings = {
@@ -77,7 +78,7 @@ export function WarmupCalculator({
         aria-label="Settings"
         aria-expanded={settingsOpen}
       >
-        ⚙
+        <Settings size={16} aria-hidden="true" />
       </button>
 
       {/* Settings row */}

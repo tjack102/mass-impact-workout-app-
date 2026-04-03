@@ -2,6 +2,7 @@
 
 import { useEffect, useRef, type ReactNode } from "react";
 import { createPortal } from "react-dom";
+import { X } from "@/components/icons";
 
 type ModalProps = {
   open: boolean;
@@ -77,7 +78,7 @@ export function Modal({ open, onClose, title, children }: ModalProps) {
             onClick={onClose}
             aria-label="Close"
           >
-            ✕
+            <X size={18} aria-hidden="true" />
           </button>
         </div>
         {children}

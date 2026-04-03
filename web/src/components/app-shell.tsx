@@ -10,14 +10,21 @@ import { ProgramSelector } from "@/components/program-selector";
 import type { HouseholdUser } from "@/lib/household-profiles";
 import { getActiveSession, getPrefs, savePrefs } from "@/lib/workout-store";
 import { loadExerciseUrls } from "@/lib/exercise-url-store";
+import {
+  Dumbbell,
+  Calendar,
+  TrendingUp,
+  ClipboardList,
+  BookOpen,
+  Settings,
+} from "@/components/icons";
 
 const navItems = [
-  { href: "/", label: "Today", short: "TD" },
-  { href: "/planner", label: "Planner", short: "PL" },
-  { href: "/progress", label: "Progress", short: "PR" },
-  { href: "/volume", label: "Volume", short: "VL" },
-  { href: "/templates", label: "Templates", short: "TP" },
-  { href: "/library", label: "Library", short: "LB" },
+  { href: "/", label: "Today", icon: Dumbbell },
+  { href: "/planner", label: "Planner", icon: Calendar },
+  { href: "/progress", label: "Progress", icon: TrendingUp },
+  { href: "/templates", label: "Templates", icon: ClipboardList },
+  { href: "/library", label: "Library", icon: BookOpen },
 ];
 
 type AppShellProps = {
@@ -52,6 +59,7 @@ export function AppShell({ children }: AppShellProps) {
   return (
     <AccessContext.Provider value={{ activeUser, setActiveUser, ownerPinEnabled: false, ownerUnlocked: true, unlockOwner: () => true, lockOwner: () => {} }}>
       <div className={`app-shell${hasSession ? " workout-active" : ""}`}>
+        <a href="#main-content" className="skip-link">Skip to content</a>
         <div className="shell-grid">
           <aside className="side-rail card panel reveal">
             <div>
@@ -62,15 +70,15 @@ export function AppShell({ children }: AppShellProps) {
               <nav className="rail-nav" aria-label="Primary">
                 {navItems.map((item) => {
                   const active = pathname === item.href;
+                  const Icon = item.icon;
                   return (
                     <Link
                       key={item.href}
                       href={item.href}
                       className={`nav-link${active ? " active" : ""}`}
+                      aria-current={active ? "page" : undefined}
                     >
-                      <span className="nav-icon" aria-hidden="true">
-                        {item.short}
-                      </span>
+                      <Icon size={20} aria-hidden="true" />
                       <span>{item.label}</span>
                     </Link>
                   );
@@ -108,12 +116,12 @@ export function AppShell({ children }: AppShellProps) {
               </div>
               <div style={{ display: "flex", flexDirection: "column", alignItems: "flex-end", gap: "0.5rem" }}>
                 <Link href="/settings" className="settings-gear-btn" aria-label="Settings">
-                  ⚙
+                  <Settings size={20} aria-hidden="true" />
                 </Link>
                 <ProfileToggle activeUser={activeUser} onChange={setActiveUser} />
               </div>
             </section>
-            <main key={`${pathname}-${activeUser}`}>{children}</main>
+            <main id="main-content" key={`${pathname}-${activeUser}`}>{children}</main>
           </div>
         </div>
 
@@ -121,13 +129,15 @@ export function AppShell({ children }: AppShellProps) {
           <nav className="mobile-nav" aria-label="Bottom navigation">
             {navItems.map((item) => {
               const active = pathname === item.href;
+              const Icon = item.icon;
               return (
                 <Link
                   key={item.href}
                   href={item.href}
                   className={`mobile-link${active ? " active" : ""}`}
+                  aria-current={active ? "page" : undefined}
                 >
-                  <span className="mobile-link-icon">{item.short}</span>
+                  <Icon size={20} className="mobile-link-icon" aria-hidden="true" />
                   <span className="mobile-link-label">{item.label}</span>
                 </Link>
               );

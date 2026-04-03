@@ -3,6 +3,7 @@
 import { FormEvent, useState } from "react";
 import { useSearchParams } from "next/navigation";
 import { useAccess } from "@/components/access-context";
+import { ConfirmDialog } from "@/components/confirm-dialog";
 import { PermissionBadge } from "@/components/permission-badge";
 import { TemplateExerciseEditor } from "@/components/template-exercise-editor";
 import { cloneProgram, type Program, type ProgramExercise } from "@/lib/program-data";
@@ -40,6 +41,8 @@ export function TemplatesScreen() {
   const [selectedWeek, setSelectedWeek] = useState(initialSelectedWeek);
   const [selectedDay, setSelectedDay] = useState(initialSelectedDay);
   const [selectedExerciseIndex, setSelectedExerciseIndex] = useState(initialSelectedExerciseIndex);
+  const [confirmRestore, setConfirmRestore] = useState(false);
+  const [confirmDelete, setConfirmDelete] = useState<number | null>(null);
 
   const canEdit = !ownerPinEnabled || ownerUnlocked;
   const selectedWeekData = program.weeks.find((week) => week.weekNumber === selectedWeek);
@@ -101,14 +104,7 @@ export function TemplatesScreen() {
               if (!canEdit) {
                 return;
               }
-              const confirmed = window.confirm("Restore the full program back to the original Mass Impact template?");
-              if (!confirmed) {
-                return;
-              }
-              setProgram(resetProgram());
-              setSelectedWeek(1);
-              setSelectedDay(1);
-              setSelectedExerciseIndex(0);
+              setConfirmRestore(true);
             }}
           >
             Restore Defaults
@@ -307,22 +303,49 @@ export function TemplatesScreen() {
             if (!selectedDayData || !selectedExercise) {
               return;
             }
-            const confirmed = window.confirm(`Delete ${selectedExercise.name}?`);
-            if (!confirmed) {
-              return;
-            }
+            setConfirmDelete(selectedExerciseIndex);
+          }}
+        />
+      </section>
+
+      <ConfirmDialog
+        open={confirmRestore}
+        onClose={() => setConfirmRestore(false)}
+        onConfirm={() => {
+          setProgram(resetProgram());
+          setSelectedWeek(1);
+          setSelectedDay(1);
+          setSelectedExerciseIndex(0);
+          setConfirmRestore(false);
+        }}
+        title="Restore Template"
+        message="This will restore the default template for this day, replacing your current exercises."
+        confirmLabel="Restore"
+        destructive
+      />
+
+      <ConfirmDialog
+        open={confirmDelete !== null}
+        onClose={() => setConfirmDelete(null)}
+        onConfirm={() => {
+          if (confirmDelete !== null) {
             commitProgram((draft) => {
               const week = draft.weeks.find((item) => item.weekNumber === selectedWeek);
               const day = week?.days.find((item) => item.dayNumber === selectedDay);
               if (!day) {
                 return;
               }
-              day.exercises = day.exercises.filter((_, index) => index !== selectedExerciseIndex);
+              day.exercises = day.exercises.filter((_, index) => index !== confirmDelete);
             });
             setSelectedExerciseIndex((current) => Math.max(0, current - 1));
-          }}
-        />
-      </section>
+          }
+          setConfirmDelete(null);
+        }}
+        title="Delete Exercise"
+        message={`Remove ${selectedExercise?.name ?? "this exercise"} from the template?`}
+        confirmLabel="Delete"
+        destructive
+      />
     </section>
   );
 }

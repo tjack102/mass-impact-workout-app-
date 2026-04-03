@@ -34,6 +34,7 @@ export function SetEntryRow({
         <label className="set-cell">
           <span className="subtle-label">Weight</span>
           <input
+            aria-label="Weight"
             type="number"
             inputMode="decimal"
             min="0"
@@ -45,6 +46,7 @@ export function SetEntryRow({
         <label className="set-cell">
           <span className="subtle-label">Reps</span>
           <input
+            aria-label="Reps"
             type="number"
             inputMode="numeric"
             min="0"
@@ -56,6 +58,7 @@ export function SetEntryRow({
         <label className="set-cell">
           <span className="subtle-label">RPE</span>
           <select
+            aria-label="RPE"
             value={draft.rpe}
             onChange={(event) => onDraftChange({ ...draft, rpe: event.target.value })}
           >
@@ -73,9 +76,11 @@ export function SetEntryRow({
           ? `Last logged: ${lastSet.weight} lb x ${lastSet.reps}${lastSet.rpe ? ` @ ${lastSet.rpe}` : ""}`
           : "Last logged: none yet"}
       </p>
-      <button type="button" className={`set-save-btn${saveFlash ? " flash" : ""}`} onClick={onSave}>
-        Log Set
-      </button>
+      <div aria-live="polite" aria-atomic="true">
+        <button type="button" className={`set-save-btn${saveFlash ? " flash" : ""}`} onClick={onSave}>
+          {saveFlash ? "Set Logged!" : "Log Set"}
+        </button>
+      </div>
     </div>
   );
 }

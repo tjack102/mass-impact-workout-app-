@@ -2,6 +2,7 @@
 
 import { useMemo, useState } from "react";
 import { Modal } from "./modal";
+import { ExternalLink } from "@/components/icons";
 import { EXERCISE_LIBRARY } from "@/lib/exercise-library";
 import type { ExerciseDefinition, MuscleGroup } from "@/lib/types";
 
@@ -78,7 +79,7 @@ export function ExercisePickerModal({
               onClick={(e) => e.stopPropagation()}
               aria-label={`ExRx page for ${exercise.name}`}
             >
-              ↗
+              <ExternalLink size={14} aria-hidden="true" />
             </a>
           )}
         </span>

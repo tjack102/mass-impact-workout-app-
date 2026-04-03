@@ -12,9 +12,10 @@ import { getProgramMeta, getExercisesForDay, getDaysInCycle } from "@/lib/progra
 import { VolumeBar } from "@/components/volume-bar";
 import { Sparkline } from "@/components/sparkline";
 import { useAccess } from "@/components/access-context";
+import { ChevronDown } from "@/components/icons";
 import { getRecoveryRatings } from "@/lib/volume-store";
 
-// ─── Helpers ─────────────────────────────────────────────────────────────────
+// --- Helpers ----------------------------------------------------------------
 
 function toTitleCase(s: string): string {
   return s
@@ -40,7 +41,7 @@ function buildSparklineData(
 
   return sortedWeeks.map((w) => {
     const weekSessions = weekMap.get(w)!;
-    // calculateWeeklyVolume uses a time window — pass a very large window
+    // calculateWeeklyVolume uses a time window -- pass a very large window
     // so all sessions in the group are counted regardless of age.
     // Simpler: count sets directly since we already have the sessions.
     const byName = new Map(EXERCISE_LIBRARY.map((e) => [e.name.toLowerCase(), e]));
@@ -70,7 +71,7 @@ function getAllProgramExercises(programId: string, daysPerCycle: number, current
   return exercises;
 }
 
-// ─── Recovery dot colors ──────────────────────────────────────────────────────
+// --- Recovery dot colors ----------------------------------------------------
 
 function recoveryDotColor(rating: number): string {
   if (rating >= 1) return "var(--ok)";
@@ -78,7 +79,7 @@ function recoveryDotColor(rating: number): string {
   return "var(--danger)";
 }
 
-// ─── Subcomponents ────────────────────────────────────────────────────────────
+// --- Subcomponents ----------------------------------------------------------
 
 type VolumeMode = "direct" | "total";
 
@@ -153,7 +154,8 @@ function MuscleCard({
               style={{
                 border: "none",
                 borderRadius: "999px",
-                padding: "0.2rem 0.55rem",
+                minHeight: "44px",
+                padding: "0.5rem 0.75rem",
                 fontSize: "0.65rem",
                 textTransform: "uppercase",
                 letterSpacing: "0.06em",
@@ -189,7 +191,7 @@ function MuscleCard({
 
       {/* Bottom row: sparkline + recovery dots + recommendation */}
       <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-end", gap: "0.5rem", flexWrap: "wrap" }}>
-        {/* Sparkline (null if <2 data points — handled inside component) */}
+        {/* Sparkline (null if <2 data points -- handled inside component) */}
         <div style={{ flexShrink: 0 }}>
           <Sparkline data={sparklineData} width={100} height={28} />
           {sparklineData.length < 2 && (
@@ -198,7 +200,7 @@ function MuscleCard({
         </div>
 
         <div style={{ display: "flex", flexDirection: "column", alignItems: "flex-end", gap: "0.35rem" }}>
-          {/* Recovery dots — last 5 ratings */}
+          {/* Recovery dots -- last 5 ratings */}
           {recentRatings.length > 0 && (
             <div style={{ display: "flex", gap: "4px", alignItems: "center" }}>
               <span className="subtle-label" style={{ fontSize: "0.6rem", marginRight: "2px" }}>Recovery</span>
@@ -245,9 +247,9 @@ function MuscleCard({
   );
 }
 
-// ─── Main screen ──────────────────────────────────────────────────────────────
+// --- Main content -----------------------------------------------------------
 
-export function VolumeScreen() {
+export function VolumeContent() {
   const { activeUser } = useAccess();
 
   // All data loaded client-side (localStorage)
@@ -302,7 +304,7 @@ export function VolumeScreen() {
     [sessions],
   );
 
-  // ─── Meso overview header text ──────────────────────────────────────────────
+  // --- Meso overview header text --------------------------------------------
 
   function renderMesoHeader() {
     if (!programMeta) return null;
@@ -418,7 +420,7 @@ export function VolumeScreen() {
     );
   }
 
-  // ─── Muscle cards ───────────────────────────────────────────────────────────
+  // --- Muscle cards ---------------------------------------------------------
 
   function buildRecommendation(muscle: MuscleGroup): string | null {
     // No recommendation for programs without auto-regulation
@@ -449,30 +451,20 @@ export function VolumeScreen() {
       .filter((v): v is number => v !== undefined);
   }
 
-  // ─── Render ─────────────────────────────────────────────────────────────────
+  // --- Render ---------------------------------------------------------------
 
   if (!ready || !landmarks) {
     return (
-      <div className="screen">
-        <div className="screen-head">
-          <h1 className="page-title">Volume</h1>
-        </div>
-        <p className="page-note">Loading...</p>
-      </div>
+      <p className="page-note">Loading...</p>
     );
   }
 
   return (
-    <div className="screen">
-      {/* Page heading */}
-      <div className="screen-head">
-        <h1 className="page-title">Volume</h1>
-      </div>
-
+    <>
       {/* Meso overview */}
       {renderMesoHeader()}
 
-      {/* Muscle group cards — 2-col on desktop, 1-col on mobile */}
+      {/* Muscle group cards -- 2-col on desktop, 1-col on mobile */}
       <div
         style={{
           display: "grid",
@@ -497,7 +489,7 @@ export function VolumeScreen() {
         })}
       </div>
 
-      {/* Next Week Recommendations — auto-regulated programs only */}
+      {/* Next Week Recommendations -- auto-regulated programs only */}
       {programMeta?.hasAutoRegulation && mesoState && (
         <div className="card panel" style={{ display: "grid", gap: "0.65rem" }}>
           <p className="subtle-label" style={{ margin: 0 }}>Next Week Recommendations</p>
@@ -535,7 +527,7 @@ export function VolumeScreen() {
         </div>
       )}
 
-      {/* Meso history — collapsed by default */}
+      {/* Meso history -- collapsed by default */}
       <details
         style={{
           border: "1px solid var(--border)",
@@ -566,13 +558,13 @@ export function VolumeScreen() {
           >
             Meso History
           </span>
-          <span style={{ color: "var(--text-1)", fontSize: "0.75rem" }}>&#9660;</span>
+          <ChevronDown size={14} aria-hidden="true" style={{ color: "var(--text-1)" }} />
         </summary>
 
         <div style={{ padding: "0 1rem 1rem" }}>
           <p className="page-note">No previous meso data recorded yet.</p>
         </div>
       </details>
-    </div>
+    </>
   );
 }

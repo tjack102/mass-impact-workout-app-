@@ -2,6 +2,7 @@
 
 import { useMemo, useState } from "react";
 import { useRouter } from "next/navigation";
+import { ChevronLeft, ChevronRight } from "@/components/icons";
 import { SyncStateIndicator } from "@/components/sync-state-indicator";
 import { getCompletedDays, getPrefs, savePrefs } from "@/lib/workout-store";
 import { getProgramMeta, getDaysInCycle, getDayTitle } from "@/lib/program-registry";
@@ -86,13 +87,13 @@ export function PlannerScreen() {
       </header>
 
       <article className="card panel reveal">
-        <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", gap: "0.5rem" }}>
+        <div className="flex justify-between items-center gap-2">
           <div>
-            <p className="subtle-label" style={{ margin: 0 }}>
+            <p className="subtle-label">
               Week Timeline
             </p>
-            <div style={{ display: "flex", alignItems: "center", gap: "0.5rem", marginTop: "0.2rem" }}>
-              <h2 className="section-title" style={{ margin: 0 }}>
+            <div className="flex items-center gap-2 mt-0.5">
+              <h2 className="section-title">
                 {isOngoing ? `Week ${currentWeek}` : `Week ${currentWeek} of ${totalWeeks}`}
               </h2>
               {isDeloadWeek && (
@@ -129,18 +130,20 @@ export function PlannerScreen() {
               <button
                 type="button"
                 className="ghost-btn"
-                style={{ height: "34px" }}
+                aria-label="Previous week"
+                style={{ minHeight: "44px" }}
                 onClick={() => updateWeek(currentWeek <= 1 ? totalWeeks : currentWeek - 1)}
               >
-                {"<"}
+                <ChevronLeft size={16} aria-hidden="true" />
               </button>
               <button
                 type="button"
                 className="ghost-btn"
-                style={{ height: "34px" }}
+                aria-label="Next week"
+                style={{ minHeight: "44px" }}
                 onClick={() => updateWeek(currentWeek >= totalWeeks ? 1 : currentWeek + 1)}
               >
-                {">"}
+                <ChevronRight size={16} aria-hidden="true" />
               </button>
             </div>
           </div>
@@ -152,11 +155,12 @@ export function PlannerScreen() {
               key={`day-${tile.dayNumber}`}
               type="button"
               className="day-tile"
+              aria-label={`${tile.label}: ${tile.title || "Rest"}`}
               onClick={() => {
                 savePrefs({ currentWeek, currentDay: tile.dayNumber });
                 router.push("/today");
               }}
-              style={{ textAlign: "left", cursor: "pointer" }}
+              style={{ textAlign: "left", cursor: "pointer", minHeight: "44px" }}
             >
               <p className="subtle-label" style={{ margin: 0 }}>
                 {tile.label}
