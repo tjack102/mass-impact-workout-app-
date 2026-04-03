@@ -88,13 +88,13 @@ export function AppShell({ children }: AppShellProps) {
             <div>
               <p className="subtle-label">Household</p>
               <p style={{ margin: "0.2rem 0 0.3rem" }}>Terence + Cheril</p>
-              <p className="page-note" style={{ margin: 0 }} suppressHydrationWarning>
+              <p className="page-note" suppressHydrationWarning>
                 {activeUser === "his" ? "His" : "Hers"} cycle: Week {currentWeek}
               </p>
-              <div style={{ marginTop: "0.75rem" }}>
+              <div className="mt-3">
                 <ProfileToggle activeUser={activeUser} onChange={setActiveUser} />
               </div>
-              <div style={{ marginTop: "0.75rem" }}>
+              <div className="mt-3">
                 <p className="subtle-label" style={{ marginBottom: "0.3rem" }}>Program</p>
                 <ProgramSelector activeUser={activeUser} />
               </div>
@@ -103,18 +103,18 @@ export function AppShell({ children }: AppShellProps) {
 
           <div className="content-pane">
             <section className="profile-banner card panel reveal">
-              <div style={{ flex: 1 }}>
-                <p className="subtle-label" style={{ margin: 0 }}>
+              <div className="flex-1">
+                <p className="subtle-label">
                   Active Profile
                 </p>
-                <p className="page-note" style={{ marginTop: "0.2rem" }}>
+                <p className="page-note mt-0.5">
                   Switch workouts, templates, and progress with one toggle.
                 </p>
-                <div style={{ marginTop: "0.5rem" }}>
+                <div className="mt-2">
                   <ProgramSelector activeUser={activeUser} />
                 </div>
               </div>
-              <div style={{ display: "flex", flexDirection: "column", alignItems: "flex-end", gap: "0.5rem" }}>
+              <div className="flex flex-col items-end gap-2">
                 <Link href="/settings" className="settings-gear-btn" aria-label="Settings">
                   <Settings size={20} aria-hidden="true" />
                 </Link>

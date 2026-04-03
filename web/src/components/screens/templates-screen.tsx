@@ -93,7 +93,7 @@ export function TemplatesScreen() {
           <h1 className="page-title">Templates</h1>
           <p className="page-note">Coach mode for structure edits, defaults, and publish controls.</p>
         </div>
-        <div style={{ display: "flex", gap: "0.5rem", alignItems: "center" }}>
+        <div className="flex gap-2 items-center">
           <PermissionBadge level={canEdit ? "owner" : "view"} />
           <button
             type="button"
@@ -114,15 +114,15 @@ export function TemplatesScreen() {
 
       {ownerPinEnabled ? (
         <article className="card panel reveal">
-          <p className="subtle-label" style={{ margin: 0 }}>
+          <p className="subtle-label">
             Owner Access
           </p>
-          <h2 className="section-title" style={{ marginTop: "0.2rem" }}>
+          <h2 className="section-title mt-0.5">
             {ownerUnlocked ? "Coach Mode Unlocked" : "Coach Mode Locked"}
           </h2>
           {ownerUnlocked ? (
-            <div style={{ marginTop: "0.7rem", display: "flex", justifyContent: "space-between", gap: "0.8rem" }}>
-              <p className="page-note" style={{ margin: 0 }}>
+            <div className="flex justify-between" style={{ marginTop: "0.7rem", gap: "0.8rem" }}>
+              <p className="page-note">
                 Template edits and publish controls are active.
               </p>
               <button type="button" className="ghost-btn" onClick={lockOwner}>
@@ -160,13 +160,13 @@ export function TemplatesScreen() {
 
       <section className="template-grid">
         <article className="card panel reveal">
-          <p className="subtle-label" style={{ margin: 0 }}>
+          <p className="subtle-label">
             Week / Day Tree
           </p>
-          <h2 className="section-title" style={{ marginTop: "0.2rem" }}>
+          <h2 className="section-title mt-0.5">
             {program.name} v1
           </h2>
-          <div className="tree-list" style={{ marginTop: "0.75rem" }}>
+          <div className="tree-list mt-3">
             {program.weeks.map((week) => (
               <button
                 key={week.weekNumber}
@@ -186,7 +186,7 @@ export function TemplatesScreen() {
               </button>
             ))}
           </div>
-          <div className="tree-list" style={{ marginTop: "0.75rem" }}>
+          <div className="tree-list mt-3">
             {(selectedWeekData?.days ?? []).map((day) => (
               <button
                 key={`day-${day.dayNumber}`}
@@ -208,13 +208,13 @@ export function TemplatesScreen() {
         </article>
 
         <article className="card panel reveal">
-          <div style={{ display: "flex", justifyContent: "space-between", gap: "0.5rem", alignItems: "center" }}>
-            <h3 className="section-title" style={{ marginBottom: 0 }}>
+          <div className="flex justify-between gap-2 items-center">
+            <h3 className="section-title mb-0">
               Ordered Exercises
             </h3>
             <PermissionBadge level="partner" />
           </div>
-          <div className="exercise-list" style={{ marginTop: "0.75rem" }}>
+          <div className="exercise-list mt-3">
             {(selectedDayData?.exercises ?? []).map((exercise, index) => (
               <button
                 key={`${selectedWeek}-${selectedDay}-${exercise.orderLabel}`}
@@ -228,12 +228,12 @@ export function TemplatesScreen() {
               >
                 <div className="exercise-line">
                   <span className="mono">{exercise.orderLabel}</span>
-                  <p style={{ margin: 0 }}>{exercise.name}</p>
+                  <p>{exercise.name}</p>
                 </div>
               </button>
             ))}
           </div>
-          <div style={{ display: "flex", gap: "0.5rem", marginTop: "0.8rem", flexWrap: "wrap" }}>
+          <div className="flex gap-2 flex-wrap" style={{ marginTop: "0.8rem" }}>
             <button
               type="button"
               className="ghost-btn"
@@ -255,7 +255,7 @@ export function TemplatesScreen() {
             >
               Add Exercise
             </button>
-            <p className="page-note" style={{ margin: 0 }}>
+            <p className="page-note">
               Changes save instantly on this device.
             </p>
           </div>

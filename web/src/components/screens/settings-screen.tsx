@@ -237,26 +237,26 @@ export function SettingsScreen() {
       </header>
 
       <article className="card panel reveal">
-        <p className="subtle-label" style={{ margin: 0 }}>
+        <p className="subtle-label">
           Theme
         </p>
-        <h2 className="section-title" style={{ marginTop: "0.2rem" }}>
+        <h2 className="section-title mt-0.5">
           Visual System
         </h2>
         <p className="page-note">
           Switch the app&apos;s visual identity. Changes apply immediately and persist on this device.
         </p>
-        <div style={{ marginTop: "0.85rem" }}>
+        <div className="mt-3.5">
           <ThemePicker />
         </div>
       </article>
 
       <section className="grid-3">
         <article className="card panel reveal">
-          <p className="subtle-label" style={{ margin: 0 }}>
+          <p className="subtle-label">
             PWA
           </p>
-          <h2 className="section-title" style={{ marginTop: "0.2rem" }}>
+          <h2 className="section-title mt-0.5">
             Install App
           </h2>
           <p className="page-note">{installMessage}</p>
@@ -266,10 +266,10 @@ export function SettingsScreen() {
         </article>
 
         <article className="card panel reveal">
-          <p className="subtle-label" style={{ margin: 0 }}>
+          <p className="subtle-label">
             Runtime Alerts
           </p>
-          <h2 className="section-title" style={{ marginTop: "0.2rem" }}>
+          <h2 className="section-title mt-0.5">
             Rest Notifications
           </h2>
           <p className="page-note">Permission: {notificationStatus}</p>
@@ -279,14 +279,14 @@ export function SettingsScreen() {
         </article>
 
         <article className="card panel reveal">
-          <p className="subtle-label" style={{ margin: 0 }}>
+          <p className="subtle-label">
             Data Safety
           </p>
-          <h2 className="section-title" style={{ marginTop: "0.2rem" }}>
+          <h2 className="section-title mt-0.5">
             Backup
           </h2>
           <p className="page-note">Export or import both profiles, including workout history, preferences, and template edits.</p>
-          <div style={{ display: "flex", gap: "0.55rem", flexWrap: "wrap", marginTop: "0.7rem" }}>
+          <div className="flex flex-wrap" style={{ gap: "0.55rem", marginTop: "0.7rem" }}>
             <button type="button" className="ghost-btn" onClick={handleExportSnapshot}>
               Export Snapshot
             </button>
@@ -305,7 +305,7 @@ export function SettingsScreen() {
             type="file"
             accept="application/json"
             aria-label="Import backup file"
-            style={{ display: "none" }}
+            className="hidden"
             onChange={(event) => {
               const file = event.target.files?.[0];
               if (file) {
@@ -318,10 +318,10 @@ export function SettingsScreen() {
       </section>
 
       <article className="card panel reveal">
-        <p className="subtle-label" style={{ margin: 0 }}>
+        <p className="subtle-label">
           Queue Visibility
         </p>
-        <h2 className="section-title" style={{ marginTop: "0.2rem" }}>
+        <h2 className="section-title mt-0.5">
           Local Sync Monitor
         </h2>
         <div className="queue-list" style={{ marginTop: "0.7rem" }}>
@@ -356,7 +356,7 @@ export function SettingsScreen() {
             </div>
           </div>
         </div>
-        <div style={{ display: "flex", gap: "0.55rem", flexWrap: "wrap", marginTop: "0.8rem" }}>
+        <div className="flex flex-wrap" style={{ gap: "0.55rem", marginTop: "0.8rem" }}>
           <button type="button" className="ghost-btn" onClick={refreshStats}>
             Refresh Stats
           </button>
@@ -374,18 +374,18 @@ export function SettingsScreen() {
       {/* Mesocycle Settings — only visible for programs with auto-regulation */}
       {isAutoReg ? (
         <article className="card panel reveal">
-          <p className="subtle-label" style={{ margin: 0 }}>
+          <p className="subtle-label">
             Periodization
           </p>
-          <h2 className="section-title" style={{ marginTop: "0.2rem" }}>
+          <h2 className="section-title mt-0.5">
             Mesocycle Settings
           </h2>
           <p className="page-note">
             Set the number of training weeks per mesocycle before a deload. Applies to{" "}
             {programMeta?.name ?? selectedProgram}.
           </p>
-          <div style={{ display: "flex", alignItems: "center", gap: "0.75rem", marginTop: "0.75rem" }}>
-            <label className="subtle-label" style={{ margin: 0 }} htmlFor="meso-length-select">
+          <div className="flex items-center gap-3 mt-3">
+            <label className="subtle-label" htmlFor="meso-length-select">
               Meso length
             </label>
             <select
@@ -411,10 +411,10 @@ export function SettingsScreen() {
 
       {/* Volume Landmarks editor — always visible */}
       <article className="card panel reveal">
-        <p className="subtle-label" style={{ margin: 0 }}>
+        <p className="subtle-label">
           RP Auto-Regulation
         </p>
-        <h2 className="section-title" style={{ marginTop: "0.2rem" }}>
+        <h2 className="section-title mt-0.5">
           Volume Landmarks
         </h2>
         <p className="page-note">
@@ -423,7 +423,7 @@ export function SettingsScreen() {
         </p>
 
         {/* Horizontal scroll wrapper for compact table on mobile */}
-        <div style={{ overflowX: "auto", marginTop: "0.75rem" }}>
+        <div className="overflow-x-auto mt-3">
           <table
             style={{
               width: "100%",
@@ -437,13 +437,11 @@ export function SettingsScreen() {
                 {["Muscle", "MEV", "MAV Lo", "MAV Hi", "MRV Lo", "MRV Hi"].map((h) => (
                   <th
                     key={h}
+                    className={`font-semibold whitespace-nowrap ${h === "Muscle" ? "text-left" : "text-center"}`}
                     style={{
-                      textAlign: h === "Muscle" ? "left" : "center",
                       padding: "0.3rem 0.4rem",
                       borderBottom: "1px solid var(--border)",
                       color: "var(--text-1)",
-                      fontWeight: 600,
-                      whiteSpace: "nowrap",
                     }}
                   >
                     {h}
@@ -465,11 +463,11 @@ export function SettingsScreen() {
                 return (
                   <tr key={muscle}>
                     <td
+                      className="whitespace-nowrap"
                       style={{
                         padding: "0.3rem 0.4rem",
                         borderBottom: "1px solid var(--border)",
                         color: "var(--text-1)",
-                        whiteSpace: "nowrap",
                       }}
                     >
                       {muscleName(muscle)}
@@ -477,10 +475,10 @@ export function SettingsScreen() {
                     {fields.map(([field, label]) => (
                       <td
                         key={field}
+                        className="text-center"
                         style={{
                           padding: "0.25rem 0.3rem",
                           borderBottom: "1px solid var(--border)",
-                          textAlign: "center",
                         }}
                       >
                         <input
@@ -489,6 +487,7 @@ export function SettingsScreen() {
                           value={entry[field]}
                           min={0}
                           onChange={(e) => handleLandmarkChange(muscle, field, e.target.value)}
+                          className="text-center"
                           style={{
                             width: "4ch",
                             background: "var(--bg-2)",
@@ -496,7 +495,6 @@ export function SettingsScreen() {
                             color: "var(--text-1)",
                             fontFamily: "var(--font-mono), monospace",
                             fontSize: "0.82rem",
-                            textAlign: "center",
                             padding: "0.2rem",
                             borderRadius: "3px",
                           }}
@@ -510,7 +508,7 @@ export function SettingsScreen() {
           </table>
         </div>
 
-        <div style={{ marginTop: "0.85rem" }}>
+        <div className="mt-3.5">
           <button type="button" className="ghost-btn danger-btn" onClick={() => setConfirmReset(true)}>
             Reset to Defaults
           </button>

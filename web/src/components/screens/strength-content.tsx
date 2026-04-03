@@ -135,24 +135,24 @@ export function StrengthContent() {
 
       <section className="two-col">
         <article className="card panel reveal">
-          <p className="subtle-label" style={{ margin: 0 }}>
+          <p className="subtle-label">
             PR Board
           </p>
-          <h2 className="section-title" style={{ marginTop: "0.2rem" }}>
+          <h2 className="section-title mt-0.5">
             Best Logged Sets
           </h2>
-          <div className="queue-list" style={{ marginTop: "0.75rem" }}>
+          <div className="queue-list mt-3">
             {prBoard.length === 0 ? (
               <div className="surface pad">
-                <p className="page-note" style={{ margin: 0 }}>
+                <p className="page-note">
                   No PR data yet.
                 </p>
               </div>
             ) : (
               prBoard.map((entry) => (
                 <div key={`${entry.exerciseName}-${entry.volume}`} className="surface pad">
-                  <p style={{ margin: 0 }}>{entry.exerciseName}</p>
-                  <p className="page-note" style={{ margin: "0.2rem 0 0" }}>
+                  <p>{entry.exerciseName}</p>
+                  <p className="page-note mt-0.5">
                     Top set:{" "}
                     <span className="mono">
                       {entry.weight} x {entry.reps}
@@ -165,10 +165,10 @@ export function StrengthContent() {
         </article>
 
         <article className="card panel reveal">
-          <p className="subtle-label" style={{ margin: 0 }}>
+          <p className="subtle-label">
             Consistency Heatmap
           </p>
-          <h2 className="section-title" style={{ marginTop: "0.2rem" }}>
+          <h2 className="section-title mt-0.5">
             12-Week Cycle
           </h2>
           <div className="heatmap" style={{ marginTop: "0.9rem" }}>

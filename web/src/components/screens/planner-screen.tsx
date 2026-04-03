@@ -154,18 +154,18 @@ export function PlannerScreen() {
             <button
               key={`day-${tile.dayNumber}`}
               type="button"
-              className="day-tile"
+              className="day-tile text-left"
               aria-label={`${tile.label}: ${tile.title || "Rest"}`}
               onClick={() => {
                 savePrefs({ currentWeek, currentDay: tile.dayNumber });
                 router.push("/today");
               }}
-              style={{ textAlign: "left", cursor: "pointer", minHeight: "44px" }}
+              style={{ cursor: "pointer", minHeight: "44px" }}
             >
-              <p className="subtle-label" style={{ margin: 0 }}>
+              <p className="subtle-label">
                 {tile.label}
               </p>
-              <p style={{ margin: "0.35rem 0 0", fontSize: "0.92rem" }}>{tile.title}</p>
+              <p className="mt-1.5" style={{ fontSize: "0.92rem" }}>{tile.title}</p>
               <p className={`day-status ${statusClassMap[tile.status]}`}>{statusLabelMap[tile.status]}</p>
             </button>
           ))}

@@ -887,12 +887,12 @@ export function TodayScreen() {
             <span className="collapsible-chevron" />
           </summary>
           <article className="card panel reveal">
-            <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", gap: "0.5rem" }}>
+            <div className="flex justify-between items-center gap-2">
               <div>
-                <p className="subtle-label" style={{ margin: 0 }}>
+                <p className="subtle-label">
                   Exercise Queue
                 </p>
-                <h2 className="section-title" style={{ marginTop: "0.25rem" }}>
+                <h2 className="section-title mt-1">
                   Today Pipeline
                 </h2>
               </div>
@@ -1007,12 +1007,12 @@ export function TodayScreen() {
             <span className="collapsible-chevron" />
           </summary>
           <article className="card panel reveal live-console">
-            <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", gap: "0.7rem" }}>
+            <div className="flex justify-between items-center" style={{ gap: "0.7rem" }}>
               <div>
-                <p className="subtle-label" style={{ margin: 0 }}>
+                <p className="subtle-label">
                   Live Set Console
                 </p>
-                <h2 className="section-title" style={{ marginTop: "0.2rem" }}>
+                <h2 className="section-title mt-0.5">
                   {activeExercise?.name ?? "No exercise selected"}
                 </h2>
               </div>
@@ -1092,11 +1092,11 @@ export function TodayScreen() {
                       gap: "0.6rem",
                     }}
                   >
-                    <p className="subtle-label" style={{ margin: 0 }}>
+                    <p className="subtle-label">
                       Override for this session only
                     </p>
                     <div style={{ display: "flex", gap: "0.75rem", alignItems: "flex-end", flexWrap: "wrap" }}>
-                      <label style={{ display: "flex", flexDirection: "column", gap: "0.2rem" }}>
+                      <label className="flex flex-col" style={{ gap: "0.2rem" }}>
                         <span className="subtle-label" style={{ fontFamily: "var(--font-ui)", fontSize: "0.78rem" }}>
                           Sets
                         </span>
@@ -1118,7 +1118,7 @@ export function TodayScreen() {
                           }}
                         />
                       </label>
-                      <label style={{ display: "flex", flexDirection: "column", gap: "0.2rem" }}>
+                      <label className="flex flex-col" style={{ gap: "0.2rem" }}>
                         <span className="subtle-label" style={{ fontFamily: "var(--font-ui)", fontSize: "0.78rem" }}>
                           Reps
                         </span>
@@ -1226,10 +1226,10 @@ export function TodayScreen() {
             <section className="surface logged-set-panel">
               <div className="exercise-line">
                 <div>
-                  <p className="subtle-label" style={{ margin: 0 }}>
+                  <p className="subtle-label">
                     Logged Sets
                   </p>
-                  <p className="page-note" style={{ marginTop: "0.2rem" }}>
+                  <p className="page-note mt-0.5">
                     {activeExercise
                       ? `${activeExerciseSets.length} of ${activeExercise.targetSets} sets complete`
                       : "Select an exercise to start logging"}
@@ -1238,7 +1238,7 @@ export function TodayScreen() {
                 {activeExercise ? <span className="mono">{activeExerciseSets.length}/{activeExercise.targetSets}</span> : null}
               </div>
               {activeExerciseSets.length === 0 ? (
-                <p className="page-note" style={{ marginTop: "0.75rem" }}>
+                <p className="page-note mt-3">
                   Save each completed set here so the workout queue and progress charts stay accurate.
                 </p>
               ) : (
@@ -1246,16 +1246,16 @@ export function TodayScreen() {
                   {activeExerciseSets.map((set) => (
                     <div key={`${set.exerciseName}-${set.setIndex}-${set.timestamp}`} className="logged-set-chip">
                       <div>
-                        <p className="mono" style={{ margin: 0 }}>
+                        <p className="mono">
                           Set {set.setIndex}
                         </p>
-                        <p style={{ margin: "0.18rem 0 0", display: "flex", alignItems: "center", gap: "0.4rem" }}>
+                        <p className="flex items-center" style={{ margin: "0.18rem 0 0", gap: "0.4rem" }}>
                           {set.weight} lb x {set.reps}
                           {set.rpe ? ` @ ${set.rpe}` : ""}
                           {prExercises.has(set.exerciseName) && <span className="pr-badge">PR</span>}
                         </p>
                       </div>
-                      <span className="page-note" style={{ margin: 0 }}>
+                      <span className="page-note">
                         {formatSetTimestamp(set.timestamp)}
                       </span>
                     </div>
@@ -1264,7 +1264,7 @@ export function TodayScreen() {
               )}
             </section>
 
-            <div style={{ display: "flex", justifyContent: "space-between", gap: "0.55rem", flexWrap: "wrap" }}>
+            <div className="flex justify-between flex-wrap" style={{ gap: "0.55rem" }}>
               <button type="button" className="ghost-btn" onClick={() => setDraft({ weight: "", reps: "", rpe: "" })}>
                 Clear Inputs
               </button>
@@ -1278,13 +1278,13 @@ export function TodayScreen() {
 
       {exerciseSummary ? (
         <section className="card panel reveal">
-          <p className="subtle-label" style={{ margin: 0 }}>
+          <p className="subtle-label">
             Exercise Summary
           </p>
-          <h3 className="section-title" style={{ marginTop: "0.25rem" }}>
+          <h3 className="section-title mt-1">
             {exerciseSummary.name}
           </h3>
-          <div className="stats-row" style={{ marginTop: "0.85rem" }}>
+          <div className="stats-row mt-3.5">
             <SessionStatPill label="Elapsed" value={formatDuration(exerciseSummary.elapsedSeconds)} />
             <SessionStatPill label="Rest" value={formatDuration(exerciseSummary.restSeconds)} />
             <SessionStatPill label="Active" value={formatDuration(exerciseSummary.activeSeconds)} />
@@ -1327,12 +1327,12 @@ export function TodayScreen() {
 
       <section className="runtime-tray card reveal">
         <div>
-          <p className="subtle-label" style={{ margin: 0 }}>
+          <p className="subtle-label">
             Active
           </p>
           <p style={{ margin: "0.2rem 0 0" }}>{activeExercise?.name ?? "Workout complete"}</p>
         </div>
-        <div style={{ display: "flex", gap: "0.55rem", alignItems: "center", flexWrap: "wrap" }}>
+        <div className="flex items-center flex-wrap" style={{ gap: "0.55rem" }}>
           <div className="stats-row">
             <SessionStatPill label="Workout Time" value={formatDuration(workoutElapsedSeconds)} />
             <SessionStatPill label="Total Rest" value={formatDuration(workoutRestSeconds)} />
@@ -1365,7 +1365,7 @@ export function TodayScreen() {
       <Modal open onClose={() => setSwapConfirm(null)} title="Swap Exercise">
         <div style={{ padding: "1rem" }}>
           <p>Replace with <strong>{swapConfirm.exercise.name}</strong>?</p>
-          <div style={{ display: "flex", gap: "0.5rem", marginTop: "1rem" }}>
+          <div className="flex gap-2 mt-4">
             {matchingActiveSession && (
               <button
                 type="button"

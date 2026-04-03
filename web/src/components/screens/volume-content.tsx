@@ -113,17 +113,16 @@ function MuscleCard({
 
   return (
     <div
-      className="card panel"
-      style={{ display: "grid", gap: "0.65rem" }}
+      className="card panel grid"
+      style={{ gap: "0.65rem" }}
     >
       {/* Header row: muscle name + volume number */}
-      <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", gap: "0.5rem" }}>
+      <div className="flex justify-between items-start gap-2">
         <div>
-          <p className="subtle-label" style={{ margin: 0 }}>{toTitleCase(muscle)}</p>
+          <p className="subtle-label">{toTitleCase(muscle)}</p>
           <p
             className="mono"
             style={{
-              margin: 0,
               fontSize: "2rem",
               lineHeight: 1,
               color: "var(--text-0)",
@@ -183,26 +182,26 @@ function MuscleCard({
       />
 
       {/* Landmark labels */}
-      <div style={{ display: "flex", justifyContent: "space-between" }}>
+      <div className="flex justify-between">
         <span className="subtle-label" style={{ fontSize: "0.62rem" }}>MEV {landmarks.mev}</span>
         <span className="subtle-label" style={{ fontSize: "0.62rem" }}>MAV {landmarks.mavLow}–{landmarks.mavHigh}</span>
         <span className="subtle-label" style={{ fontSize: "0.62rem" }}>MRV {landmarks.mrvLow}</span>
       </div>
 
       {/* Bottom row: sparkline + recovery dots + recommendation */}
-      <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-end", gap: "0.5rem", flexWrap: "wrap" }}>
+      <div className="flex justify-between items-end flex-wrap gap-2">
         {/* Sparkline (null if <2 data points -- handled inside component) */}
-        <div style={{ flexShrink: 0 }}>
+        <div className="shrink-0">
           <Sparkline data={sparklineData} width={100} height={28} />
           {sparklineData.length < 2 && (
             <span className="subtle-label" style={{ fontSize: "0.62rem" }}>No trend yet</span>
           )}
         </div>
 
-        <div style={{ display: "flex", flexDirection: "column", alignItems: "flex-end", gap: "0.35rem" }}>
+        <div className="flex flex-col items-end" style={{ gap: "0.35rem" }}>
           {/* Recovery dots -- last 5 ratings */}
           {recentRatings.length > 0 && (
-            <div style={{ display: "flex", gap: "4px", alignItems: "center" }}>
+            <div className="flex items-center" style={{ gap: "4px" }}>
               <span className="subtle-label" style={{ fontSize: "0.6rem", marginRight: "2px" }}>Recovery</span>
               {recentRatings.slice(-5).map((r, i) => (
                 <div
@@ -387,8 +386,8 @@ export function VolumeContent() {
     }
 
     return (
-      <div className="card panel" style={{ display: "grid", gap: "0.45rem" }}>
-        <div style={{ display: "flex", alignItems: "center", flexWrap: "wrap", gap: "0.4rem" }}>
+      <div className="card panel grid" style={{ gap: "0.45rem" }}>
+        <div className="flex items-center flex-wrap" style={{ gap: "0.4rem" }}>
           {/* Program name badge */}
           <span
             style={{
@@ -409,7 +408,6 @@ export function VolumeContent() {
         <p
           className="mono"
           style={{
-            margin: 0,
             fontSize: "1rem",
             color: "var(--text-1)",
           }}
@@ -466,8 +464,8 @@ export function VolumeContent() {
 
       {/* Muscle group cards -- 2-col on desktop, 1-col on mobile */}
       <div
+        className="grid"
         style={{
-          display: "grid",
           gridTemplateColumns: "repeat(auto-fill, minmax(300px, 1fr))",
           gap: "0.8rem",
         }}
@@ -491,19 +489,17 @@ export function VolumeContent() {
 
       {/* Next Week Recommendations -- auto-regulated programs only */}
       {programMeta?.hasAutoRegulation && mesoState && (
-        <div className="card panel" style={{ display: "grid", gap: "0.65rem" }}>
-          <p className="subtle-label" style={{ margin: 0 }}>Next Week Recommendations</p>
-          <div style={{ display: "grid", gap: "0.35rem" }}>
+        <div className="card panel grid" style={{ gap: "0.65rem" }}>
+          <p className="subtle-label">Next Week Recommendations</p>
+          <div className="grid" style={{ gap: "0.35rem" }}>
             {TRACKED_MUSCLES.map((muscle) => {
               const rec = buildRecommendation(muscle);
               if (rec === null) return null;
               return (
                 <div
                   key={muscle}
+                  className="flex justify-between items-center"
                   style={{
-                    display: "flex",
-                    justifyContent: "space-between",
-                    alignItems: "center",
                     padding: "0.3rem 0",
                     borderBottom: "1px solid var(--border)",
                   }}
@@ -537,14 +533,9 @@ export function VolumeContent() {
         }}
       >
         <summary
+          className="flex justify-between items-center list-none select-none cursor-pointer"
           style={{
             padding: "0.75rem 1rem",
-            cursor: "pointer",
-            listStyle: "none",
-            display: "flex",
-            justifyContent: "space-between",
-            alignItems: "center",
-            userSelect: "none",
           }}
         >
           <span

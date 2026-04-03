@@ -209,7 +209,7 @@ export function LibraryScreen() {
       {addTarget && !selectedDay && (
         <Modal open onClose={() => setAddTarget(null)} title={`Add ${addTarget.name}`}>
           <div style={{ padding: "1rem" }}>
-            <p className="page-note" style={{ marginBottom: "0.75rem" }}>Which day?</p>
+            <p className="page-note mb-3">Which day?</p>
             {Array.from({ length: daysInCycle }, (_, i) => i + 1).map((day) => (
               <button
                 key={day}
@@ -228,7 +228,7 @@ export function LibraryScreen() {
       {/* Action picker: append or replace */}
       {addTarget && selectedDay && !addAction && (
         <Modal open onClose={() => { setSelectedDay(null); setAddTarget(null); }} title="How to add?">
-          <div style={{ padding: "1rem", display: "flex", flexDirection: "column", gap: "0.5rem" }}>
+          <div className="flex flex-col gap-2" style={{ padding: "1rem" }}>
             <button type="button" className="ghost-btn" onClick={() => handleAppend()} aria-label="Add exercise to end of day">
               Add to end
             </button>
@@ -261,7 +261,7 @@ export function LibraryScreen() {
       {/* URL editor modal */}
       {urlEditName && (
         <Modal open onClose={() => setUrlEditName(null)} title={`Demo Link: ${urlEditName}`}>
-          <div style={{ padding: "1rem", display: "flex", flexDirection: "column", gap: "0.75rem" }}>
+          <div className="flex flex-col gap-3" style={{ padding: "1rem" }}>
             <input
               aria-label="Exercise demo URL"
               type="url"
@@ -280,11 +280,10 @@ export function LibraryScreen() {
                 fontSize: "0.9rem",
               }}
             />
-            <div style={{ display: "flex", gap: "0.5rem" }}>
+            <div className="flex gap-2">
               <button
                 type="button"
-                className="ghost-btn"
-                style={{ flex: 1 }}
+                className="ghost-btn flex-1"
                 onClick={() => {
                   if (urlDraft.trim()) {
                     setExerciseUrl(urlEditName, urlDraft.trim());
