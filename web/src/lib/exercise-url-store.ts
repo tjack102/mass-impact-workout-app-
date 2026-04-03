@@ -1,35 +1,59 @@
-// User-managed exercise demo URLs stored in localStorage.
+// Exercise demo URLs -- synced via API (Vercel KV) so they work on all devices.
 // Falls back to exrxUrl from exercise library if no user-set URL.
 
 import { findExercise } from "./exercise-library";
 
-const STORAGE_KEY = "mi_exercise_urls";
+// Module-level cache loaded once on app init. Synchronous reads after that.
+let urlCache: Record<string, string> = {};
+let loaded = false;
 
-function getAll(): Record<string, string> {
-  if (typeof window === "undefined") return {};
+/** Fetch all URLs from server and populate cache. Call once on app mount. */
+export async function loadExerciseUrls(): Promise<void> {
   try {
-    return JSON.parse(localStorage.getItem(STORAGE_KEY) ?? "{}");
+    const res = await fetch("/api/exercise-urls");
+    if (res.ok) {
+      urlCache = await res.json();
+    }
   } catch {
-    return {};
+    // Offline or API down -- cache stays empty, fall back to library exrxUrl
+  }
+  loaded = true;
+}
+
+/** True once loadExerciseUrls() has completed */
+export function exerciseUrlsLoaded(): boolean {
+  return loaded;
+}
+
+/** Get demo URL for an exercise (sync -- reads from cache) */
+export function getExerciseUrl(exerciseName: string): string | undefined {
+  return urlCache[exerciseName] ?? findExercise(exerciseName)?.exrxUrl;
+}
+
+/** Save a demo URL -- writes to server + updates cache */
+export async function setExerciseUrl(exerciseName: string, url: string): Promise<void> {
+  urlCache[exerciseName] = url;
+  try {
+    await fetch("/api/exercise-urls", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ name: exerciseName, url }),
+    });
+  } catch {
+    // Offline -- URL is in local cache until next page load
   }
 }
 
-/** Get demo URL for an exercise -- user-set URL takes priority, then library exrxUrl */
-export function getExerciseUrl(exerciseName: string): string | undefined {
-  const urls = getAll();
-  return urls[exerciseName] ?? findExercise(exerciseName)?.exrxUrl;
-}
-
-/** Save a user-set demo URL for an exercise */
-export function setExerciseUrl(exerciseName: string, url: string): void {
-  const urls = getAll();
-  urls[exerciseName] = url;
-  localStorage.setItem(STORAGE_KEY, JSON.stringify(urls));
-}
-
-/** Remove user-set URL (falls back to library exrxUrl if it exists) */
-export function clearExerciseUrl(exerciseName: string): void {
-  const urls = getAll();
-  delete urls[exerciseName];
-  localStorage.setItem(STORAGE_KEY, JSON.stringify(urls));
+/** Remove a demo URL -- deletes from server + cache */
+export async function clearExerciseUrl(exerciseName: string): Promise<void> {
+  delete urlCache[exerciseName];
+  try {
+    await fetch("/api/exercise-urls", {
+      method: "DELETE",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ name: exerciseName }),
+    });
+  } catch {
+    // Offline
+  }
 }

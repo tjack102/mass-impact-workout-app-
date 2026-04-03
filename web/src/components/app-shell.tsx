@@ -9,6 +9,7 @@ import { ProfileToggle } from "@/components/profile-toggle";
 import { ProgramSelector } from "@/components/program-selector";
 import type { HouseholdUser } from "@/lib/household-profiles";
 import { getActiveSession, getPrefs, savePrefs } from "@/lib/workout-store";
+import { loadExerciseUrls } from "@/lib/exercise-url-store";
 
 const navItems = [
   { href: "/", label: "Today", short: "TD" },
@@ -33,6 +34,7 @@ export function AppShell({ children }: AppShellProps) {
   // Re-apply stored theme after React hydration (hydration strips the data-theme attribute)
   useEffect(() => {
     setTheme(getTheme());
+    loadExerciseUrls();
   }, []);
 
   useEffect(() => {
