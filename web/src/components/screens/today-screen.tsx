@@ -85,6 +85,7 @@ type QueueExercise = {
   track: "his" | "hers";
   supersetGroup?: string;
   notes?: string;
+  exrxUrl?: string;
 };
 
 function formatElapsed(seconds: number): string {
@@ -302,6 +303,7 @@ export function TodayScreen() {
         track: prefs.activeUser,
         supersetGroup: exercise.supersetGroup,
         notes: exercise.notes,
+        exrxUrl: findExercise(resolvedName)?.exrxUrl,
       };
     });
   // eslint-disable-next-line react-hooks/exhaustive-deps -- subVersion is an intentional cache-buster for permanent substitution writes
@@ -983,6 +985,7 @@ export function TodayScreen() {
                   supersetGroup={qe.supersetGroup}
                   prFlash={index === safeActiveIndex ? prFlash : false}
                   notes={qe.notes}
+                  exrxUrl={qe.exrxUrl}
                 />
               ))}
             </div>

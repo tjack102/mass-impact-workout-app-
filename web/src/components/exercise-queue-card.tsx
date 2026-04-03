@@ -13,6 +13,7 @@ type ExerciseQueueCardProps = {
   originalName?: string;
   onSwap?: () => void;
   notes?: string;
+  exrxUrl?: string;
 };
 
 function ProgressRing({ completed, total, isDone }: { completed: number; total: number; isDone: boolean }) {
@@ -64,6 +65,7 @@ export function ExerciseQueueCard({
   originalName,
   onSwap,
   notes,
+  exrxUrl,
 }: ExerciseQueueCardProps) {
   const isDone = completedSets >= targetSets;
 
@@ -79,7 +81,21 @@ export function ExerciseQueueCard({
             {orderLabel}
           </span>
           <div>
-            <h3 className="exercise-name">{name}</h3>
+            <h3 className="exercise-name">
+              {name}
+              {exrxUrl && (
+                <a
+                  href={exrxUrl}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="queue-exrx-link"
+                  onClick={(e) => e.stopPropagation()}
+                  aria-label={`How to: ${name}`}
+                >
+                  ?
+                </a>
+              )}
+            </h3>
             {originalName && (
               <span className="swap-indicator">Replaces: {originalName}</span>
             )}
