@@ -81,25 +81,23 @@ export function ExerciseQueueCard({
             {orderLabel}
           </span>
           <div>
-            <h3 className="exercise-name">
-              {name}
-              {exrxUrl && (
-                <span
-                  role="link"
-                  className="queue-exrx-link"
-                  onClick={(e) => { e.stopPropagation(); window.open(exrxUrl, "_blank", "noopener"); }}
-                  aria-label={`How to: ${name}`}
-                >
-                  ?
-                </span>
-              )}
-            </h3>
+            <h3 className="exercise-name">{name}</h3>
             {originalName && (
               <span className="swap-indicator">Replaces: {originalName}</span>
             )}
           </div>
         </div>
         <div style={{ display: "flex", alignItems: "center", gap: "0.45rem" }}>
+          {exrxUrl && (
+            <span
+              role="link"
+              className="queue-exrx-link"
+              onClick={(e) => { e.stopPropagation(); window.open(exrxUrl, "_blank", "noopener"); }}
+              aria-label={`How to: ${name}`}
+            >
+              ?
+            </span>
+          )}
           {onSwap && (
             <button
               type="button"
