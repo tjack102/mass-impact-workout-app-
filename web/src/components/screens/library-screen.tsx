@@ -71,16 +71,22 @@ function ExerciseRow({ exercise, onAdd, onEditUrl }: { exercise: ExerciseDefinit
 function MuscleSection({
   label,
   muscle,
+  search,
   onAdd,
   onEditUrl,
 }: {
   label: string;
   muscle: MuscleGroup;
+  search: string;
   onAdd: (exercise: ExerciseDefinition) => void;
   onEditUrl: (name: string) => void;
 }) {
   const [collapsed, setCollapsed] = useState(false);
-  const exercises = EXERCISE_LIBRARY.filter((e) => e.primaryMuscle === muscle && (e.tier === "S" || e.tier === "A"));
+  const query = search.toLowerCase();
+  const exercises = EXERCISE_LIBRARY.filter((e) =>
+    e.primaryMuscle === muscle && (e.tier === "S" || e.tier === "A") &&
+    (!query || e.name.toLowerCase().includes(query))
+  );
   const sTier = exercises.filter((e) => e.tier === "S").sort((a, b) => a.name.localeCompare(b.name));
   const aTier = exercises.filter((e) => e.tier === "A").sort((a, b) => a.name.localeCompare(b.name));
 
@@ -133,6 +139,7 @@ export function LibraryScreen() {
   const [urlEditName, setUrlEditName] = useState<string | null>(null);
   const [urlDraft, setUrlDraft] = useState("");
   const [urlVersion, setUrlVersion] = useState(0); // bump to re-render after URL save
+  const [search, setSearch] = useState("");
 
   function handleAppend() {
     if (!addTarget || selectedDay === null) return;
@@ -177,11 +184,19 @@ export function LibraryScreen() {
   return (
     <div className="screen-container">
       <h1 className="page-title">Exercise Library</h1>
+      <input
+        type="text"
+        value={search}
+        onChange={(e) => setSearch(e.target.value)}
+        placeholder="Search exercises..."
+        className="library-search"
+      />
       {MUSCLE_SECTIONS.map(({ muscle, label }) => (
         <MuscleSection
           key={`${muscle}-${urlVersion}`}
           label={label}
           muscle={muscle}
+          search={search}
           onAdd={(exercise) => setAddTarget(exercise)}
           onEditUrl={(name) => { setUrlEditName(name); setUrlDraft(getExerciseUrl(name) ?? ""); }}
         />

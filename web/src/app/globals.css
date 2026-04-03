@@ -1858,6 +1858,21 @@ a {
 }
 
 /* ── Library Screen ── */
+.library-search {
+  display: block;
+  width: 100%;
+  padding: 10px 12px;
+  margin-bottom: 0.75rem;
+  background: var(--bg-1);
+  border: 1px solid var(--border);
+  color: var(--text-0);
+  border-radius: var(--radius-sm);
+  font-family: var(--font-ui);
+  font-size: 0.9rem;
+}
+.library-search::placeholder {
+  color: var(--text-muted);
+}
 .library-section {
   margin-bottom: 0.5rem;
 }
