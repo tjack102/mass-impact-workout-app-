@@ -1125,8 +1125,14 @@ a {
 
 .template-grid {
   display: grid;
-  grid-template-columns: 220px minmax(0, 1fr) 320px;
+  grid-template-columns: 1fr;
   gap: 0.8rem;
+}
+
+@media (min-width: 1024px) {
+  .template-grid {
+    grid-template-columns: 220px minmax(0, 1fr) 320px;
+  }
 }
 
 .tree-list,
@@ -1421,7 +1427,7 @@ a {
   border-bottom-color: var(--accent-primary);
 }
 
-@media (max-width: 1279px) {
+@media (max-width: 1279px) and (min-width: 1024px) {
   .template-grid {
     grid-template-columns: minmax(0, 1fr) minmax(0, 1.3fr);
   }
@@ -1510,10 +1516,6 @@ a {
 
   .week-strip {
     grid-template-columns: repeat(2, minmax(0, 1fr));
-  }
-
-  .template-grid {
-    grid-template-columns: 1fr;
   }
 
   .timer-adjust-row,
