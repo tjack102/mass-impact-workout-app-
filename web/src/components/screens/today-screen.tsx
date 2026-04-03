@@ -227,6 +227,13 @@ export function TodayScreen() {
   const [swapConfirm, setSwapConfirm] = useState<{ exercise: ExerciseDefinition; originalTemplateName: string } | null>(null);
   // Bumped whenever a permanent sub is written so queueExercises memo re-runs
   const [subVersion, setSubVersion] = useState(0);
+  // Bumped when exercise URLs finish loading from server
+  const [urlVersion, setUrlVersion] = useState(0);
+  useEffect(() => {
+    const handler = () => setUrlVersion((v) => v + 1);
+    window.addEventListener("exercise-urls-loaded", handler);
+    return () => window.removeEventListener("exercise-urls-loaded", handler);
+  }, []);
   const flashTimeout = useRef<number | null>(null);
   const prFlashTimeout = useRef<number | null>(null);
   const restStartedAtRef = useRef<number | null>(null);
@@ -307,8 +314,8 @@ export function TodayScreen() {
         exrxUrl: getExerciseUrl(resolvedName),
       };
     });
-  // eslint-disable-next-line react-hooks/exhaustive-deps -- subVersion is an intentional cache-buster for permanent substitution writes
-  }, [exercises, matchingActiveSession, prefs.activeUser, prefs.currentDay, prefs.currentWeek, sessionHistory, programId, subVersion]);
+  // eslint-disable-next-line react-hooks/exhaustive-deps -- subVersion/urlVersion are intentional cache-busters
+  }, [exercises, matchingActiveSession, prefs.activeUser, prefs.currentDay, prefs.currentWeek, sessionHistory, programId, subVersion, urlVersion]);
 
   const safeActiveIndex =
     queueExercises.length === 0 ? 0 : Math.min(activeIndex, Math.max(0, queueExercises.length - 1));

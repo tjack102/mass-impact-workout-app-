@@ -18,6 +18,9 @@ export async function loadExerciseUrls(): Promise<void> {
     // Offline or API down -- cache stays empty, fall back to library exrxUrl
   }
   loaded = true;
+  if (typeof window !== "undefined") {
+    window.dispatchEvent(new Event("exercise-urls-loaded"));
+  }
 }
 
 /** True once loadExerciseUrls() has completed */
