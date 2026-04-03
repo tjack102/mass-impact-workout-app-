@@ -44,6 +44,7 @@ import { RecoveryRatingPrompt } from "@/components/recovery-rating-prompt";
 import { findExercise, EXERCISE_LIBRARY } from "@/lib/exercise-library";
 import { TRACKED_MUSCLES, type MuscleGroup, type ExerciseDefinition } from "@/lib/types";
 import { getPermanentSub, setPermanentSub } from "@/lib/exercise-substitutions";
+import { getExerciseUrl } from "@/lib/exercise-url-store";
 import { getAdditions } from "@/lib/exercise-additions";
 import { ExercisePickerModal } from "@/components/exercise-picker-modal";
 import {
@@ -303,7 +304,7 @@ export function TodayScreen() {
         track: prefs.activeUser,
         supersetGroup: exercise.supersetGroup,
         notes: exercise.notes,
-        exrxUrl: findExercise(resolvedName)?.exrxUrl,
+        exrxUrl: getExerciseUrl(resolvedName),
       };
     });
   // eslint-disable-next-line react-hooks/exhaustive-deps -- subVersion is an intentional cache-buster for permanent substitution writes

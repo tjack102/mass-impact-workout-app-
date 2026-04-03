@@ -9,6 +9,7 @@ import { getDaysInCycle, getDayTitle, getExercisesForDay } from "@/lib/program-r
 import { getProgram, getProgramDay, saveProgram } from "@/lib/program-store";
 import { addExerciseToDay } from "@/lib/exercise-additions";
 import { setPermanentSub } from "@/lib/exercise-substitutions";
+import { getExerciseUrl, setExerciseUrl, clearExerciseUrl } from "@/lib/exercise-url-store";
 import { Modal } from "@/components/modal";
 import type { ProgramExercise } from "@/lib/program-data";
 
@@ -29,7 +30,8 @@ const MUSCLE_SECTIONS: { muscle: MuscleGroup; label: string }[] = [
   { muscle: "forearms", label: "Forearms" },
 ];
 
-function ExerciseRow({ exercise, onAdd }: { exercise: ExerciseDefinition; onAdd: () => void }) {
+function ExerciseRow({ exercise, onAdd, onEditUrl }: { exercise: ExerciseDefinition; onAdd: () => void; onEditUrl: (name: string) => void }) {
+  const url = getExerciseUrl(exercise.name);
   return (
     <div className="library-row">
       <div className="library-row-info">
@@ -37,18 +39,26 @@ function ExerciseRow({ exercise, onAdd }: { exercise: ExerciseDefinition; onAdd:
         <span className="picker-row-tags">
           <span className="picker-pill">{exercise.equipment.replace("_", " ")}</span>
           <span className="picker-pill">{exercise.type}</span>
-          {exercise.exrxUrl && (
+          {url ? (
             <a
-              href={exercise.exrxUrl}
+              href={url}
               target="_blank"
               rel="noopener noreferrer"
-              className="picker-exrx"
+              className="picker-exrx picker-exrx--active"
               onClick={(e) => e.stopPropagation()}
-              aria-label={`ExRx page for ${exercise.name}`}
+              aria-label={`Demo for ${exercise.name}`}
             >
               ↗
             </a>
-          )}
+          ) : null}
+          <button
+            type="button"
+            className={`picker-exrx-edit${url ? " has-url" : ""}`}
+            onClick={(e) => { e.stopPropagation(); onEditUrl(exercise.name); }}
+            aria-label={url ? `Edit demo link for ${exercise.name}` : `Add demo link for ${exercise.name}`}
+          >
+            {url ? "✎" : "+↗"}
+          </button>
         </span>
       </div>
       <button type="button" className="ghost-btn library-add-btn" onClick={onAdd}>
@@ -62,10 +72,12 @@ function MuscleSection({
   label,
   muscle,
   onAdd,
+  onEditUrl,
 }: {
   label: string;
   muscle: MuscleGroup;
   onAdd: (exercise: ExerciseDefinition) => void;
+  onEditUrl: (name: string) => void;
 }) {
   const [collapsed, setCollapsed] = useState(false);
   const exercises = EXERCISE_LIBRARY.filter((e) => e.primaryMuscle === muscle && (e.tier === "S" || e.tier === "A"));
@@ -90,7 +102,7 @@ function MuscleSection({
             <>
               <h3 className="picker-tier-header picker-tier-s">S TIER</h3>
               {sTier.map((e) => (
-                <ExerciseRow key={e.id} exercise={e} onAdd={() => onAdd(e)} />
+                <ExerciseRow key={e.id} exercise={e} onAdd={() => onAdd(e)} onEditUrl={onEditUrl} />
               ))}
             </>
           )}
@@ -98,7 +110,7 @@ function MuscleSection({
             <>
               <h3 className="picker-tier-header picker-tier-a">A TIER</h3>
               {aTier.map((e) => (
-                <ExerciseRow key={e.id} exercise={e} onAdd={() => onAdd(e)} />
+                <ExerciseRow key={e.id} exercise={e} onAdd={() => onAdd(e)} onEditUrl={onEditUrl} />
               ))}
             </>
           )}
@@ -118,6 +130,9 @@ export function LibraryScreen() {
   const [addTarget, setAddTarget] = useState<ExerciseDefinition | null>(null);
   const [selectedDay, setSelectedDay] = useState<number | null>(null);
   const [addAction, setAddAction] = useState<"append" | "replace" | null>(null);
+  const [urlEditName, setUrlEditName] = useState<string | null>(null);
+  const [urlDraft, setUrlDraft] = useState("");
+  const [urlVersion, setUrlVersion] = useState(0); // bump to re-render after URL save
 
   function handleAppend() {
     if (!addTarget || selectedDay === null) return;
@@ -164,10 +179,11 @@ export function LibraryScreen() {
       <h1 className="page-title">Exercise Library</h1>
       {MUSCLE_SECTIONS.map(({ muscle, label }) => (
         <MuscleSection
-          key={muscle}
+          key={`${muscle}-${urlVersion}`}
           label={label}
           muscle={muscle}
           onAdd={(exercise) => setAddTarget(exercise)}
+          onEditUrl={(name) => { setUrlEditName(name); setUrlDraft(getExerciseUrl(name) ?? ""); }}
         />
       ))}
 
@@ -218,6 +234,61 @@ export function LibraryScreen() {
                 {ex.name}
               </button>
             ))}
+          </div>
+        </Modal>
+      )}
+
+      {/* URL editor modal */}
+      {urlEditName && (
+        <Modal open onClose={() => setUrlEditName(null)} title={`Demo Link: ${urlEditName}`}>
+          <div style={{ padding: "1rem", display: "flex", flexDirection: "column", gap: "0.75rem" }}>
+            <input
+              type="url"
+              value={urlDraft}
+              onChange={(e) => setUrlDraft(e.target.value)}
+              placeholder="Paste YouTube or ExRx URL..."
+              autoFocus
+              style={{
+                background: "var(--bg-1)",
+                border: "1px solid var(--border)",
+                color: "var(--text-0)",
+                borderRadius: "var(--radius-sm)",
+                fontFamily: "var(--font-ui)",
+                padding: "10px 12px",
+                width: "100%",
+                fontSize: "0.9rem",
+              }}
+            />
+            <div style={{ display: "flex", gap: "0.5rem" }}>
+              <button
+                type="button"
+                className="ghost-btn"
+                style={{ flex: 1 }}
+                onClick={() => {
+                  if (urlDraft.trim()) {
+                    setExerciseUrl(urlEditName, urlDraft.trim());
+                  }
+                  setUrlEditName(null);
+                  setUrlVersion((v) => v + 1);
+                }}
+              >
+                Save
+              </button>
+              {getExerciseUrl(urlEditName) && (
+                <button
+                  type="button"
+                  className="ghost-btn"
+                  style={{ color: "var(--text-muted)" }}
+                  onClick={() => {
+                    clearExerciseUrl(urlEditName);
+                    setUrlEditName(null);
+                    setUrlVersion((v) => v + 1);
+                  }}
+                >
+                  Remove
+                </button>
+              )}
+            </div>
           </div>
         </Modal>
       )}
