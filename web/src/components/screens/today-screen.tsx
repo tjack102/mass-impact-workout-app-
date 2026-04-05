@@ -44,7 +44,7 @@ import { RecoveryRatingPrompt } from "@/components/recovery-rating-prompt";
 import { findExercise, EXERCISE_LIBRARY } from "@/lib/exercise-library";
 import { TRACKED_MUSCLES, type MuscleGroup, type ExerciseDefinition } from "@/lib/types";
 import { getPermanentSub, setPermanentSub } from "@/lib/exercise-substitutions";
-import { getExerciseUrl } from "@/lib/exercise-url-store";
+import { getExerciseUrl, setExerciseUrl, clearExerciseUrl } from "@/lib/exercise-url-store";
 import { getAdditions } from "@/lib/exercise-additions";
 import { ExercisePickerModal } from "@/components/exercise-picker-modal";
 import {
@@ -230,6 +230,9 @@ export function TodayScreen() {
   const [subVersion, setSubVersion] = useState(0);
   // Bumped when exercise URLs finish loading from server
   const [urlVersion, setUrlVersion] = useState(0);
+  // URL editor state for adding demo links from today screen
+  const [urlEditName, setUrlEditName] = useState<string | null>(null);
+  const [urlDraft, setUrlDraft] = useState("");
   useEffect(() => {
     const handler = () => setUrlVersion((v) => v + 1);
     window.addEventListener("exercise-urls-loaded", handler);
@@ -995,6 +998,10 @@ export function TodayScreen() {
                   prFlash={index === safeActiveIndex ? prFlash : false}
                   notes={qe.notes}
                   exrxUrl={qe.exrxUrl}
+                  onEditUrl={() => {
+                    setUrlEditName(qe.name);
+                    setUrlDraft(getExerciseUrl(qe.name) ?? "");
+                  }}
                 />
               ))}
             </div>
@@ -1382,6 +1389,60 @@ export function TodayScreen() {
             >
               All future sessions
             </button>
+          </div>
+        </div>
+      </Modal>
+    )}
+
+    {urlEditName && (
+      <Modal open onClose={() => setUrlEditName(null)} title={`Demo Link: ${urlEditName}`}>
+        <div className="flex flex-col gap-3" style={{ padding: "1rem" }}>
+          <input
+            aria-label="Exercise demo URL"
+            type="url"
+            value={urlDraft}
+            onChange={(e) => setUrlDraft(e.target.value)}
+            placeholder="Paste YouTube or ExRx URL..."
+            autoFocus
+            style={{
+              background: "var(--bg-1)",
+              border: "1px solid var(--border)",
+              color: "var(--text-0)",
+              borderRadius: "var(--radius-sm)",
+              fontFamily: "var(--font-ui)",
+              padding: "10px 12px",
+              width: "100%",
+              fontSize: "0.9rem",
+            }}
+          />
+          <div className="flex gap-2">
+            <button
+              type="button"
+              className="ghost-btn flex-1"
+              onClick={() => {
+                if (urlDraft.trim()) {
+                  setExerciseUrl(urlEditName, urlDraft.trim());
+                }
+                setUrlEditName(null);
+                setUrlVersion((v) => v + 1);
+              }}
+            >
+              Save
+            </button>
+            {getExerciseUrl(urlEditName) && (
+              <button
+                type="button"
+                className="ghost-btn"
+                style={{ color: "var(--danger)" }}
+                onClick={() => {
+                  clearExerciseUrl(urlEditName);
+                  setUrlEditName(null);
+                  setUrlVersion((v) => v + 1);
+                }}
+              >
+                Remove
+              </button>
+            )}
           </div>
         </div>
       </Modal>

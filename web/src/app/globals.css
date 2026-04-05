@@ -1923,6 +1923,13 @@ a {
   -webkit-tap-highlight-color: transparent;
 }
 
+.queue-exrx-link--add {
+  background: transparent;
+  border: var(--border-width) solid var(--border);
+  color: var(--text-1);
+  font-size: 0.75rem;
+}
+
 /* ── Library Screen ── */
 .library-search {
   display: block;
