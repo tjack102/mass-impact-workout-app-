@@ -61,7 +61,7 @@ export function AppShell({ children }: AppShellProps) {
       <div className={`app-shell${hasSession ? " workout-active" : ""}`}>
         <a href="#main-content" className="skip-link">Skip to content</a>
         <div className="shell-grid">
-          <aside className="side-rail card panel reveal">
+          <aside className="side-rail card panel reveal glass">
             <div>
               <div className="brand-block">
                 <h1 className="brand-title">Mass Impact</h1>
@@ -104,11 +104,16 @@ export function AppShell({ children }: AppShellProps) {
           <div className="content-pane">
             <section className="profile-banner card panel reveal">
               <div className="flex-1">
-                <p className="subtle-label">
-                  Active Profile
-                </p>
-                <p className="page-note mt-0.5">
-                  Switch workouts, templates, and progress with one toggle.
+                <p style={{
+                  fontFamily: "var(--font-display)",
+                  fontSize: "0.7rem",
+                  fontWeight: 500,
+                  textTransform: "uppercase",
+                  letterSpacing: "0.08em",
+                  color: "#8b92a0",
+                  margin: 0,
+                }}>
+                  Command Center
                 </p>
                 <div className="mt-2">
                   <ProgramSelector activeUser={activeUser} />

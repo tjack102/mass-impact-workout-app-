@@ -1,145 +1,127 @@
-type ExerciseQueueCardProps = {
+
+export type ExerciseQueueCardProps = {
   orderLabel: string;
   name: string;
-  scheme: string;
-  lastPerformance: string;
-  track: "his" | "hers";
+  muscleGroup: string;
+  reps: string;
   targetSets: number;
   completedSets: number;
+  lastWeight?: number;
+  prescribedWeight?: number;
+  rirTarget?: string;
   isActive: boolean;
+  isSkipped?: boolean;
   onSelect: () => void;
+  onSwap?: () => void;
   supersetGroup?: string;
   prFlash?: boolean;
   originalName?: string;
-  onSwap?: () => void;
   notes?: string;
   exrxUrl?: string;
   onEditUrl?: () => void;
 };
 
-function ProgressRing({ completed, total, isDone }: { completed: number; total: number; isDone: boolean }) {
-  const size = 28;
-  const stroke = 3;
-  const radius = (size - stroke) / 2;
-  const circumference = 2 * Math.PI * radius;
-  const progress = total > 0 ? completed / total : 0;
-  const offset = circumference * (1 - progress);
-
-  return (
-    <svg className="progress-ring" width={size} height={size} viewBox={`0 0 ${size} ${size}`}>
-      <circle
-        className="progress-ring__bg"
-        cx={size / 2}
-        cy={size / 2}
-        r={radius}
-        strokeWidth={stroke}
-        fill="none"
-      />
-      <circle
-        className={`progress-ring__fill${isDone ? " progress-ring__fill--done" : ""}`}
-        cx={size / 2}
-        cy={size / 2}
-        r={radius}
-        strokeWidth={stroke}
-        fill="none"
-        strokeDasharray={circumference}
-        strokeDashoffset={offset}
-        strokeLinecap="round"
-        transform={`rotate(-90 ${size / 2} ${size / 2})`}
-      />
-    </svg>
-  );
-}
-
 export function ExerciseQueueCard({
   orderLabel,
   name,
-  scheme,
-  lastPerformance,
-  track,
+  muscleGroup,
+  reps,
   targetSets,
   completedSets,
+  lastWeight,
+  prescribedWeight,
+  rirTarget,
   isActive,
+  isSkipped,
   onSelect,
-  supersetGroup,
+  onSwap,
   prFlash,
   originalName,
-  onSwap,
   notes,
   exrxUrl,
   onEditUrl,
 }: ExerciseQueueCardProps) {
-  const isDone = completedSets >= targetSets;
+  const isDone = completedSets >= targetSets && targetSets > 0;
+  const weightDisplay = prescribedWeight
+    ? `${prescribedWeight} LBS`
+    : lastWeight
+      ? `${lastWeight} LBS`
+      : "---";
 
   return (
     <button
       type="button"
-      className={`surface exercise-card${isActive ? " active" : ""}${isDone ? " done" : ""}${supersetGroup ? " superset-grouped" : ""}${prFlash ? " pr-pulse" : ""}`}
+      className={`queue-card${prFlash ? " pr-pulse" : ""}`}
+      data-active={isActive}
+      data-complete={isDone}
+      data-skipped={isSkipped || false}
       onClick={onSelect}
     >
-      <div className="exercise-line">
+      {/* Row 1: Order + Name + Actions */}
+      <div className="queue-card-header">
         <div style={{ display: "flex", alignItems: "center", gap: "0.5rem" }}>
-          <span className="track-chip mono" style={{ padding: "0.1rem 0.35rem" }}>
-            {orderLabel}
-          </span>
-          <div>
-            <h3 className="exercise-name">{name}</h3>
-            {originalName && (
-              <span className="swap-indicator">Replaces: {originalName}</span>
-            )}
-          </div>
+          <span className="queue-card-order">{orderLabel}</span>
+          <span className="queue-card-name">{name}</span>
         </div>
-        <div style={{ display: "flex", alignItems: "center", gap: "0.45rem" }}>
+        <div style={{ display: "flex", alignItems: "center", gap: "0.4rem" }}>
           {exrxUrl ? (
             <span
               role="link"
-              className="queue-exrx-link"
+              className="queue-card-url"
               onClick={(e) => { e.stopPropagation(); window.open(exrxUrl, "_blank", "noopener"); }}
               aria-label={`How to: ${name}`}
-            >
-              ?
-            </span>
+            >?</span>
           ) : onEditUrl ? (
             <span
               role="button"
-              className="queue-exrx-link queue-exrx-link--add"
+              className="queue-card-url"
               onClick={(e) => { e.stopPropagation(); onEditUrl(); }}
               aria-label={`Add demo link for ${name}`}
-            >
-              +
-            </span>
+            >+</span>
           ) : null}
           {onSwap && (
             <button
               type="button"
-              className="swap-btn"
+              className="queue-card-swap"
               onClick={(e) => { e.stopPropagation(); onSwap(); }}
               aria-label={`Swap ${name}`}
             >
               ⇄
             </button>
           )}
-          <ProgressRing completed={completedSets} total={targetSets} isDone={isDone} />
-          <span className={`track-chip ${track}`}>{track}</span>
         </div>
       </div>
-      <div className="exercise-line">
-        <span className="mono">{scheme}</span>
-        <span className="page-note" style={{ margin: 0 }}>
-          Last: {lastPerformance}
-        </span>
+
+      {/* Row 2: Muscle group + original name */}
+      {muscleGroup && <span className="queue-card-muscles">{muscleGroup}</span>}
+      {originalName && <span className="queue-card-muscles">Replaces: {originalName}</span>}
+
+      {/* Row 3: Data cluster */}
+      <div className="queue-card-data">
+        <div className="queue-card-stat">
+          <span className="queue-card-label">SETS</span>
+          <span className="queue-card-value">{targetSets}</span>
+        </div>
+        <div className="queue-card-stat">
+          <span className="queue-card-label">REPS</span>
+          <span className="queue-card-value">{reps}</span>
+        </div>
+        <div className="queue-card-stat">
+          <span className="queue-card-label">WEIGHT</span>
+          <span className="queue-card-value">{weightDisplay}</span>
+        </div>
       </div>
-      {notes && (
-        <div className="queue-exercise-notes">{notes}</div>
+
+      {/* Row 4: Footer */}
+      {(completedSets > 0 || rirTarget || notes) && (
+        <div className="queue-card-footer">
+          {completedSets > 0 && (
+            <span className="queue-card-progress">{completedSets}/{targetSets} done</span>
+          )}
+          {rirTarget && <span className="queue-card-rir">RIR {rirTarget}</span>}
+        </div>
       )}
-      <div className="completion-dots" aria-label={`${completedSets}/${targetSets} sets complete`}>
-        {Array.from({ length: targetSets }).map((_, idx) => (
-          <span
-            key={`${name}-${idx}`}
-            className={`completion-dot${idx < completedSets ? " complete" : ""}`}
-          />
-        ))}
-      </div>
+      {notes && <div className="queue-card-notes">{notes}</div>}
     </button>
   );
 }

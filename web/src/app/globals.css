@@ -1,19 +1,39 @@
 @import "tailwindcss";
 
 :root {
-  --bg-0: #0b0d10;
-  --bg-1: #12161b;
-  --bg-2: #1a2028;
+  /* Surface hierarchy (Stitch "Kinetic Precision") */
+  --surface-base: #111317;
+  --surface-low: #1a1c1f;
+  --surface-mid: #1e2023;
+  --surface-high: #282a2d;
+  --surface-highest: #333538;
+
+  /* Alias existing tokens to surface system */
+  --bg-0: var(--surface-base);
+  --bg-1: var(--surface-low);
+  --bg-2: var(--surface-mid);
+  --card-bg: var(--surface-mid);
+  --bg-input: var(--surface-high);
+  --bg-index: var(--surface-low);
+  --bg-stat: var(--surface-low);
+  --bg-heat: var(--surface-low);
+  --nav-bg: rgba(30, 32, 35, 0.7);
+
   --text-0: #f4f7fa;
   --text-1: #a9b5c3;
+  --text-2: #8891a4;
+  --text-on-accent: #03201f;
+  --text-on-accent-hers: #260613;
+  --text-on-power: #180f01;
   --accent-primary: #26d9d1;
+  --accent-primary-30: rgba(85, 246, 237, 0.3);
   --accent-power: #f08a24;
   --accent-hers: #ff5a8b;
   --ok: #34d399;
   --warn: #fbbf24;
   --danger: #f87171;
   --border: #2a3340;
-  --border-width: 1px;
+  --border-width: 0px;
   --radius-xl: 20px;
   --radius-lg: 14px;
   --radius-sm: 10px;
@@ -21,18 +41,8 @@
   --ease-exit: cubic-bezier(0.4, 0, 1, 1);
   --shadow-card: 0 14px 28px rgba(0, 0, 0, 0.28);
   --shadow-soft: 0 8px 14px rgba(0, 0, 0, 0.2);
-  --bg-input: #0f141a;
-  --bg-index: #10151b;
-  --bg-stat: #0f1318;
-  --bg-heat: #11161d;
-  --text-2: #8891a4;
-  --text-on-accent: #03201f;
-  --text-on-accent-hers: #260613;
-  --text-on-power: #180f01;
-  --nav-bg: rgba(18, 22, 27, 0.78);
   --btn-radius: 10px;
   --btn-letter-spacing: 0.08em;
-  --card-bg: linear-gradient(160deg, rgba(255,255,255,0.03), rgba(255,255,255,0)), #12161b;
   --card-backdrop: none;
   --dial-inner-bg: linear-gradient(160deg, rgba(26,32,40,0.96), rgba(10,11,14,0.96));
   --glow-strength: 0;
@@ -41,10 +51,43 @@
   --body-bg: radial-gradient(circle at 12% 10%, rgba(38,217,209,0.16), transparent 34%), radial-gradient(circle at 84% 14%, rgba(240,138,36,0.17), transparent 30%), linear-gradient(154deg, #0a0d11 10%, #0d1015 36%, #090b0f 100%);
   --accent-gradient-his: linear-gradient(135deg, color-mix(in srgb, #26d9d1, white 12%), #b1f0ed);
   --accent-gradient-hers: linear-gradient(135deg, color-mix(in srgb, #ff5a8b, white 12%), #ffb1c7);
-  --font-display: var(--font-teko);
+  --font-display: var(--font-space-grotesk);
   --font-ui: var(--font-source-sans);
   --font-mono: var(--font-jetbrains-mono);
 }
+
+/* Glass-morphism utilities */
+.glass {
+  background: rgba(30, 32, 35, 0.7);
+  backdrop-filter: blur(20px);
+  -webkit-backdrop-filter: blur(20px);
+}
+.glass-card {
+  background: rgba(30, 32, 35, 0.85);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+}
+@supports not (backdrop-filter: blur(1px)) {
+  .glass { background: rgba(30, 32, 35, 0.95); }
+  .glass-card { background: rgba(30, 32, 35, 0.97); }
+}
+
+/* Primary gradient button */
+.btn-primary {
+  background: linear-gradient(135deg, var(--accent-primary), color-mix(in srgb, var(--accent-primary), black 15%));
+  color: var(--bg-0);
+  border: none;
+  border-radius: 8px;
+  font-family: var(--font-display);
+  font-weight: 700;
+  font-size: 1.1rem;
+  padding: 0.65rem 1.5rem;
+  cursor: pointer;
+  letter-spacing: 0.02em;
+  transition: filter 0.15s;
+}
+.btn-primary:hover { filter: brightness(1.1); }
+.btn-primary:disabled { opacity: 0.4; cursor: not-allowed; filter: none; }
 
 /* ============================================
    WARZONE - Military surplus, brutalist, flat
@@ -536,18 +579,16 @@ a {
 
 .card {
   border-radius: var(--radius-xl);
-  border: var(--border-width) solid var(--border);
   background: var(--card-bg);
   box-shadow: var(--shadow-card);
 }
 
 .panel {
-  padding: 1rem;
+  padding: 20px;
 }
 
 .surface {
   border-radius: var(--radius-lg);
-  border: var(--border-width) solid var(--border);
   background: var(--bg-2);
   box-shadow: var(--shadow-soft);
 }
@@ -714,94 +755,128 @@ a {
   margin-top: 0.85rem;
 }
 
-.exercise-card {
-  padding: 0.8rem;
-  display: grid;
-  gap: 0.66rem;
+/* Queue card -- Stitch data-cluster layout */
+.queue-card {
+  background: var(--surface-mid);
+  border-radius: 8px;
+  padding: 16px 20px;
   cursor: pointer;
-  transition: border-color 280ms var(--ease-standard),
-              transform 280ms var(--ease-standard),
-              box-shadow 280ms var(--ease-standard),
-              background 280ms var(--ease-standard);
+  transition: background 0.15s;
+  border: none;
+  text-align: left;
+  width: 100%;
+  color: inherit;
+  font: inherit;
+  display: block;
 }
-
-.exercise-card.active {
-  border-color: color-mix(in srgb, var(--accent-primary), transparent 42%);
-  transform: translateY(-2px);
+.queue-card:hover { background: var(--surface-high); }
+.queue-card[data-active="true"] {
+  border-left: 3px solid var(--accent-primary);
+  padding-left: 17px;
+  background: var(--surface-high);
 }
+.queue-card[data-complete="true"] { opacity: 0.5; }
+.queue-card[data-skipped="true"] { opacity: 0.3; }
 
-.exercise-card.done {
-  border-color: color-mix(in srgb, var(--ok), transparent 58%);
-}
-
-.exercise-card.superset-grouped {
-  border-left: 2px solid var(--accent-primary);
-  margin-left: 0.5rem;
-}
-
-.exercise-line {
+.queue-card-header {
   display: flex;
   justify-content: space-between;
-  gap: 0.8rem;
-  align-items: baseline;
+  align-items: center;
 }
-
-.exercise-name {
-  margin: 0;
+.queue-card-order {
+  font-family: var(--font-mono), monospace;
+  font-size: 0.78rem;
+  color: var(--accent-primary);
+}
+.queue-card-name {
+  font-family: var(--font-display), sans-serif;
+  font-weight: 700;
   font-size: 1rem;
+  text-transform: uppercase;
+  color: var(--text-0);
   letter-spacing: 0.02em;
+}
+.queue-card-muscles {
+  font-family: var(--font-ui), sans-serif;
+  font-size: 0.78rem;
+  color: #8b92a0;
+  margin-top: 2px;
+  display: block;
+}
+.queue-card-data {
+  display: flex;
+  gap: 24px;
+  margin-top: 12px;
+}
+.queue-card-label {
+  font-family: var(--font-display), sans-serif;
+  font-size: 0.65rem;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  color: #8b92a0;
+  display: block;
+}
+.queue-card-value {
+  font-family: var(--font-mono), monospace;
+  font-size: 1.1rem;
+  color: var(--text-0);
+  display: block;
+  margin-top: 2px;
+}
+.queue-card-footer {
+  display: flex;
+  align-items: center;
+  margin-top: 8px;
+  gap: 8px;
+}
+.queue-card-progress {
+  font-family: var(--font-mono), monospace;
+  font-size: 0.75rem;
+  color: var(--accent-primary);
+}
+.queue-card-rir {
+  font-family: var(--font-mono), monospace;
+  font-size: 0.75rem;
+  color: var(--accent-power);
+  margin-left: auto;
+}
+.queue-card-swap {
+  background: none;
+  border: none;
+  color: var(--text-1);
+  cursor: pointer;
+  padding: 4px;
+  display: flex;
+  align-items: center;
+}
+.queue-card-swap:hover { color: var(--accent-primary); }
+.queue-card-url {
+  font-family: var(--font-mono), monospace;
+  font-size: 0.78rem;
+  color: var(--text-2);
+  cursor: pointer;
+  padding: 2px 6px;
+  border-radius: 4px;
+  background: var(--surface-high);
+}
+.queue-card-url:hover { color: var(--accent-primary); }
+.queue-card-notes {
+  font-family: var(--font-ui), sans-serif;
+  font-size: 0.75rem;
+  color: #8b92a0;
+  font-style: italic;
+  margin-top: 4px;
+}
+.queue-card.pr-pulse {
+  animation: pr-glow 400ms ease-out;
+}
+@keyframes pr-glow {
+  0% { box-shadow: 0 0 0 0 rgba(38, 217, 209, 0.5); }
+  100% { box-shadow: 0 0 0 8px rgba(38, 217, 209, 0); }
 }
 
 .mono {
   font-family: var(--font-mono), monospace;
-}
-
-.track-chip {
-  border-radius: 999px;
-  padding: 0.2rem 0.5rem;
-  font-size: 0.68rem;
-  text-transform: uppercase;
-  letter-spacing: 0.06em;
-  border: var(--border-width) solid var(--border);
-  color: var(--text-1);
-}
-
-.track-chip.hers {
-  border-color: color-mix(in srgb, var(--accent-hers), transparent 52%);
-  color: var(--accent-hers);
-}
-
-.completion-dots {
-  display: flex;
-  gap: 0.26rem;
-}
-
-.completion-dot {
-  width: 14px;
-  height: 4px;
-  border-radius: 4px;
-  background: color-mix(in srgb, var(--text-1), transparent 60%);
-}
-
-.completion-dot.complete {
-  background: var(--accent-primary);
-}
-
-.progress-ring {
-  flex-shrink: 0;
-}
-
-.progress-ring__bg {
-  stroke: color-mix(in srgb, var(--text-1), transparent 72%);
-}
-
-.progress-ring__fill {
-  stroke: var(--accent-primary);
-  transition: stroke-dashoffset 400ms var(--ease-standard), stroke 300ms var(--ease-standard);
-}
-
-.progress-ring__fill--done {
-  stroke: var(--ok);
 }
 
 .live-console {
@@ -1217,21 +1292,12 @@ a {
   gap: 0.7rem;
 }
 
-/* Queue card readability overrides */
-.exercise-card .exercise-name {
-  font-size: 1.05rem;
-}
-
-.exercise-card .mono {
-  font-size: 0.9rem;
-}
-
 .workout-status-bar {
   position: fixed;
   left: 0.6rem;
   right: 0.6rem;
   bottom: 0.74rem;
-  z-index: 12;
+  z-index: 60;
   display: flex;
   align-items: center;
   gap: 0.75rem;
@@ -1289,69 +1355,50 @@ a {
 
 .mobile-nav {
   position: fixed;
-  left: 0.6rem;
-  right: 0.6rem;
-  bottom: max(0.74rem, env(safe-area-inset-bottom, 0.74rem));
-  z-index: 12;
-  padding: 0.4rem;
-  padding-bottom: env(safe-area-inset-bottom, 0);
+  bottom: 0;
+  left: 0;
+  right: 0;
+  z-index: 50;
   display: none;
-  grid-template-columns: repeat(5, minmax(0, 1fr));
-  gap: 0.2rem;
-  min-height: 56px;
-  border-radius: var(--radius-xl);
-  border: var(--border-width) solid color-mix(in srgb, var(--border), transparent 20%);
-  background: var(--nav-bg);
-  backdrop-filter: blur(12px);
-  -webkit-backdrop-filter: blur(12px);
-  box-shadow: var(--shadow-card);
+  grid-template-columns: repeat(5, 1fr);
+  padding: 8px 0 calc(8px + env(safe-area-inset-bottom, 0px));
+  background: rgba(30, 32, 35, 0.7);
+  backdrop-filter: blur(20px);
+  -webkit-backdrop-filter: blur(20px);
+}
+@supports not (backdrop-filter: blur(1px)) {
+  .mobile-nav { background: rgba(30, 32, 35, 0.95); }
 }
 
 .mobile-link {
-  border-radius: 10px;
-  border: var(--border-width) solid transparent;
-  text-align: center;
-  padding: 0.6rem 0.2rem 0.5rem;
-  font-size: 0.68rem;
-  color: var(--text-1);
-  text-transform: uppercase;
-  letter-spacing: 0.06em;
   display: flex;
   flex-direction: column;
   align-items: center;
-  gap: 0.18rem;
-  position: relative;
-  transition: color 220ms var(--ease-standard);
+  gap: 4px;
+  padding: 6px 0;
+  color: #8b92a0;
+  text-decoration: none;
+  transition: color 0.15s;
 }
 
 .mobile-link-icon {
   display: flex;
+  align-items: center;
   justify-content: center;
 }
 
 .mobile-link-label {
-  font-size: 0.6rem;
+  font-family: var(--font-display), sans-serif;
+  font-weight: 500;
+  font-size: 0.65rem;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
 }
 
-.mobile-link.active {
-  color: var(--text-0);
-  background: color-mix(in srgb, var(--accent-primary), transparent 90%);
-}
-
+.mobile-link.active,
 .mobile-link.active .mobile-link-icon,
 .mobile-link.active .mobile-link-label {
   color: var(--accent-primary);
-}
-
-.mobile-link.active::before {
-  content: "";
-  position: absolute;
-  top: 0;
-  left: 20%;
-  right: 20%;
-  height: 3px;
-  border-radius: 0 0 3px 3px;
-  background: var(--accent-primary);
 }
 
 .reveal {
@@ -1554,15 +1601,6 @@ a {
 }
 
 /* Target the actual element class -- ExerciseQueueCard renders as <button class="surface exercise-card ..."> */
-.exercise-card.pr-pulse {
-  animation: pr-pulse 400ms var(--ease-standard);
-}
-
-@keyframes pr-pulse {
-  0%   { border-color: var(--ok); box-shadow: 0 0 0 2px color-mix(in srgb, var(--ok), transparent 60%); }
-  60%  { border-color: var(--ok); box-shadow: 0 0 0 4px color-mix(in srgb, var(--ok), transparent 80%); }
-  100% { border-color: var(--border); box-shadow: none; }
-}
 
 @media (prefers-reduced-motion: reduce) {
   *,

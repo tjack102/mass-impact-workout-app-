@@ -101,6 +101,10 @@ type QueueExercise = {
   prescribedWeight?: number;
   rirTarget?: string;
   rpSlotId?: string;
+  muscleGroup: string;
+  reps: string;
+  lastWeight?: number;
+  isSkipped?: boolean;
 };
 
 function formatElapsed(seconds: number): string {
@@ -132,6 +136,20 @@ function isRepCeilingHit(exercise: ProgramExercise, loggedSets: LoggedSet[]): bo
   const ceiling = parseRepCeiling(repsStr);
   if (ceiling === null) return false;
   return loggedSets.every((set) => set.reps >= ceiling);
+}
+
+function formatMuscleGroup(exerciseName: string): string {
+  const def = findExercise(exerciseName);
+  if (!def) return "";
+  const primary = def.primaryMuscle.replace(/_/g, " ");
+  const title = primary.charAt(0).toUpperCase() + primary.slice(1);
+  const secondaries = def.secondaryMuscles
+    .filter(s => s.factor >= 0.3)
+    .map(s => {
+      const n = s.muscle.replace(/_/g, " ");
+      return n.charAt(0).toUpperCase() + n.slice(1);
+    });
+  return secondaries.length > 0 ? `${title} & ${secondaries[0]}` : title;
 }
 
 function formatDuration(totalSeconds: number) {
@@ -364,6 +382,10 @@ export function TodayScreen() {
         prescribedWeight: exercise.prescribedWeight,
         rirTarget: exercise.rirTarget,
         rpSlotId: rpDaySlots[index]?.slotId,
+        muscleGroup: formatMuscleGroup(resolvedName),
+        reps: exercise.setGroups[0]?.reps ?? "---",
+        lastWeight: lastPerformance?.weight,
+        isSkipped: effectiveSets === 0,
       };
     });
   // eslint-disable-next-line react-hooks/exhaustive-deps -- subVersion/urlVersion are intentional cache-busters
@@ -982,21 +1004,10 @@ export function TodayScreen() {
       )}
 
       <div className="two-col">
-        <details className="collapsible-section" open>
-          <summary className="collapsible-summary">
-            <span className="collapsible-title">Exercise Queue</span>
-            <span className="collapsible-chevron" />
-          </summary>
-          <article className="card panel reveal">
-            <div className="flex justify-between items-center gap-2">
-              <div>
-                <p className="subtle-label">
-                  Exercise Queue
-                </p>
-                <h2 className="section-title mt-1">
-                  Today Pipeline
-                </h2>
-              </div>
+        <article className="card panel reveal">
+          <div className="flex justify-between items-center gap-2">
+            <div></div>
+            <div>
               <div className="cycle-toolbar">
                 <label className="compact-field">
                   <span className="subtle-label">Week</span>
@@ -1063,6 +1074,7 @@ export function TodayScreen() {
                 </button>
               </div>
             ) : null}
+          </div>
 
             {templateEditorOpen && activeProgramExercise ? (
               <ExerciseTemplateInlineEditor
@@ -1077,23 +1089,27 @@ export function TodayScreen() {
               />
             ) : null}
 
-            <div className="queue-list">
+            <div className="queue-list" style={{ display: "flex", flexDirection: "column", gap: "12px" }}>
               {queueExercises.map((qe, index) => (
                 <div key={qe.id} style={qe.targetSets === 0 ? { opacity: 0.4, position: "relative" } : undefined}>
                   <ExerciseQueueCard
+                    key={qe.id}
                     orderLabel={qe.orderLabel}
                     name={qe.name}
-                    originalName={qe.originalName}
-                    scheme={qe.scheme}
-                    track={qe.track}
+                    muscleGroup={qe.muscleGroup}
+                    reps={qe.reps}
                     targetSets={qe.targetSets}
                     completedSets={qe.completedSets}
-                    lastPerformance={qe.lastPerformance}
+                    lastWeight={qe.lastWeight}
+                    prescribedWeight={qe.prescribedWeight}
+                    rirTarget={qe.rirTarget}
                     isActive={index === safeActiveIndex}
+                    isSkipped={qe.isSkipped}
                     onSelect={() => handleSelectExercise(index)}
                     onSwap={() => handleOpenSwap(index)}
                     supersetGroup={qe.supersetGroup}
                     prFlash={index === safeActiveIndex ? prFlash : false}
+                    originalName={qe.originalName}
                     notes={qe.notes}
                     exrxUrl={qe.exrxUrl}
                     onEditUrl={() => {
@@ -1122,20 +1138,21 @@ export function TodayScreen() {
               ))}
             </div>
           </article>
-        </details>
 
-        <details className="collapsible-section" open>
-          <summary className="collapsible-summary">
-            <span className="collapsible-title">Live Console</span>
-            <span className="collapsible-chevron" />
-          </summary>
-          <article className="card panel reveal live-console">
+        <article className="card panel reveal live-console glass-card">
             <div className="flex justify-between items-center" style={{ gap: "0.7rem" }}>
               <div>
                 <p className="subtle-label">
                   Live Set Console
                 </p>
-                <h2 className="section-title mt-0.5">
+                <h2 style={{
+                  fontFamily: "var(--font-display)",
+                  fontWeight: 700,
+                  fontSize: "1.4rem",
+                  textTransform: "uppercase",
+                  margin: 0,
+                  letterSpacing: "0.02em",
+                }}>
                   {activeExercise?.name ?? "No exercise selected"}
                 </h2>
               </div>
@@ -1488,7 +1505,6 @@ export function TodayScreen() {
               </button>
             </div>
           </article>
-        </details>
       </div>
 
       {exerciseSummary ? (

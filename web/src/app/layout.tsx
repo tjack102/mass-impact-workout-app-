@@ -11,12 +11,12 @@ import {
   Orbitron,
   Source_Sans_3,
   Share_Tech_Mono,
-  Teko,
+  Space_Grotesk,
 } from "next/font/google";
 import { AppShell } from "@/components/app-shell";
 import "./globals.css";
 
-const teko = Teko({ variable: "--font-teko", subsets: ["latin"] });
+const spaceGrotesk = Space_Grotesk({ variable: "--font-space-grotesk", subsets: ["latin"] });
 const sourceSans = Source_Sans_3({ variable: "--font-source-sans", subsets: ["latin"] });
 const jetbrainsMono = JetBrains_Mono({ variable: "--font-jetbrains-mono", subsets: ["latin"] });
 const blackOpsOne = Black_Ops_One({ variable: "--font-black-ops-one", weight: "400", subsets: ["latin"] });
@@ -67,7 +67,7 @@ export default function RootLayout({
   return (
     <html lang="en" suppressHydrationWarning>
       <body
-        className={`${teko.variable} ${sourceSans.variable} ${jetbrainsMono.variable} ${blackOpsOne.variable} ${barlowCondensed.variable} ${shareTechMono.variable} ${orbitron.variable} ${exo2.variable} ${bebasNeue.variable} ${dmSans.variable} ${ibmPlexMono.variable}`}
+        className={`${spaceGrotesk.variable} ${sourceSans.variable} ${jetbrainsMono.variable} ${blackOpsOne.variable} ${barlowCondensed.variable} ${shareTechMono.variable} ${orbitron.variable} ${exo2.variable} ${bebasNeue.variable} ${dmSans.variable} ${ibmPlexMono.variable}`}
       >
         <script
           dangerouslySetInnerHTML={{
