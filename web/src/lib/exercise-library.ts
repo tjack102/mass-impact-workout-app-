@@ -243,6 +243,71 @@ export const EXERCISE_LIBRARY: ExerciseDefinition[] = [
     tier: "A",
     secondaryMuscles: [{ muscle: "biceps", factor: 0.5 }],
   },
+  {
+    id: "underhand-ez-bar-row",
+    name: "Underhand EZ Bar Row",
+    primaryMuscle: "back",
+    type: "compound",
+    equipment: "barbell",
+    secondaryMuscles: [{ muscle: "biceps", factor: 0.4 }],
+  },
+  {
+    id: "row-to-chest",
+    name: "Row to Chest",
+    primaryMuscle: "back",
+    type: "compound",
+    equipment: "cable",
+    secondaryMuscles: [
+      { muscle: "rear_delts", factor: 0.3 },
+      { muscle: "biceps", factor: 0.2 },
+    ],
+  },
+  {
+    id: "2-arm-dumbbell-row",
+    name: "2-Arm Dumbbell Row",
+    primaryMuscle: "back",
+    type: "compound",
+    equipment: "dumbbell",
+    secondaryMuscles: [
+      { muscle: "biceps", factor: 0.3 },
+      { muscle: "rear_delts", factor: 0.2 },
+    ],
+  },
+  {
+    id: "row-machine",
+    name: "Row Machine",
+    primaryMuscle: "back",
+    type: "compound",
+    equipment: "machine",
+    secondaryMuscles: [
+      { muscle: "biceps", factor: 0.3 },
+      { muscle: "rear_delts", factor: 0.2 },
+    ],
+  },
+  {
+    id: "assisted-overhand-pullup",
+    name: "Assisted Overhand Pullup",
+    primaryMuscle: "back",
+    type: "compound",
+    equipment: "machine",
+    secondaryMuscles: [{ muscle: "biceps", factor: 0.3 }],
+  },
+  {
+    id: "assisted-parallel-pullup",
+    name: "Assisted Parallel Pullup",
+    primaryMuscle: "back",
+    type: "compound",
+    equipment: "machine",
+    secondaryMuscles: [{ muscle: "biceps", factor: 0.3 }],
+  },
+  {
+    id: "assisted-underhand-pullup",
+    name: "Assisted Underhand Pullup",
+    primaryMuscle: "back",
+    type: "compound",
+    equipment: "machine",
+    secondaryMuscles: [{ muscle: "biceps", factor: 0.4 }],
+  },
 
   // ─────────────────────────────────────────────
   // CHEST
@@ -450,6 +515,96 @@ export const EXERCISE_LIBRARY: ExerciseDefinition[] = [
     tier: "A",
     secondaryMuscles: [],
   },
+  {
+    id: "flat-dumbbell-flye",
+    name: "Flat Dumbbell Flye",
+    primaryMuscle: "chest",
+    type: "isolation",
+    equipment: "dumbbell",
+    secondaryMuscles: [],
+  },
+  {
+    id: "high-cable-flye",
+    name: "High Cable Flye",
+    primaryMuscle: "chest",
+    type: "isolation",
+    equipment: "cable",
+    secondaryMuscles: [],
+  },
+  {
+    id: "cable-incline-flye",
+    name: "Cable Incline Flye",
+    primaryMuscle: "chest",
+    type: "isolation",
+    equipment: "cable",
+    secondaryMuscles: [],
+  },
+  {
+    id: "wide-grip-bench-press",
+    name: "Wide Grip Bench Press",
+    primaryMuscle: "chest",
+    type: "compound",
+    equipment: "barbell",
+    secondaryMuscles: [
+      { muscle: "triceps", factor: 0.3 },
+      { muscle: "front_delts", factor: 0.2 },
+    ],
+  },
+  {
+    id: "pushup",
+    name: "Pushup",
+    primaryMuscle: "chest",
+    type: "compound",
+    equipment: "bodyweight",
+    secondaryMuscles: [
+      { muscle: "triceps", factor: 0.3 },
+      { muscle: "front_delts", factor: 0.2 },
+    ],
+  },
+  {
+    id: "close-grip-pushup",
+    name: "Close Grip Pushup",
+    primaryMuscle: "chest",
+    type: "compound",
+    equipment: "bodyweight",
+    secondaryMuscles: [
+      { muscle: "triceps", factor: 0.5 },
+      { muscle: "front_delts", factor: 0.2 },
+    ],
+  },
+  {
+    id: "incline-wide-grip-bench-press",
+    name: "Incline Wide Grip Bench Press",
+    primaryMuscle: "chest",
+    type: "compound",
+    equipment: "barbell",
+    secondaryMuscles: [
+      { muscle: "front_delts", factor: 0.3 },
+      { muscle: "triceps", factor: 0.2 },
+    ],
+  },
+  {
+    id: "incline-close-grip-bench-press",
+    name: "Incline Close Grip Bench Press",
+    primaryMuscle: "chest",
+    type: "compound",
+    equipment: "barbell",
+    secondaryMuscles: [
+      { muscle: "triceps", factor: 0.5 },
+      { muscle: "front_delts", factor: 0.2 },
+    ],
+  },
+  {
+    id: "incline-machine-bench-press",
+    name: "Incline Machine Bench Press",
+    primaryMuscle: "chest",
+    type: "compound",
+    equipment: "machine",
+    secondaryMuscles: [
+      { muscle: "front_delts", factor: 0.3 },
+      { muscle: "triceps", factor: 0.2 },
+    ],
+  },
 
   // ─────────────────────────────────────────────
   // SIDE DELTS
@@ -555,6 +710,25 @@ export const EXERCISE_LIBRARY: ExerciseDefinition[] = [
     tier: "A",
     secondaryMuscles: [],
   },
+  {
+    id: "dumbbell-upright-row",
+    name: "Dumbbell Upright Row",
+    primaryMuscle: "side_delts",
+    type: "compound",
+    equipment: "dumbbell",
+    secondaryMuscles: [
+      { muscle: "traps", factor: 0.3 },
+      { muscle: "front_delts", factor: 0.2 },
+    ],
+  },
+  {
+    id: "thumbs-down-lateral-raise",
+    name: "Thumbs Down Lateral Raise",
+    primaryMuscle: "side_delts",
+    type: "isolation",
+    equipment: "dumbbell",
+    secondaryMuscles: [],
+  },
 
   // ─────────────────────────────────────────────
   // REAR DELTS
@@ -613,6 +787,28 @@ export const EXERCISE_LIBRARY: ExerciseDefinition[] = [
     tier: "A",
     secondaryMuscles: [],
   },
+  {
+    id: "barbell-facepull",
+    name: "Barbell Facepull",
+    primaryMuscle: "rear_delts",
+    type: "compound",
+    equipment: "barbell",
+    secondaryMuscles: [
+      { muscle: "back", factor: 0.2 },
+      { muscle: "biceps", factor: 0.1 },
+    ],
+  },
+  {
+    id: "dumbbell-facepull",
+    name: "Dumbbell Facepull",
+    primaryMuscle: "rear_delts",
+    type: "compound",
+    equipment: "dumbbell",
+    secondaryMuscles: [
+      { muscle: "back", factor: 0.2 },
+      { muscle: "biceps", factor: 0.1 },
+    ],
+  },
 
   // ─────────────────────────────────────────────
   // FRONT DELTS
@@ -651,6 +847,50 @@ export const EXERCISE_LIBRARY: ExerciseDefinition[] = [
     secondaryMuscles: [
       { muscle: "triceps", factor: 0.5 },
       { muscle: "side_delts", factor: 0.5 },
+    ],
+  },
+  {
+    id: "standing-barbell-shoulder-press",
+    name: "Standing Barbell Shoulder Press",
+    primaryMuscle: "front_delts",
+    type: "compound",
+    equipment: "barbell",
+    secondaryMuscles: [
+      { muscle: "triceps", factor: 0.4 },
+      { muscle: "side_delts", factor: 0.2 },
+    ],
+  },
+  {
+    id: "seated-barbell-shoulder-press",
+    name: "Seated Barbell Shoulder Press",
+    primaryMuscle: "front_delts",
+    type: "compound",
+    equipment: "barbell",
+    secondaryMuscles: [
+      { muscle: "triceps", factor: 0.4 },
+      { muscle: "side_delts", factor: 0.2 },
+    ],
+  },
+  {
+    id: "high-incline-dumbbell-press",
+    name: "High Incline Dumbbell Press",
+    primaryMuscle: "front_delts",
+    type: "compound",
+    equipment: "dumbbell",
+    secondaryMuscles: [
+      { muscle: "chest", factor: 0.4 },
+      { muscle: "triceps", factor: 0.3 },
+    ],
+  },
+  {
+    id: "standing-dumbbell-shoulder-press",
+    name: "Standing Dumbbell Shoulder Press",
+    primaryMuscle: "front_delts",
+    type: "compound",
+    equipment: "dumbbell",
+    secondaryMuscles: [
+      { muscle: "triceps", factor: 0.4 },
+      { muscle: "side_delts", factor: 0.2 },
     ],
   },
 
@@ -693,6 +933,38 @@ export const EXERCISE_LIBRARY: ExerciseDefinition[] = [
     equipment: "barbell",
     tier: "A",
     secondaryMuscles: [],
+  },
+  {
+    id: "barbell-shrug",
+    name: "Barbell Shrug",
+    primaryMuscle: "traps",
+    type: "isolation",
+    equipment: "barbell",
+    secondaryMuscles: [{ muscle: "forearms", factor: 0.2 }],
+  },
+  {
+    id: "barbell-bent-over-shrug",
+    name: "Barbell Bent Over Shrug",
+    primaryMuscle: "traps",
+    type: "isolation",
+    equipment: "barbell",
+    secondaryMuscles: [{ muscle: "rear_delts", factor: 0.2 }],
+  },
+  {
+    id: "dumbbell-shrug",
+    name: "Dumbbell Shrug",
+    primaryMuscle: "traps",
+    type: "isolation",
+    equipment: "dumbbell",
+    secondaryMuscles: [{ muscle: "forearms", factor: 0.2 }],
+  },
+  {
+    id: "dumbbell-bent-over-shrug",
+    name: "Dumbbell Bent Over Shrug",
+    primaryMuscle: "traps",
+    type: "isolation",
+    equipment: "dumbbell",
+    secondaryMuscles: [{ muscle: "rear_delts", factor: 0.2 }],
   },
 
   // ─────────────────────────────────────────────
@@ -830,6 +1102,22 @@ export const EXERCISE_LIBRARY: ExerciseDefinition[] = [
     tier: "A",
     secondaryMuscles: [],
   },
+  {
+    id: "close-stance-feet-forward-squats",
+    name: "Close Stance Feet Forward Squats",
+    primaryMuscle: "quads",
+    type: "compound",
+    equipment: "machine",
+    secondaryMuscles: [{ muscle: "glutes", factor: 0.3 }],
+  },
+  {
+    id: "machine-feet-forward-squat",
+    name: "Machine Feet Forward Squat",
+    primaryMuscle: "quads",
+    type: "compound",
+    equipment: "machine",
+    secondaryMuscles: [{ muscle: "glutes", factor: 0.2 }],
+  },
 
   // ─────────────────────────────────────────────
   // HAMSTRINGS
@@ -901,6 +1189,25 @@ export const EXERCISE_LIBRARY: ExerciseDefinition[] = [
     equipment: "dumbbell",
     tier: "A",
     secondaryMuscles: [{ muscle: "glutes", factor: 0.5 }],
+  },
+  {
+    id: "stiff-legged-deadlift",
+    name: "Stiff-Legged Deadlift",
+    primaryMuscle: "hamstrings",
+    type: "compound",
+    equipment: "barbell",
+    secondaryMuscles: [
+      { muscle: "glutes", factor: 0.5 },
+      { muscle: "back", factor: 0.3 },
+    ],
+  },
+  {
+    id: "single-leg-leg-curl",
+    name: "Single-Leg Leg Curl",
+    primaryMuscle: "hamstrings",
+    type: "isolation",
+    equipment: "machine",
+    secondaryMuscles: [],
   },
 
   // ─────────────────────────────────────────────
@@ -1002,6 +1309,86 @@ export const EXERCISE_LIBRARY: ExerciseDefinition[] = [
     tier: "A",
     secondaryMuscles: [{ muscle: "quads", factor: 0.5 }],
   },
+  {
+    id: "barbell-walking-lunge",
+    name: "Barbell Walking Lunge",
+    primaryMuscle: "glutes",
+    type: "compound",
+    equipment: "barbell",
+    secondaryMuscles: [
+      { muscle: "quads", factor: 0.5 },
+      { muscle: "hamstrings", factor: 0.3 },
+    ],
+  },
+  {
+    id: "sumo-squat",
+    name: "Sumo Squat",
+    primaryMuscle: "glutes",
+    type: "compound",
+    equipment: "barbell",
+    secondaryMuscles: [
+      { muscle: "quads", factor: 0.5 },
+      { muscle: "hamstrings", factor: 0.2 },
+    ],
+  },
+  {
+    id: "deficit-deadlift",
+    name: "Deficit Deadlift",
+    primaryMuscle: "glutes",
+    type: "compound",
+    equipment: "barbell",
+    secondaryMuscles: [
+      { muscle: "hamstrings", factor: 0.5 },
+      { muscle: "back", factor: 0.4 },
+    ],
+  },
+  {
+    id: "25s-deadlift",
+    name: "25's Deadlift",
+    primaryMuscle: "glutes",
+    type: "compound",
+    equipment: "barbell",
+    secondaryMuscles: [
+      { muscle: "hamstrings", factor: 0.5 },
+      { muscle: "back", factor: 0.4 },
+    ],
+  },
+  {
+    id: "sumo-deadlift",
+    name: "Sumo Deadlift",
+    primaryMuscle: "glutes",
+    type: "compound",
+    equipment: "barbell",
+    secondaryMuscles: [
+      { muscle: "hamstrings", factor: 0.4 },
+      { muscle: "quads", factor: 0.3 },
+      { muscle: "back", factor: 0.3 },
+    ],
+  },
+  {
+    id: "deadlift",
+    name: "Deadlift",
+    primaryMuscle: "glutes",
+    type: "compound",
+    equipment: "barbell",
+    secondaryMuscles: [
+      { muscle: "hamstrings", factor: 0.5 },
+      { muscle: "back", factor: 0.5 },
+      { muscle: "quads", factor: 0.2 },
+    ],
+  },
+  {
+    id: "hex-bar-deadlift",
+    name: "Hex Bar Deadlift",
+    primaryMuscle: "glutes",
+    type: "compound",
+    equipment: "barbell",
+    secondaryMuscles: [
+      { muscle: "hamstrings", factor: 0.4 },
+      { muscle: "quads", factor: 0.4 },
+      { muscle: "back", factor: 0.3 },
+    ],
+  },
 
   // ─────────────────────────────────────────────
   // CALVES
@@ -1031,6 +1418,22 @@ export const EXERCISE_LIBRARY: ExerciseDefinition[] = [
     type: "isolation",
     equipment: "machine",
     tier: "A",
+    secondaryMuscles: [],
+  },
+  {
+    id: "stair-calves",
+    name: "Stair Calves",
+    primaryMuscle: "calves",
+    type: "isolation",
+    equipment: "bodyweight",
+    secondaryMuscles: [],
+  },
+  {
+    id: "smith-machine-calves",
+    name: "Smith Machine Calves",
+    primaryMuscle: "calves",
+    type: "isolation",
+    equipment: "smith_machine",
     secondaryMuscles: [],
   },
 
@@ -1153,6 +1556,46 @@ export const EXERCISE_LIBRARY: ExerciseDefinition[] = [
     tier: "A",
     secondaryMuscles: [],
   },
+  {
+    id: "close-grip-barbell-curl",
+    name: "Close Grip Barbell Curl",
+    primaryMuscle: "biceps",
+    type: "isolation",
+    equipment: "barbell",
+    secondaryMuscles: [],
+  },
+  {
+    id: "2-arm-dumbbell-curl",
+    name: "2-Arm Dumbbell Curl",
+    primaryMuscle: "biceps",
+    type: "isolation",
+    equipment: "dumbbell",
+    secondaryMuscles: [],
+  },
+  {
+    id: "dummbell-twist-curl",
+    name: "Dummbell Twist Curl",
+    primaryMuscle: "biceps",
+    type: "isolation",
+    equipment: "dumbbell",
+    secondaryMuscles: [],
+  },
+  {
+    id: "alternating-dumbbell-curl",
+    name: "Alternating Dumbbell Curl",
+    primaryMuscle: "biceps",
+    type: "isolation",
+    equipment: "dumbbell",
+    secondaryMuscles: [],
+  },
+  {
+    id: "cable-rope-twist-curl",
+    name: "Cable Rope Twist Curl",
+    primaryMuscle: "biceps",
+    type: "isolation",
+    equipment: "cable",
+    secondaryMuscles: [],
+  },
 
   // ─────────────────────────────────────────────
   // TRICEPS
@@ -1248,6 +1691,57 @@ export const EXERCISE_LIBRARY: ExerciseDefinition[] = [
       { muscle: "front_delts", factor: 0.5 },
     ],
   },
+  {
+    id: "ez-bar-overhead-tricep-extension",
+    name: "EZ Bar Overhead Tricep Extension",
+    primaryMuscle: "triceps",
+    type: "isolation",
+    equipment: "barbell",
+    secondaryMuscles: [],
+  },
+  {
+    id: "barbell-overhead-tricep-extension",
+    name: "Barbell Overhead Tricep Extension",
+    primaryMuscle: "triceps",
+    type: "isolation",
+    equipment: "barbell",
+    secondaryMuscles: [],
+  },
+  {
+    id: "seated-ez-bar-overhead-tricep-extension",
+    name: "Seated EZ Bar Overhead Tricep Extension",
+    primaryMuscle: "triceps",
+    type: "isolation",
+    equipment: "barbell",
+    secondaryMuscles: [],
+  },
+  {
+    id: "seated-barbell-overhead-tricep-extension",
+    name: "Seated Barbell Overhead Tricep Extension",
+    primaryMuscle: "triceps",
+    type: "isolation",
+    equipment: "barbell",
+    secondaryMuscles: [],
+  },
+  {
+    id: "jm-press",
+    name: "JM Press",
+    primaryMuscle: "triceps",
+    type: "compound",
+    equipment: "barbell",
+    secondaryMuscles: [{ muscle: "chest", factor: 0.3 }],
+  },
+  {
+    id: "assisted-dips",
+    name: "Assisted Dips",
+    primaryMuscle: "triceps",
+    type: "compound",
+    equipment: "machine",
+    secondaryMuscles: [
+      { muscle: "chest", factor: 0.4 },
+      { muscle: "front_delts", factor: 0.2 },
+    ],
+  },
 
   // ─────────────────────────────────────────────
   // ABS
@@ -1293,6 +1787,54 @@ export const EXERCISE_LIBRARY: ExerciseDefinition[] = [
     type: "compound",
     equipment: "bodyweight",
     tier: "S",
+    secondaryMuscles: [],
+  },
+  {
+    id: "machine-crunch",
+    name: "Machine Crunch",
+    primaryMuscle: "abs",
+    type: "isolation",
+    equipment: "machine",
+    secondaryMuscles: [],
+  },
+  {
+    id: "slant-board-sit-up",
+    name: "Slant Board Sit-Up",
+    primaryMuscle: "abs",
+    type: "isolation",
+    equipment: "bodyweight",
+    secondaryMuscles: [],
+  },
+  {
+    id: "reaching-sit-up",
+    name: "Reaching Sit-Up",
+    primaryMuscle: "abs",
+    type: "isolation",
+    equipment: "bodyweight",
+    secondaryMuscles: [],
+  },
+  {
+    id: "v-up",
+    name: "V-Up",
+    primaryMuscle: "abs",
+    type: "isolation",
+    equipment: "bodyweight",
+    secondaryMuscles: [],
+  },
+  {
+    id: "modified-candlestick",
+    name: "Modified Candlestick",
+    primaryMuscle: "abs",
+    type: "isolation",
+    equipment: "bodyweight",
+    secondaryMuscles: [],
+  },
+  {
+    id: "hanging-knee-raise",
+    name: "Hanging Knee Raise",
+    primaryMuscle: "abs",
+    type: "isolation",
+    equipment: "bodyweight",
     secondaryMuscles: [],
   },
 

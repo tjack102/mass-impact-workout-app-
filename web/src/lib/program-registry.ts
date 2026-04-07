@@ -6,6 +6,21 @@ import { RAMPAGE_PROGRAM, getRampageDayTemplate } from "./program-data-rampage";
 import { UPPER_LOWER_PROGRAM, getUpperLowerDayTemplate } from "./program-data-upper-lower";
 import { getHersDayTemplate } from "./program-data-hers";
 import { getMinimalistDayTemplate } from "./program-data-nippard-minimalist";
+import type { RpProgramState } from "./rp-types";
+import type { RpTemplate } from "./rp-types";
+import { RP_TEMPLATE_NF3 } from "./rp-template-nf3";
+import { RP_TEMPLATE_NF4 } from "./rp-template-nf4";
+import { RP_TEMPLATE_NA4 } from "./rp-template-na4";
+import { RP_TEMPLATE_NC4 } from "./rp-template-nc4";
+import {
+  getWeekWeight,
+  getDeloadWeight,
+  getCurrentSets,
+  getDeloadSets,
+  getRirTarget,
+  isDeloadWeek,
+  getMesoRestSeconds,
+} from "./rp-engine";
 import type { ProgramMeta } from "./types";
 import type { HouseholdUser } from "./household-profiles";
 
@@ -101,6 +116,46 @@ export const PROGRAM_REGISTRY: ProgramMeta[] = [
     hasAutoRegulation: true,
     hasVolumeTracking: true,
   },
+  {
+    id: "rp-nf3",
+    name: "RP Full Body 3-Day",
+    profile: "both",
+    daysPerCycle: 3,
+    cycleLength: 13,
+    periodizationType: "auto-regulated",
+    hasAutoRegulation: true,
+    hasVolumeTracking: true,
+  },
+  {
+    id: "rp-nf4",
+    name: "RP Full Body 4-Day",
+    profile: "both",
+    daysPerCycle: 4,
+    cycleLength: 13,
+    periodizationType: "auto-regulated",
+    hasAutoRegulation: true,
+    hasVolumeTracking: true,
+  },
+  {
+    id: "rp-na4",
+    name: "RP Arms-Focus 4-Day",
+    profile: "both",
+    daysPerCycle: 4,
+    cycleLength: 13,
+    periodizationType: "auto-regulated",
+    hasAutoRegulation: true,
+    hasVolumeTracking: true,
+  },
+  {
+    id: "rp-nc4",
+    name: "RP Chest/Back 4-Day",
+    profile: "both",
+    daysPerCycle: 4,
+    cycleLength: 13,
+    periodizationType: "auto-regulated",
+    hasAutoRegulation: true,
+    hasVolumeTracking: true,
+  },
 ];
 
 // Get programs available for a profile
@@ -111,6 +166,17 @@ export function getAvailablePrograms(profile: HouseholdUser): ProgramMeta[] {
 // Get program metadata by ID
 export function getProgramMeta(programId: string): ProgramMeta | undefined {
   return PROGRAM_REGISTRY.find((p) => p.id === programId);
+}
+
+// Helper to look up RP template by program ID
+function getRpTemplate(programId: string): RpTemplate | undefined {
+  switch (programId) {
+    case "rp-nf3": return RP_TEMPLATE_NF3;
+    case "rp-nf4": return RP_TEMPLATE_NF4;
+    case "rp-na4": return RP_TEMPLATE_NA4;
+    case "rp-nc4": return RP_TEMPLATE_NC4;
+    default: return undefined;
+  }
 }
 
 // Get exercises for a specific program/day/week, adapted to ProgramExercise[]
@@ -212,6 +278,10 @@ export function getExercisesForDay(
       supersetGroup: ex.supersetGroup,
     } satisfies ProgramExercise));
   }
+  if (programId.startsWith("rp-")) {
+    // RP programs use getRpExercisesForDay() instead -- called by today-screen directly
+    return [];
+  }
   return [];
 }
 
@@ -241,10 +311,112 @@ export function getDayTitle(programId: string, dayNumber: number): string {
   if (programId.startsWith("hers-")) {
     return getHersDayTemplate(programId, dayNumber)?.title ?? `Day ${dayNumber}`;
   }
+  if (programId.startsWith("rp-")) {
+    const template = getRpTemplate(programId);
+    return template?.dayTitles[dayNumber - 1] ?? `Day ${dayNumber}`;
+  }
   return `Day ${dayNumber}`;
 }
 
 // Get total days in cycle for a program
 export function getDaysInCycle(programId: string): number {
   return getProgramMeta(programId)?.daysPerCycle ?? 5;
+}
+
+/**
+ * Build ProgramExercise[] for an RP program day.
+ * Pure function -- caller passes rpState from localStorage.
+ */
+export function getRpExercisesForDay(
+  templateId: string,
+  dayNumber: number,
+  rpState: RpProgramState,
+): ProgramExercise[] {
+  const template = getRpTemplate(templateId);
+  if (!template) return [];
+
+  const meso = rpState.currentMeso;
+  const week = rpState.currentWeek;
+  const deload = isDeloadWeek(meso, week);
+  const restRange = getMesoRestSeconds(meso);
+  const daySlots = template.slots.filter(s => s.dayNumber === dayNumber);
+
+  // Build superset group map: for each slot that has supersetWith, group them
+  const supersetMap = new Map<string, string>();
+  let ssCounter = 0;
+  for (const slot of daySlots) {
+    if (slot.supersetWith && meso === "metabolite") {
+      const partnerId = slot.supersetWith;
+      // Check if partner already has a group
+      const existingGroup = supersetMap.get(partnerId);
+      if (existingGroup) {
+        supersetMap.set(slot.slotId, existingGroup);
+      } else {
+        ssCounter++;
+        const group = `ss-${ssCounter}`;
+        supersetMap.set(slot.slotId, group);
+        supersetMap.set(partnerId, group);
+      }
+    }
+  }
+
+  // Determine order labels -- supersets get A/B suffixes
+  const orderLabels: string[] = [];
+  let labelNum = 0;
+  const assignedGroups = new Map<string, { num: number; nextSuffix: string }>();
+  for (const slot of daySlots) {
+    const ssGroup = supersetMap.get(slot.slotId);
+    if (ssGroup) {
+      const existing = assignedGroups.get(ssGroup);
+      if (existing) {
+        orderLabels.push(`${existing.num}${existing.nextSuffix}`);
+        existing.nextSuffix = String.fromCharCode(existing.nextSuffix.charCodeAt(0) + 1);
+      } else {
+        labelNum++;
+        orderLabels.push(`${labelNum}A`);
+        assignedGroups.set(ssGroup, { num: labelNum, nextSuffix: "B" });
+      }
+    } else {
+      labelNum++;
+      orderLabels.push(String(labelNum));
+    }
+  }
+
+  const exercises: ProgramExercise[] = [];
+  let orderNum = 1;
+
+  for (let i = 0; i < daySlots.length; i++) {
+    const slot = daySlots[i];
+    const sel = rpState.selections[slot.slotId];
+    if (!sel) continue;
+
+    // Detect if this is a superset secondary (its supersetWith partner is in a lower order position)
+    const isSupersetSecondary = !!(slot.supersetWith &&
+      daySlots.findIndex(s => s.slotId === slot.supersetWith) < i);
+
+    const sets = deload
+      ? getDeloadSets()
+      : getCurrentSets(slot, meso, week, rpState.ratings);
+
+    const weight = deload
+      ? getDeloadWeight(sel.tenRepMax, meso, i >= daySlots.length / 2)
+      : getWeekWeight(sel.tenRepMax, meso, week, isSupersetSecondary);
+
+    const rir = getRirTarget(week, deload);
+
+    exercises.push({
+      order: orderNum,
+      orderLabel: orderLabels[i],
+      name: sel.exerciseName,
+      setGroups: [{ sets, reps: `${rir}` }],
+      restSeconds: restRange.min,
+      prescribedWeight: weight,
+      rirTarget: rir,
+      supersetGroup: supersetMap.get(slot.slotId),
+    });
+
+    orderNum++;
+  }
+
+  return exercises;
 }

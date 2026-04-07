@@ -12,6 +12,8 @@ export type ProgramExercise = {
   // Used by programs with paired exercises (e.g. "1A"/"1B"). Mass Impact doesn't use this.
   supersetGroup?: string;
   notes?: string;
+  prescribedWeight?: number;  // calculated weight suggestion for RP programs
+  rirTarget?: string;         // e.g. "3/fail", "2/fail", "1/fail"
 };
 
 export type ProgramDay = {

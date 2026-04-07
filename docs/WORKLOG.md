@@ -291,24 +291,196 @@ Create `web/src/lib/rp-template-na4.ts` and `rp-template-nc4.ts` from N_A_4.xlsx
 
 ---
 
+## 2026-04-06 -- RP Program Integration (Task 1+2) -- COMPLETE
+
+### Goal
+Integrate 4 RP programs (NF3, NF4, NA4, NC4) into the app by:
+1. Adding prescribedWeight and rirTarget to ProgramExercise type
+2. Registering 4 RP programs in PROGRAM_REGISTRY
+3. Adding getRpExercisesForDay() function to program-registry.ts
+
+### Files Modified
+- `web/src/lib/program-data.ts` -- added prescribedWeight?, rirTarget? to ProgramExercise type
+- `web/src/lib/program-registry.ts` -- 4 RP entries, getRpExercisesForDay() export, getRpTemplate() helper, RP handling in getExercisesForDay() and getDayTitle()
+
+### What Was Done
+- [x] Added prescribedWeight (weight suggestion) and rirTarget (RIR description) to ProgramExercise type
+- [x] Added 4 RP program registry entries: rp-nf3, rp-nf4, rp-na4, rp-nc4 (all "both" profiles, 13-week cycle)
+- [x] Added getRpTemplate() helper -- maps program ID to RpTemplate (NF3/NF4/NA4/NC4)
+- [x] Added getRpExercisesForDay() pure function (exported):
+  - Takes templateId, dayNumber, and rpState (from localStorage)
+  - Builds superset group map (supersets active only in metabolite meso)
+  - Generates order labels (numeric for normal exercises, A/B suffixes for supersets)
+  - Builds ProgramExercise[] with:
+    * Prescribed weight from rp-engine functions (respects meso, week, superset secondary status)
+    * RIR target from rp-engine (3/fail -> 2/fail -> 1/fail progression)
+    * Set count from rp-engine (autoregulated or fixed per leg muscles)
+    * Rest seconds from meso type (short for metabolite, long for basic/resensitization)
+- [x] Added RP handling to getExercisesForDay() -- returns empty array for RP (caller uses getRpExercisesForDay directly)
+- [x] Added RP handling to getDayTitle() -- looks up title from template.dayTitles
+- [x] TypeScript: 0 errors (`npx tsc --noEmit`)
+- [x] Vitest: 177/177 passing
+
+### Key Design Notes
+- RP programs return [] from getExercisesForDay() because they need rpState (from localStorage) passed directly via getRpExercisesForDay()
+- Non-RP programs use getExercisesForDay(templateId, dayNumber, weekNumber)
+- RP programs use getRpExercisesForDay(templateId, dayNumber, rpState)
+- Superset groups only apply in metabolite meso (Meso 2)
+- Order numbering resets per day; superset pairs share a number with A/B suffix
+
+---
+
+## 2026-04-06 -- RP Mesocycle Setup Screen -- COMPLETE
+
+### Goal
+Create `web/src/components/screens/rp-setup-screen.tsx` component for initial RP program configuration.
+
+### What Was Done
+- [x] Created RpSetupScreen component with full props interface
+- [x] Implemented mesocycle selection UI (Basic/Metabolite/Resensitization descriptions)
+- [x] Implemented exercise picker dropdowns (per slot, from getRpExercisesForCategory)
+- [x] Implemented 10RM input with number validation
+- [x] Implemented Epley formula estimation calculator (weight + reps -> 10RM)
+- [x] Implemented state management (selections, estimator UI, form validation)
+- [x] Implemented active slot filtering (only slots with baseSets[meso] > 0)
+- [x] Implemented form completion check (all active slots must have exerciseName + tenRepMax > 0)
+- [x] Implemented onComplete callback building full RpProgramState
+- [x] Styled with existing CSS variables, design tokens, inline styles
+- [x] TypeScript: 0 errors (`npx tsc --noEmit`)
+
+### Component Features
+- Groups exercises by day with day titles from template
+- Shows category label + (fixed sets) indicator for non-autoregulated muscles
+- Estimation calculator with collapsible UI (toggle button)
+- Submit button disabled until all active slots complete
+- Pre-fills selections from carryForward prop (for mesocycle transitions)
+- Only includes active slots in final RpProgramState
+
+### New File
+- `web/src/components/screens/rp-setup-screen.tsx`
+
+---
+
+## 2026-04-06 -- Add 58 Missing RP Exercises -- COMPLETE
+
+### Goal
+Add 58 missing exercises to exercise-library.ts that are required by RP (Renaissance Periodization) program templates. These exercises were already listed in rp-exercise-library.ts as "Unmatched" and needed canonical definitions to be used in the RP engine.
+
+### What Was Done
+Added 58 new ExerciseDefinition entries organized by muscle group sections:
+
+**BACK section (7):** Underhand EZ Bar Row, Row to Chest, 2-Arm Dumbbell Row, Row Machine, Assisted Overhand Pullup, Assisted Parallel Pullup, Assisted Underhand Pullup
+
+**CHEST section (9):** Flat Dumbbell Flye, High Cable Flye, Cable Incline Flye, Wide Grip Bench Press, Pushup, Close Grip Pushup, Incline Wide Grip Bench Press, Incline Close Grip Bench Press, Incline Machine Bench Press
+
+**SIDE DELTS section (2):** Dumbbell Upright Row, Thumbs Down Lateral Raise
+
+**REAR DELTS section (2):** Barbell Facepull, Dumbbell Facepull
+
+**FRONT DELTS section (4):** Standing Barbell Shoulder Press, Seated Barbell Shoulder Press, High Incline Dumbbell Press, Standing Dumbbell Shoulder Press
+
+**TRAPS section (4):** Barbell Shrug, Barbell Bent Over Shrug, Dumbbell Shrug, Dumbbell Bent Over Shrug
+
+**QUADS section (2):** Close Stance Feet Forward Squats, Machine Feet Forward Squat
+
+**HAMSTRINGS section (2):** Stiff-Legged Deadlift, Single-Leg Leg Curl
+
+**GLUTES section (7):** Barbell Walking Lunge, Sumo Squat, Deficit Deadlift, 25's Deadlift, Sumo Deadlift, Deadlift, Hex Bar Deadlift
+
+**BICEPS section (5):** Close Grip Barbell Curl, 2-Arm Dumbbell Curl, Dummbell Twist Curl, Alternating Dumbbell Curl, Cable Rope Twist Curl
+
+**TRICEPS section (6):** EZ Bar Overhead Tricep Extension, Barbell Overhead Tricep Extension, Seated EZ Bar Overhead Tricep Extension, Seated Barbell Overhead Tricep Extension, JM Press, Assisted Dips
+
+**CALVES section (2):** Stair Calves, Smith Machine Calves
+
+**ABS section (6):** Machine Crunch, Slant Board Sit-Up, Reaching Sit-Up, V-Up, Modified Candlestick, Hanging Knee Raise
+
+### Changes Made
+- `web/src/lib/exercise-library.ts` -- added 58 ExerciseDefinition entries with correct:
+  - `id` (kebab-case from name)
+  - `name` (exact from RP list, including "Dummbell" typo)
+  - `primaryMuscle` (correct muscle group)
+  - `type` ("compound" or "isolation")
+  - `equipment` (barbell, dumbbell, cable, machine, bodyweight, smith_machine)
+  - `secondaryMuscles` (based on exercise mechanics, using RP conventions)
+
+### Verification
+- TypeScript: 0 errors (`npx tsc --noEmit src/lib/exercise-library.ts`)
+- All 58 exercises verified in file via grep (spot checks on all categories)
+- Exercise library now has 197 total exercises (up from 139)
+
+### Files Modified
+- `web/src/lib/exercise-library.ts` -- inserted 58 new exercises in correct muscle group sections
+
+---
+
+## 2026-04-06 -- RP Integration into Today Screen -- COMPLETE
+
+### Goal
+Integrate RP program support into today-screen.tsx so users can:
+1. See RpSetupScreen when RP program selected with no active state
+2. View prescribed weights + RIR targets in Live Console
+3. Log recovery ratings inline after completing autoregulated exercises
+4. Skip exercises (0 sets) marked with "recovery needed" visual
+5. Auto-advance weeks and trigger meso transitions after deload completion
+
+### What Was Done
+- [x] Added imports: rp-store, program-registry getRpExercisesForDay, RpSetupScreen, rp-engine functions, rp template files, rp-types
+- [x] Extended QueueExercise type: added prescribedWeight?, rirTarget?, rpSlotId?
+- [x] Added getRpTemplateById() helper to map program ID to template object
+- [x] Added RP state management: rpState, rpRatedSlots (Set), rpMesoComplete, rpCarryForward
+- [x] Updated exercises memo to call getRpExercisesForDay() for RP programs
+- [x] Added rpDaySlots memo to filter template slots by current day
+- [x] Propagated RP fields in queueExercises memo: prescribedWeight, rirTarget, rpSlotId (from rpDaySlots)
+- [x] Reset rpRatedSlots in applyDaySelection (when user switches days)
+- [x] Added RP week/meso progression in finalizeCompletion: week advance on last day, meso transition when week >= mesoWeeks, macrocycle completion message
+- [x] Added early return for RpSetupScreen (before main JSX): shown when isRpProgram && (!rpState || rpMesoComplete)
+- [x] Added prescribed weight display in Live Console (below scheme, monospace, cyan)
+- [x] Added RIR badge in Live Console (orange, shows "RIR: X" from rirTarget)
+- [x] Added inline recovery rating UI after logged sets (only for autoregulated slots, not deload weeks, only after all sets logged, shows +1/0/-1 buttons)
+- [x] Modified RecoveryRatingPrompt condition: only shown for non-RP programs
+- [x] Added greyed-out styling for skipped exercises (targetSets === 0): opacity 0.4, overlay "Skipped -- recovery needed"
+- [x] TypeScript: 0 errors (`npx tsc --noEmit`)
+- [x] Vitest: 177/177 passing
+
+### Key Implementation Details
+- RP setup screen early return prevents workout UI from rendering until meso state exists
+- rpRatedSlots tracks slots already rated in current session to prevent duplicate ratings
+- Week advancement happens auto on last day of week, meso transition shows prompt to set up new meso
+- Prescribed weights calculated by getRpExercisesForDay (respects meso, week, 10RM, autoregulation)
+- RIR target shows "3/fail" -> "2/fail" -> "1/fail" or fixed for non-autoregulated muscles
+- Recovery rating UI appears only after all target sets logged for autoregulated exercises
+- Skipped exercises (0 sets) show visual indicator + reduced opacity to clearly indicate recovery week
+
+### Files Modified
+- `web/src/components/screens/today-screen.tsx` -- entire RP integration (1,700+ lines)
+
+### Verification
+- TypeScript: 0 errors
+- Vitest: 177/177 passing
+- No tests broken by changes
+
+---
+
 ## HANDOFF
 
 ### Current State
 - **Working:** Everything deployed at https://web-blush-phi.vercel.app
-- **Working:** Exercise library at 139 exercises
-- **Working:** 51/51 tests, 0 TypeScript errors
-- **Working:** lucide-react installed, icons.tsx created (Task 1 of UX/UI overhaul)
-- **Working:** confirm-dialog.tsx created (Task 4 of UX/UI overhaul)
-- **Working:** tabs.tsx created + tab CSS added (Task 5 of UX/UI overhaul)
-- **Working:** Global CSS foundation added (Task 2 of UX/UI overhaul)
-- **Working:** App shell redesigned with 5-item nav + SVG icons (Task 3)
-- **Working:** Volume merged into Progress as tabbed screen (Task 6)
+- **Working:** Exercise library at 197 exercises
+- **Working:** 177/177 tests, 0 TypeScript errors
+- **Working:** RP programs (NF3, NF4, NA4, NC4) fully integrated into today-screen.tsx
+- **Working:** RpSetupScreen shown on first RP program launch
+- **Working:** Prescribed weights, RIR targets, recovery ratings, week/meso advancement
 - **Broken:** Nothing known
 
 ### Next Steps
-1. Continue UX/UI overhaul -- remaining tasks per `docs/superpowers/plans/2026-04-02-ux-ui-overhaul.md`
-2. Commit completed tasks when ready
+1. Test RP workflow end-to-end (select program, setup, log workout, rate recovery, check week advance)
+2. Verify meso transitions trigger correctly and carryForward works
+3. Test skipped exercise display and week auto-advance
+4. Deploy to Vercel for live testing
 
 ### Context
-- UX/UI overhaul plan: `docs/superpowers/plans/2026-04-02-ux-ui-overhaul.md`
-- Nippard Minimalist plan is at `docs/superpowers/plans/2026-04-02-nippard-minimalist.md`
+- All 4 RP templates ready with exercise slot data
+- Engine functions produce correct weights/reps/sets based on 10RM, meso, week, ratings
+- RpSetupScreen collects initial exercise selection and 10RM per slot
+- Today-screen now handles full RP workflow: setup -> logging -> rating -> week advance -> meso transition

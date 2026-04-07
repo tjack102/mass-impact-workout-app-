@@ -41,7 +41,17 @@ import {
   type WorkoutSession,
 } from "@/lib/workout-store";
 import { RecoveryRatingPrompt } from "@/components/recovery-rating-prompt";
+import { RpSetupScreen } from "./rp-setup-screen";
 import { findExercise, EXERCISE_LIBRARY } from "@/lib/exercise-library";
+import { getRpState, saveRpState, addRating, clearRpState } from "@/lib/rp-store";
+import { getRpExercisesForDay } from "@/lib/program-registry";
+import type { RpProgramState, RpMesoType } from "@/lib/rp-types";
+import { isDeloadWeek, getNextMeso, getMesoWeeks } from "@/lib/rp-engine";
+import { RP_TEMPLATE_NF3 } from "@/lib/rp-template-nf3";
+import { RP_TEMPLATE_NF4 } from "@/lib/rp-template-nf4";
+import { RP_TEMPLATE_NA4 } from "@/lib/rp-template-na4";
+import { RP_TEMPLATE_NC4 } from "@/lib/rp-template-nc4";
+import type { RpTemplate, RpExerciseSlot } from "@/lib/rp-types";
 import { TRACKED_MUSCLES, type MuscleGroup, type ExerciseDefinition } from "@/lib/types";
 import { getPermanentSub, setPermanentSub } from "@/lib/exercise-substitutions";
 import { getExerciseUrl, setExerciseUrl, clearExerciseUrl } from "@/lib/exercise-url-store";
@@ -88,6 +98,9 @@ type QueueExercise = {
   supersetGroup?: string;
   notes?: string;
   exrxUrl?: string;
+  prescribedWeight?: number;
+  rirTarget?: string;
+  rpSlotId?: string;
 };
 
 function formatElapsed(seconds: number): string {
@@ -174,6 +187,16 @@ function clampDayPrefs(prefs: UserPrefs, daysPerCycle: number, totalWeeks: numbe
   };
 }
 
+function getRpTemplateById(id: string): RpTemplate | undefined {
+  switch (id) {
+    case "rp-nf3": return RP_TEMPLATE_NF3;
+    case "rp-nf4": return RP_TEMPLATE_NF4;
+    case "rp-na4": return RP_TEMPLATE_NA4;
+    case "rp-nc4": return RP_TEMPLATE_NC4;
+    default: return undefined;
+  }
+}
+
 export function TodayScreen() {
   const router = useRouter();
   const { ownerPinEnabled, ownerUnlocked, activeUser } = useAccess();
@@ -233,6 +256,18 @@ export function TodayScreen() {
   // URL editor state for adding demo links from today screen
   const [urlEditName, setUrlEditName] = useState<string | null>(null);
   const [urlDraft, setUrlDraft] = useState("");
+
+  // RP program state
+  const isRpProgram = programId.startsWith("rp-");
+  const [rpState, setRpState] = useState<RpProgramState | null>(() =>
+    isRpProgram ? getRpState(activeUser) : null
+  );
+  // Track which exercises have been rated this session
+  const [rpRatedSlots, setRpRatedSlots] = useState<Set<string>>(new Set());
+  // Meso transition state
+  const [rpMesoComplete, setRpMesoComplete] = useState(false);
+  const [rpCarryForward, setRpCarryForward] = useState<Record<string, { exerciseName: string; tenRepMax: number }> | undefined>();
+
   useEffect(() => {
     const handler = () => setUrlVersion((v) => v + 1);
     window.addEventListener("exercise-urls-loaded", handler);
@@ -249,8 +284,18 @@ export function TodayScreen() {
     if (programId === "mass-impact") {
       return programDay?.exercises ?? [];
     }
+    if (isRpProgram && rpState) {
+      return getRpExercisesForDay(programId, prefs.currentDay, rpState);
+    }
     return getExercisesForDay(programId, prefs.currentDay, prefs.currentWeek);
-  }, [programId, programDay, prefs.currentDay, prefs.currentWeek]);
+  }, [programId, programDay, prefs.currentDay, prefs.currentWeek, isRpProgram, rpState]);
+
+  const rpDaySlots = useMemo<RpExerciseSlot[]>(() => {
+    if (!isRpProgram) return [];
+    const template = getRpTemplateById(programId);
+    if (!template) return [];
+    return template.slots.filter(s => s.dayNumber === prefs.currentDay);
+  }, [isRpProgram, programId, prefs.currentDay]);
 
   const matchingActiveSession =
     activeSession && activeSession.weekNumber === prefs.currentWeek && activeSession.dayNumber === prefs.currentDay
@@ -316,10 +361,13 @@ export function TodayScreen() {
         supersetGroup: exercise.supersetGroup,
         notes: exercise.notes,
         exrxUrl: getExerciseUrl(resolvedName),
+        prescribedWeight: exercise.prescribedWeight,
+        rirTarget: exercise.rirTarget,
+        rpSlotId: rpDaySlots[index]?.slotId,
       };
     });
   // eslint-disable-next-line react-hooks/exhaustive-deps -- subVersion/urlVersion are intentional cache-busters
-  }, [exercises, matchingActiveSession, prefs.activeUser, prefs.currentDay, prefs.currentWeek, sessionHistory, programId, subVersion, urlVersion]);
+  }, [exercises, matchingActiveSession, prefs.activeUser, prefs.currentDay, prefs.currentWeek, sessionHistory, programId, subVersion, urlVersion, rpDaySlots]);
 
   const safeActiveIndex =
     queueExercises.length === 0 ? 0 : Math.min(activeIndex, Math.max(0, queueExercises.length - 1));
@@ -482,6 +530,7 @@ export function TodayScreen() {
       setExerciseRestSeconds(0);
       setTemplateEditorOpen(false);
       setOverrideEditorOpen(false);
+      setRpRatedSlots(new Set());
       stopTimer();
 
       // Get first exercise for the next day to pre-set the template draft and rest timer
@@ -692,7 +741,36 @@ export function TodayScreen() {
         window.setTimeout(() => setMesoNotification(null), 8000);
       }
     }
-  }, [activeUser, daysPerCycle, programMeta]);
+
+    // RP week/meso progression
+    if (isRpProgram && rpState) {
+      const isLastDayOfWeek = prefs.currentDay === daysPerCycle;
+      if (isLastDayOfWeek) {
+        const mesoWeeks = getMesoWeeks(rpState.currentMeso);
+        if (rpState.currentWeek >= mesoWeeks) {
+          // Meso complete
+          const nextMeso = getNextMeso(rpState.currentMeso);
+          if (nextMeso) {
+            setRpCarryForward(rpState.selections);
+            clearRpState(activeUser);
+            setRpState(null);
+            setRpMesoComplete(true);
+          } else {
+            // Macrocycle done
+            clearRpState(activeUser);
+            setRpState(null);
+            setMesoNotification("Macrocycle Complete! Set up a fresh Meso 1 to start over.");
+            window.setTimeout(() => setMesoNotification(null), 10000);
+          }
+        } else {
+          // Advance to next week
+          const updated: RpProgramState = { ...rpState, currentWeek: rpState.currentWeek + 1 };
+          saveRpState(activeUser, updated);
+          setRpState(updated);
+        }
+      }
+    }
+  }, [activeUser, daysPerCycle, programMeta, isRpProgram, rpState, prefs.currentDay]);
 
   // Step 2a: User submitted ratings — save them, then complete the session.
   const handleRecoverySubmit = useCallback(
@@ -859,6 +937,26 @@ export function TodayScreen() {
     return [...muscles].filter((m) => TRACKED_MUSCLES.includes(m));
   }, [pendingCompletion]);
 
+  // RP setup screen -- shown when RP program selected but no meso state exists
+  if (isRpProgram && (!rpState || rpMesoComplete)) {
+    const nextMeso: RpMesoType = rpMesoComplete
+      ? (getNextMeso(rpState?.currentMeso ?? "basic") ?? "basic")
+      : "basic";
+    return (
+      <RpSetupScreen
+        templateId={programId}
+        meso={nextMeso}
+        carryForward={rpCarryForward}
+        onComplete={(state) => {
+          saveRpState(activeUser, state);
+          setRpState(state);
+          setRpMesoComplete(false);
+          setRpCarryForward(undefined);
+        }}
+      />
+    );
+  }
+
   return (
     <>
     <section className="screen">
@@ -981,28 +1079,46 @@ export function TodayScreen() {
 
             <div className="queue-list">
               {queueExercises.map((qe, index) => (
-                <ExerciseQueueCard
-                  key={qe.id}
-                  orderLabel={qe.orderLabel}
-                  name={qe.name}
-                  originalName={qe.originalName}
-                  scheme={qe.scheme}
-                  track={qe.track}
-                  targetSets={qe.targetSets}
-                  completedSets={qe.completedSets}
-                  lastPerformance={qe.lastPerformance}
-                  isActive={index === safeActiveIndex}
-                  onSelect={() => handleSelectExercise(index)}
-                  onSwap={() => handleOpenSwap(index)}
-                  supersetGroup={qe.supersetGroup}
-                  prFlash={index === safeActiveIndex ? prFlash : false}
-                  notes={qe.notes}
-                  exrxUrl={qe.exrxUrl}
-                  onEditUrl={() => {
-                    setUrlEditName(qe.name);
-                    setUrlDraft(getExerciseUrl(qe.name) ?? "");
-                  }}
-                />
+                <div key={qe.id} style={qe.targetSets === 0 ? { opacity: 0.4, position: "relative" } : undefined}>
+                  <ExerciseQueueCard
+                    orderLabel={qe.orderLabel}
+                    name={qe.name}
+                    originalName={qe.originalName}
+                    scheme={qe.scheme}
+                    track={qe.track}
+                    targetSets={qe.targetSets}
+                    completedSets={qe.completedSets}
+                    lastPerformance={qe.lastPerformance}
+                    isActive={index === safeActiveIndex}
+                    onSelect={() => handleSelectExercise(index)}
+                    onSwap={() => handleOpenSwap(index)}
+                    supersetGroup={qe.supersetGroup}
+                    prFlash={index === safeActiveIndex ? prFlash : false}
+                    notes={qe.notes}
+                    exrxUrl={qe.exrxUrl}
+                    onEditUrl={() => {
+                      setUrlEditName(qe.name);
+                      setUrlDraft(getExerciseUrl(qe.name) ?? "");
+                    }}
+                  />
+                  {qe.targetSets === 0 && (
+                    <div style={{
+                      position: "absolute",
+                      top: "50%",
+                      left: "50%",
+                      transform: "translate(-50%, -50%)",
+                      background: "var(--bg-1)",
+                      padding: "0.3rem 0.75rem",
+                      borderRadius: "var(--radius-sm)",
+                      fontFamily: "var(--font-ui)",
+                      fontSize: "0.8rem",
+                      color: "var(--accent-power)",
+                      whiteSpace: "nowrap",
+                    }}>
+                      Skipped -- recovery needed
+                    </div>
+                  )}
+                </div>
               ))}
             </div>
           </article>
@@ -1180,6 +1296,35 @@ export function TodayScreen() {
                     </div>
                   </div>
                 ) : null}
+
+                {/* RP prescribed weight */}
+                {activeExercise?.prescribedWeight ? (
+                  <p style={{
+                    fontFamily: "var(--font-mono)",
+                    fontSize: "0.85rem",
+                    color: "var(--accent-primary)",
+                    margin: "0.3rem 0 0",
+                  }}>
+                    Target: {activeExercise.prescribedWeight} lbs
+                  </p>
+                ) : null}
+
+                {/* RP RIR badge */}
+                {activeExercise?.rirTarget && !activeExercise.rirTarget.includes("reps") ? (
+                  <span style={{
+                    display: "inline-block",
+                    padding: "0.15rem 0.5rem",
+                    background: "var(--bg-2)",
+                    border: "1px solid var(--border)",
+                    borderRadius: "var(--radius-sm)",
+                    fontFamily: "var(--font-mono)",
+                    fontSize: "0.78rem",
+                    color: "var(--accent-power)",
+                    marginTop: "0.3rem",
+                  }}>
+                    RIR: {activeExercise.rirTarget.split("/")[0]}
+                  </span>
+                ) : null}
               </div>
             ) : null}
 
@@ -1271,6 +1416,69 @@ export function TodayScreen() {
               )}
             </section>
 
+            {/* RP inline recovery rating */}
+            {isRpProgram && activeExercise?.rpSlotId && rpState && (() => {
+              const slot = rpDaySlots.find(s => s.slotId === activeExercise.rpSlotId);
+              if (!slot?.isAutoregulated) return null;
+              if (isDeloadWeek(rpState.currentMeso, rpState.currentWeek)) return null;
+              if (rpState.currentWeek === 1 && rpState.ratings.length === 0) return null;
+              if (activeExerciseSets.length < activeExercise.targetSets) return null;
+              if (rpRatedSlots.has(activeExercise.rpSlotId)) return null;
+
+              return (
+                <div style={{
+                  padding: "0.75rem",
+                  background: "var(--bg-2)",
+                  borderRadius: "var(--radius-sm)",
+                  border: "1px solid var(--border)",
+                  marginTop: "0.5rem",
+                }}>
+                  <p className="subtle-label" style={{ marginBottom: "0.5rem" }}>
+                    Recovery Rating for {activeExercise.name}
+                  </p>
+                  <div style={{ display: "flex", gap: "0.5rem" }}>
+                    {([
+                      { value: 1 as const, label: "Recovered", desc: "Not sore, reps easy", color: "var(--accent-primary)" },
+                      { value: 0 as const, label: "Neutral", desc: "Sore, reps manageable", color: "var(--text-1)" },
+                      { value: -1 as const, label: "Struggling", desc: "Very sore, reps hard", color: "var(--accent-power)" },
+                    ]).map(opt => (
+                      <button
+                        key={opt.value}
+                        type="button"
+                        onClick={() => {
+                          addRating(activeUser, {
+                            slotId: activeExercise.rpSlotId!,
+                            week: rpState.currentWeek,
+                            meso: rpState.currentMeso,
+                            value: opt.value,
+                          });
+                          setRpState(getRpState(activeUser));
+                          setRpRatedSlots(prev => new Set([...prev, activeExercise.rpSlotId!]));
+                        }}
+                        style={{
+                          flex: 1,
+                          padding: "0.5rem",
+                          background: "var(--bg-1)",
+                          border: "1px solid var(--border)",
+                          borderRadius: "var(--radius-sm)",
+                          color: opt.color,
+                          cursor: "pointer",
+                          textAlign: "center",
+                        }}
+                      >
+                        <span style={{ display: "block", fontFamily: "var(--font-display)", fontSize: "1.1rem" }}>
+                          {opt.value > 0 ? "+1" : opt.value === 0 ? "0" : "-1"}
+                        </span>
+                        <span style={{ display: "block", fontSize: "0.75rem", fontFamily: "var(--font-ui)" }}>
+                          {opt.label}
+                        </span>
+                      </button>
+                    ))}
+                  </div>
+                </div>
+              );
+            })()}
+
             <div className="flex justify-between flex-wrap" style={{ gap: "0.55rem" }}>
               <button type="button" className="ghost-btn" onClick={() => setDraft({ weight: "", reps: "", rpe: "" })}>
                 Clear Inputs
@@ -1299,7 +1507,7 @@ export function TodayScreen() {
         </section>
       ) : null}
 
-      {pendingCompletion ? (
+      {pendingCompletion && !isRpProgram ? (
         <RecoveryRatingPrompt
           musclesTrained={musclesTrained}
           onSubmit={handleRecoverySubmit}
