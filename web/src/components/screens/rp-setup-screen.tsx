@@ -7,8 +7,10 @@ import { RP_TEMPLATE_NF4 } from "@/lib/rp-template-nf4";
 import { RP_TEMPLATE_NA4 } from "@/lib/rp-template-na4";
 import { RP_TEMPLATE_NC4 } from "@/lib/rp-template-nc4";
 import { getRpExercisesForCategory } from "@/lib/rp-exercise-library";
-import { estimateTenRepMax } from "@/lib/rp-engine";
+import { estimateTenRepMax, getRirTarget, getMesoRestSeconds } from "@/lib/rp-engine";
 import type { RpTemplate } from "@/lib/rp-types";
+
+const MESO_OPTIONS: RpMesoType[] = ["basic", "metabolite", "resensitization"];
 
 interface RpSetupScreenProps {
   templateId: string;
@@ -49,15 +51,15 @@ function getTemplate(id: string): RpTemplate | undefined {
 
 export function RpSetupScreen({
   templateId,
-  meso,
+  meso: initialMeso,
   carryForward,
   onComplete,
 }: RpSetupScreenProps) {
   const template = getTemplate(templateId);
   if (!template) return <p>Template not found</p>;
 
-  // Type assertion after guard
   const t = template as RpTemplate;
+  const [meso, setMeso] = useState<RpMesoType>(initialMeso);
 
   // State: selections keyed by slotId -> { exerciseName, tenRepMax }
   // Initialize from carryForward if provided
@@ -179,20 +181,78 @@ export function RpSetupScreen({
             margin: 0,
           }}
         >
-          {MESO_INFO[meso].title}
+          {t.name}
         </h1>
-        <p
-          className="page-note"
-          style={{ marginTop: "0.5rem" }}
-        >
-          {MESO_INFO[meso].description}
+        <p className="page-note" style={{ marginTop: "0.25rem" }}>
+          {t.daysPerWeek} days/week -- {meso === "basic" ? "5 weeks" : meso === "metabolite" ? "5 weeks" : "3 weeks"} (incl. deload)
         </p>
-        <p
-          className="page-note"
-          style={{ marginTop: "0.25rem" }}
-        >
-          {t.name} -- {t.daysPerWeek} days/week
-        </p>
+
+        {/* Meso selector */}
+        <div style={{ display: "flex", gap: "8px", marginTop: "0.75rem" }}>
+          {MESO_OPTIONS.map((m) => (
+            <button
+              key={m}
+              type="button"
+              onClick={() => setMeso(m)}
+              style={{
+                flex: 1,
+                padding: "0.5rem 0.75rem",
+                borderRadius: "8px",
+                border: "none",
+                cursor: "pointer",
+                fontFamily: "var(--font-display)",
+                fontSize: "0.85rem",
+                fontWeight: m === meso ? 700 : 400,
+                textTransform: "uppercase",
+                letterSpacing: "0.03em",
+                background: m === meso ? "var(--accent-primary)" : "var(--surface-high)",
+                color: m === meso ? "var(--bg-0)" : "var(--text-1)",
+                transition: "background 0.15s",
+              }}
+            >
+              {m === "basic" ? "1: Basic" : m === "metabolite" ? "2: Metabolite" : "3: Resensitize"}
+            </button>
+          ))}
+        </div>
+
+        {/* Meso description */}
+        <div style={{
+          marginTop: "0.75rem",
+          padding: "0.75rem",
+          background: "var(--surface-mid)",
+          borderRadius: "8px",
+        }}>
+          <p style={{
+            fontFamily: "var(--font-display)",
+            fontSize: "1rem",
+            fontWeight: 700,
+            color: "var(--text-0)",
+            margin: 0,
+          }}>
+            {MESO_INFO[meso].title}
+          </p>
+          <p className="page-note" style={{ marginTop: "0.3rem" }}>
+            {MESO_INFO[meso].description}
+          </p>
+          <div style={{ display: "flex", gap: "16px", marginTop: "0.5rem" }}>
+            <div>
+              <span className="queue-card-label">RIR TARGET</span>
+              <span className="queue-card-value" style={{ fontSize: "0.9rem" }}>{getRirTarget(1, false)}</span>
+            </div>
+            <div>
+              <span className="queue-card-label">REST</span>
+              <span className="queue-card-value" style={{ fontSize: "0.9rem" }}>
+                {(() => { const r = getMesoRestSeconds(meso); return `${Math.floor(r.min / 60)}:${String(r.min % 60).padStart(2, "0")} - ${Math.floor(r.max / 60)}:${String(r.max % 60).padStart(2, "0")}`; })()}
+              </span>
+            </div>
+            <div>
+              <span className="queue-card-label">WEIGHT</span>
+              <span className="queue-card-value" style={{ fontSize: "0.9rem" }}>
+                {meso === "basic" ? "85%" : meso === "metabolite" ? "75%" : "100%"} of 10RM
+              </span>
+            </div>
+          </div>
+        </div>
       </div>
 
       {/* For each day */}
@@ -229,23 +289,20 @@ export function RpSetupScreen({
                     borderBottom: "1px solid var(--border)",
                   }}
                 >
-                  {/* Category label */}
-                  <p
-                    className="subtle-label"
-                    style={{ marginBottom: "0.4rem" }}
-                  >
-                    {slot.muscleCategory}
-                    {!slot.isAutoregulated && (
-                      <span
-                        style={{
-                          color: "var(--accent-power)",
-                          marginLeft: "0.5rem",
-                        }}
-                      >
-                        (fixed sets)
-                      </span>
-                    )}
-                  </p>
+                  {/* Category label + set info */}
+                  <div style={{ display: "flex", justifyContent: "space-between", alignItems: "baseline", marginBottom: "0.4rem" }}>
+                    <p className="subtle-label" style={{ margin: 0 }}>
+                      {slot.muscleCategory}
+                    </p>
+                    <span style={{
+                      fontFamily: "var(--font-mono)",
+                      fontSize: "0.78rem",
+                      color: slot.isAutoregulated ? "var(--accent-primary)" : "var(--accent-power)",
+                    }}>
+                      {slot.baseSets[meso]} sets{slot.isAutoregulated ? " (auto)" : " (fixed)"}
+                      {slot.supersetWith && meso === "metabolite" ? " -- superset" : ""}
+                    </span>
+                  </div>
 
                   {/* Exercise dropdown */}
                   <select
