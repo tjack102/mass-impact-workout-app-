@@ -1685,44 +1685,6 @@ export function TodayScreen() {
         </button>
       ) : null}
 
-      <section className="runtime-tray card reveal">
-        <div>
-          <p className="subtle-label">
-            Active
-          </p>
-          <p style={{ margin: "0.2rem 0 0" }}>{activeExercise?.name ?? "Workout complete"}</p>
-        </div>
-        <div className="flex items-center flex-wrap" style={{ gap: "0.55rem" }}>
-          <div className="stats-row">
-            <SessionStatPill label="Workout Time" value={formatDuration(workoutElapsedSeconds)} />
-            <SessionStatPill label="Total Rest" value={formatDuration(workoutRestSeconds)} />
-          </div>
-          <button type="button" className="ghost-btn" onClick={handleFinishWorkout} disabled={!matchingActiveSession} aria-label={matchingActiveSession ? "Finish workout and log session" : "Start a workout first"}>
-            Finish Workout
-          </button>
-          {matchingActiveSession && (
-            <button
-              type="button"
-              className="ghost-btn"
-              style={{ color: "var(--danger)", fontSize: "0.8rem" }}
-              onClick={() => {
-                if (window.confirm("Cancel this workout? All logged sets will be discarded.")) {
-                  clearActiveSession(activeUser);
-                  setActiveSession(null);
-                  setExerciseSummary(null);
-                  setExerciseRestSeconds(0);
-                  setWorkoutRestSeconds(0);
-                  setDraft({ weight: "", reps: "", rpe: "" });
-                  setPendingCompletion(null);
-                  stopTimer();
-                }
-              }}
-            >
-              Cancel Workout
-            </button>
-          )}
-        </div>
-      </section>
     </section>
 
     <Modal open={warmupOpen} onClose={() => setWarmupOpen(false)} title="Warm-Up Calculator">
@@ -1826,19 +1788,31 @@ export function TodayScreen() {
       <div className="workout-status-bar" role="status" aria-label="Active workout status">
         <span className="workout-status-time">{formatElapsed(workoutElapsedSeconds)}</span>
         <span className="workout-status-sets">{matchingActiveSession.sets.length} sets</span>
-        <span className="workout-status-exercise">
-          {activeExercise?.name
-            ? activeExercise.name.length > 20
-              ? activeExercise.name.slice(0, 18) + "…"
-              : activeExercise.name
-            : "—"}
-        </span>
         <button
           type="button"
           className="workout-status-end-btn"
           onClick={handleFinishWorkout}
         >
-          End Workout
+          Finish
+        </button>
+        <button
+          type="button"
+          className="workout-status-end-btn"
+          style={{ borderColor: "var(--danger)", color: "var(--danger)" }}
+          onClick={() => {
+            if (window.confirm("Cancel this workout? All logged sets will be discarded.")) {
+              clearActiveSession(activeUser);
+              setActiveSession(null);
+              setExerciseSummary(null);
+              setExerciseRestSeconds(0);
+              setWorkoutRestSeconds(0);
+              setDraft({ weight: "", reps: "", rpe: "" });
+              setPendingCompletion(null);
+              stopTimer();
+            }
+          }}
+        >
+          Cancel
         </button>
       </div>
     ) : null}
