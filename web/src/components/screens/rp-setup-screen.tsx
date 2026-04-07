@@ -8,6 +8,7 @@ import { RP_TEMPLATE_NA4 } from "@/lib/rp-template-na4";
 import { RP_TEMPLATE_NC4 } from "@/lib/rp-template-nc4";
 import { getRpExercisesForCategory } from "@/lib/rp-exercise-library";
 import { estimateTenRepMax, getRirTarget, getMesoRestSeconds } from "@/lib/rp-engine";
+import { getRpExercisesForDay } from "@/lib/program-registry";
 import type { RpTemplate } from "@/lib/rp-types";
 
 const MESO_OPTIONS: RpMesoType[] = ["basic", "metabolite", "resensitization"];
@@ -474,6 +475,66 @@ export function RpSetupScreen({
             })}
         </article>
       ))}
+
+      {/* Week 1 Preview -- appears when all 10RMs are entered */}
+      {isComplete && (
+        <article className="card panel" style={{ marginTop: "1rem" }}>
+          <h2 style={{
+            fontFamily: "var(--font-display)",
+            fontSize: "1.2rem",
+            fontWeight: 700,
+            textTransform: "uppercase",
+            color: "var(--accent-primary)",
+            margin: "0 0 0.75rem",
+            letterSpacing: "0.02em",
+          }}>
+            Week 1 Preview
+          </h2>
+          <p className="page-note" style={{ marginBottom: "0.75rem" }}>
+            Verify your weights look right before starting.
+          </p>
+          {Array.from(slotsByDay.entries()).map(([dayNum, slots]) => {
+            // Build temporary state to calculate Week 1 exercises
+            const tempState: RpProgramState = {
+              templateId,
+              currentMeso: meso,
+              currentWeek: 1,
+              selections,
+              ratings: [],
+            };
+            const dayExercises = getRpExercisesForDay(templateId, dayNum, tempState);
+            if (dayExercises.length === 0) return null;
+
+            return (
+              <div key={dayNum} style={{ marginBottom: "1rem" }}>
+                <h3 style={{
+                  fontFamily: "var(--font-display)",
+                  fontSize: "1rem",
+                  color: "var(--text-0)",
+                  margin: "0 0 0.5rem",
+                }}>
+                  Day {dayNum}: {t.dayTitles[dayNum - 1]}
+                </h3>
+                {dayExercises.map((ex, i) => (
+                  <div key={`${dayNum}-${i}`} style={{
+                    display: "flex",
+                    gap: "16px",
+                    padding: "0.4rem 0",
+                    fontFamily: "var(--font-mono)",
+                    fontSize: "0.85rem",
+                    color: "var(--text-1)",
+                  }}>
+                    <span style={{ color: "var(--text-0)", minWidth: "40%" }}>{ex.name}</span>
+                    <span>{ex.prescribedWeight} lbs</span>
+                    <span>{ex.setGroups[0]?.sets} sets</span>
+                    <span style={{ color: "var(--accent-power)" }}>{ex.rirTarget}</span>
+                  </div>
+                ))}
+              </div>
+            );
+          })}
+        </article>
+      )}
 
       {/* Submit */}
       <button
