@@ -6,6 +6,7 @@ import { RAMPAGE_PROGRAM, getRampageDayTemplate } from "./program-data-rampage";
 import { UPPER_LOWER_PROGRAM, getUpperLowerDayTemplate } from "./program-data-upper-lower";
 import { getHersDayTemplate } from "./program-data-hers";
 import { getMinimalistDayTemplate } from "./program-data-nippard-minimalist";
+import { getSplitDayTemplate } from "./program-data-splits";
 import type { RpProgramState } from "./rp-types";
 import type { RpTemplate } from "./rp-types";
 import { RP_TEMPLATE_NF3 } from "./rp-template-nf3";
@@ -156,6 +157,46 @@ export const PROGRAM_REGISTRY: ProgramMeta[] = [
     hasAutoRegulation: true,
     hasVolumeTracking: true,
   },
+  {
+    id: "split-fb3",
+    name: "Full Body 3-Day (Push/Legs/Pull)",
+    profile: "both",
+    daysPerCycle: 3,
+    cycleLength: 0,
+    periodizationType: "double-progression",
+    hasAutoRegulation: false,
+    hasVolumeTracking: true,
+  },
+  {
+    id: "split-fb4",
+    name: "Full Body 4-Day (Upper/Lower)",
+    profile: "both",
+    daysPerCycle: 4,
+    cycleLength: 0,
+    periodizationType: "double-progression",
+    hasAutoRegulation: false,
+    hasVolumeTracking: true,
+  },
+  {
+    id: "split-arms4",
+    name: "Arms-Focus 4-Day",
+    profile: "both",
+    daysPerCycle: 4,
+    cycleLength: 0,
+    periodizationType: "double-progression",
+    hasAutoRegulation: false,
+    hasVolumeTracking: true,
+  },
+  {
+    id: "split-chest4",
+    name: "Chest/Back 4-Day",
+    profile: "both",
+    daysPerCycle: 4,
+    cycleLength: 0,
+    periodizationType: "double-progression",
+    hasAutoRegulation: false,
+    hasVolumeTracking: true,
+  },
 ];
 
 // Get programs available for a profile
@@ -278,6 +319,11 @@ export function getExercisesForDay(
       supersetGroup: ex.supersetGroup,
     } satisfies ProgramExercise));
   }
+  if (programId.startsWith("split-")) {
+    const template = getSplitDayTemplate(programId, dayNumber);
+    if (!template) return [];
+    return template.exercises;
+  }
   if (programId.startsWith("rp-")) {
     // RP programs use getRpExercisesForDay() instead -- called by today-screen directly
     return [];
@@ -310,6 +356,10 @@ export function getDayTitle(programId: string, dayNumber: number): string {
   }
   if (programId.startsWith("hers-")) {
     return getHersDayTemplate(programId, dayNumber)?.title ?? `Day ${dayNumber}`;
+  }
+  if (programId.startsWith("split-")) {
+    const template = getSplitDayTemplate(programId, dayNumber);
+    return template?.title ?? `Day ${dayNumber}`;
   }
   if (programId.startsWith("rp-")) {
     const template = getRpTemplate(programId);
