@@ -308,6 +308,26 @@ export function logSet(set: LoggedSet, user?: HouseholdUser): WorkoutSession | n
   return session;
 }
 
+export function deleteSet(
+  exerciseName: string,
+  setIndex: number,
+  user?: HouseholdUser
+): WorkoutSession | null {
+  const targetUser = resolveUser(user);
+  const activeSessions = readActiveSessionsByUser();
+  const session = activeSessions[targetUser];
+  if (!session) {
+    return null;
+  }
+  // Remove the set matching exerciseName and setIndex
+  session.sets = session.sets.filter(
+    (set) => !(set.exerciseName === exerciseName && set.setIndex === setIndex)
+  );
+  activeSessions[targetUser] = session;
+  writeActiveSessionsByUser(activeSessions);
+  return session;
+}
+
 export function completeSession(user?: HouseholdUser): WorkoutSession | null {
   const targetUser = resolveUser(user);
   const activeSessions = readActiveSessionsByUser();

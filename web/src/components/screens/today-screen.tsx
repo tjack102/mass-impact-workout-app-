@@ -28,6 +28,7 @@ import {
 } from "@/lib/program-registry";
 import {
   completeSession,
+  deleteSet,
   getActiveSession,
   getAllSessions,
   getLastPerformance,
@@ -283,6 +284,9 @@ export function TodayScreen() {
   );
   // Track which exercises have been rated this session
   const [rpRatedSlots, setRpRatedSlots] = useState<Set<string>>(new Set());
+  // 10RM editor state for RP exercises
+  const [rpTenRmEdit, setRpTenRmEdit] = useState<string | null>(null);
+  const [rpTenRmDraft, setRpTenRmDraft] = useState("");
   // Meso transition state
   const [rpMesoComplete, setRpMesoComplete] = useState(false);
   const [rpCarryForward, setRpCarryForward] = useState<Record<string, { exerciseName: string; tenRepMax: number }> | undefined>();
@@ -642,6 +646,14 @@ export function TodayScreen() {
       const rest = selected ? selected.restTargetSeconds : 90;
       stopTimer();
       setTimerTarget(rest);
+
+      // Pre-fill weight for faster logging
+      if (selected) {
+        const prefillWeight = selected.prescribedWeight ?? selected.lastWeight;
+        if (prefillWeight) {
+          setDraft(prev => ({ ...prev, weight: String(prefillWeight) }));
+        }
+      }
     },
     [exercises, queueExercises, setTimerTarget, stopTimer],
   );
@@ -1200,6 +1212,51 @@ export function TodayScreen() {
                 }}>
                   {activeExercise?.name ?? "No exercise selected"}
                 </h2>
+                {isRpProgram && rpState && activeExercise?.rpSlotId && (
+                  <div style={{ display: "flex", alignItems: "center", gap: "0.5rem", marginTop: "0.3rem" }}>
+                    {rpTenRmEdit === activeExercise.rpSlotId ? (
+                      <div style={{ display: "flex", alignItems: "center", gap: "0.4rem" }}>
+                        <span style={{ fontFamily: "var(--font-ui)", fontSize: "0.8rem", color: "var(--text-2)" }}>10RM:</span>
+                        <input type="number" min={0} step={5} value={rpTenRmDraft}
+                          onChange={e => setRpTenRmDraft(e.target.value)}
+                          style={{ width: "5rem", background: "var(--surface-high)", border: "none", color: "var(--text-0)", fontFamily: "var(--font-mono)", fontSize: "0.9rem", padding: "0.25rem 0.4rem", borderRadius: "6px" }}
+                        />
+                        <button type="button" className="ghost-btn" style={{ fontSize: "0.78rem", padding: "0.2rem 0.5rem" }}
+                          onClick={() => {
+                            const val = parseInt(rpTenRmDraft, 10);
+                            if (!isNaN(val) && val > 0 && rpState) {
+                              const updated = {
+                                ...rpState,
+                                selections: {
+                                  ...rpState.selections,
+                                  [activeExercise.rpSlotId!]: {
+                                    ...rpState.selections[activeExercise.rpSlotId!],
+                                    tenRepMax: val,
+                                  },
+                                },
+                              };
+                              saveRpState(activeUser, updated);
+                              setRpState(updated);
+                            }
+                            setRpTenRmEdit(null);
+                          }}>Save</button>
+                        <button type="button" className="ghost-btn" style={{ fontSize: "0.78rem", padding: "0.2rem 0.5rem" }}
+                          onClick={() => setRpTenRmEdit(null)}>Cancel</button>
+                      </div>
+                    ) : (
+                      <button type="button" onClick={() => {
+                        const sel = rpState?.selections[activeExercise.rpSlotId!];
+                        setRpTenRmDraft(String(sel?.tenRepMax ?? ""));
+                        setRpTenRmEdit(activeExercise.rpSlotId!);
+                      }} style={{ background: "none", border: "none", cursor: "pointer", display: "flex", alignItems: "center", gap: "0.3rem", padding: 0 }}>
+                        <span style={{ fontFamily: "var(--font-mono)", fontSize: "0.85rem", color: "var(--accent-primary)" }}>
+                          {activeExercise.prescribedWeight ? `Target: ${activeExercise.prescribedWeight} lbs` : "No 10RM set"}
+                        </span>
+                        <span style={{ fontSize: "0.7rem", color: "var(--text-2)" }}>[edit]</span>
+                      </button>
+                    )}
+                  </div>
+                )}
               </div>
               {activeExercise && (
                 <button
@@ -1472,6 +1529,24 @@ export function TodayScreen() {
                       <span className="page-note">
                         {formatSetTimestamp(set.timestamp)}
                       </span>
+                      <button
+                        type="button"
+                        onClick={() => {
+                          const updated = deleteSet(set.exerciseName, set.setIndex);
+                          if (updated) setActiveSession(updated);
+                        }}
+                        style={{
+                          background: "none",
+                          border: "none",
+                          color: "var(--text-2)",
+                          cursor: "pointer",
+                          padding: "2px 6px",
+                          fontSize: "0.85rem",
+                          borderRadius: "4px",
+                          marginLeft: "auto",
+                        }}
+                        aria-label={`Delete set ${set.setIndex}`}
+                      >✕</button>
                     </div>
                   ))}
                 </div>

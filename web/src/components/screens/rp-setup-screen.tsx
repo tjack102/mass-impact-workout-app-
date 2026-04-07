@@ -104,7 +104,7 @@ export function RpSetupScreen({
   const isComplete = t.slots.every((slot) => {
     if (!isSlotActive(slot)) return true;
     const sel = selections[slot.slotId];
-    return sel && sel.exerciseName && sel.tenRepMax > 0;
+    return sel && sel.exerciseName;
   });
 
   function handleExerciseChange(slotId: string, exerciseName: string) {
