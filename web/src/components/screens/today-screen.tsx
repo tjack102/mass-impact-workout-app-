@@ -27,6 +27,7 @@ import {
   getProgramMeta,
 } from "@/lib/program-registry";
 import {
+  clearActiveSession,
   completeSession,
   deleteSet,
   getActiveSession,
@@ -1699,6 +1700,27 @@ export function TodayScreen() {
           <button type="button" className="ghost-btn" onClick={handleFinishWorkout} disabled={!matchingActiveSession} aria-label={matchingActiveSession ? "Finish workout and log session" : "Start a workout first"}>
             Finish Workout
           </button>
+          {matchingActiveSession && (
+            <button
+              type="button"
+              className="ghost-btn"
+              style={{ color: "var(--danger)", fontSize: "0.8rem" }}
+              onClick={() => {
+                if (window.confirm("Cancel this workout? All logged sets will be discarded.")) {
+                  clearActiveSession(activeUser);
+                  setActiveSession(null);
+                  setExerciseSummary(null);
+                  setExerciseRestSeconds(0);
+                  setWorkoutRestSeconds(0);
+                  setDraft({ weight: "", reps: "", rpe: "" });
+                  setPendingCompletion(null);
+                  stopTimer();
+                }
+              }}
+            >
+              Cancel Workout
+            </button>
+          )}
         </div>
       </section>
     </section>
