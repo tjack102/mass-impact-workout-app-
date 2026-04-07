@@ -415,6 +415,7 @@ export function getRpExercisesForDay(
       restSeconds: restRange.min,
       prescribedWeight: weight,
       rirTarget: rir,
+      rpSlotId: slot.slotId,
       supersetGroup: supersetMap.get(slot.slotId),
     });
 

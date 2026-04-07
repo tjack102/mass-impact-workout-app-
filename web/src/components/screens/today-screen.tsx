@@ -399,7 +399,7 @@ export function TodayScreen() {
         exrxUrl: getExerciseUrl(resolvedName),
         prescribedWeight: exercise.prescribedWeight,
         rirTarget: exercise.rirTarget,
-        rpSlotId: rpDaySlots[index]?.slotId,
+        rpSlotId: exercise.rpSlotId,
         muscleGroup: formatMuscleGroup(resolvedName),
         reps: exercise.setGroups[0]?.reps ?? "---",
         lastWeight: lastPerformance?.weight,
@@ -1483,7 +1483,6 @@ export function TodayScreen() {
               const slot = rpDaySlots.find(s => s.slotId === activeExercise.rpSlotId);
               if (!slot?.isAutoregulated) return null;
               if (isDeloadWeek(rpState.currentMeso, rpState.currentWeek)) return null;
-              if (rpState.currentWeek === 1 && rpState.ratings.length === 0) return null;
               if (activeExerciseSets.length < activeExercise.targetSets) return null;
               if (rpRatedSlots.has(activeExercise.rpSlotId)) return null;
 
@@ -1541,28 +1540,14 @@ export function TodayScreen() {
               );
             })()}
 
-            {/* RP rating hint -- shown when ratings aren't available */}
-            {isRpProgram && rpState && activeExercise?.rpSlotId && (() => {
-              const slot = rpDaySlots.find(s => s.slotId === activeExercise.rpSlotId);
-              if (!slot?.isAutoregulated) return null;
-              if (rpRatedSlots.has(activeExercise.rpSlotId)) return null;
-              if (activeExerciseSets.length >= activeExercise.targetSets) return null; // actual rating shows
-              if (rpState.currentWeek === 1) {
-                return (
-                  <p style={{ fontFamily: "var(--font-ui)", fontSize: "0.75rem", color: "var(--text-2)", marginTop: "0.5rem" }}>
-                    Ratings unlock in Week 2
-                  </p>
-                );
-              }
-              if (isDeloadWeek(rpState.currentMeso, rpState.currentWeek)) {
-                return (
-                  <p style={{ fontFamily: "var(--font-ui)", fontSize: "0.75rem", color: "var(--text-2)", marginTop: "0.5rem" }}>
-                    Deload week -- no ratings
-                  </p>
-                );
-              }
-              return null;
-            })()}
+            {/* RP deload hint -- ratings disabled during deload */}
+            {isRpProgram && rpState && activeExercise?.rpSlotId &&
+             isDeloadWeek(rpState.currentMeso, rpState.currentWeek) &&
+             activeExerciseSets.length >= activeExercise.targetSets && (
+              <p style={{ fontFamily: "var(--font-ui)", fontSize: "0.75rem", color: "var(--text-2)", marginTop: "0.5rem" }}>
+                Deload week -- no ratings needed
+              </p>
+            )}
 
             <div className="flex justify-between flex-wrap" style={{ gap: "0.55rem" }}>
               <button type="button" className="ghost-btn" onClick={() => setDraft({ weight: "", reps: "", rpe: "" })}>

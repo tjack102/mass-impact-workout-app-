@@ -14,6 +14,7 @@ export type ProgramExercise = {
   notes?: string;
   prescribedWeight?: number;  // calculated weight suggestion for RP programs
   rirTarget?: string;         // e.g. "3/fail", "2/fail", "1/fail"
+  rpSlotId?: string;          // slot ID for RP rating association
 };
 
 export type ProgramDay = {
