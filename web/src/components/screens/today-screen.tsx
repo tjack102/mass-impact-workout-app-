@@ -55,7 +55,7 @@ import { RP_TEMPLATE_NA4 } from "@/lib/rp-template-na4";
 import { RP_TEMPLATE_NC4 } from "@/lib/rp-template-nc4";
 import type { RpTemplate, RpExerciseSlot } from "@/lib/rp-types";
 import { TRACKED_MUSCLES, type MuscleGroup, type ExerciseDefinition } from "@/lib/types";
-import { getPermanentSub, setPermanentSub } from "@/lib/exercise-substitutions";
+import { getPermanentSub, setPermanentSub, clearPermanentSub } from "@/lib/exercise-substitutions";
 import { getExerciseUrl, setExerciseUrl, clearExerciseUrl } from "@/lib/exercise-url-store";
 import { getAdditions } from "@/lib/exercise-additions";
 import { ExercisePickerModal } from "@/components/exercise-picker-modal";
@@ -1708,16 +1708,19 @@ export function TodayScreen() {
       <Modal open onClose={() => setSwapConfirm(null)} title="Swap Exercise">
         <div style={{ padding: "1rem" }}>
           <p>Replace with <strong>{swapConfirm.exercise.name}</strong>?</p>
-          <div className="flex gap-2 mt-4">
-            {matchingActiveSession && (
-              <button
-                type="button"
-                className="ghost-btn"
-                onClick={() => handleSwapConfirm(false)}
-              >
-                Just this session
-              </button>
-            )}
+          <div className="flex flex-col gap-2 mt-4">
+            <button
+              type="button"
+              className="ghost-btn"
+              onClick={() => {
+                const session = ensureActiveSession();
+                if (session) {
+                  handleSwapConfirm(false);
+                }
+              }}
+            >
+              Just this session
+            </button>
             <button
               type="button"
               className="ghost-btn"
@@ -1726,6 +1729,20 @@ export function TodayScreen() {
               All future sessions
             </button>
           </div>
+          {swapConfirm.originalTemplateName !== swapConfirm.exercise.name && (
+            <button
+              type="button"
+              className="ghost-btn"
+              style={{ color: "var(--text-2)", fontSize: "0.8rem", marginTop: "0.75rem" }}
+              onClick={() => {
+                clearPermanentSub(prefs.activeUser, programId, prefs.currentDay, swapConfirm.originalTemplateName);
+                setSubVersion((v) => v + 1);
+                setSwapConfirm(null);
+              }}
+            >
+              Reset to original ({swapConfirm.originalTemplateName})
+            </button>
+          )}
         </div>
       </Modal>
     )}
