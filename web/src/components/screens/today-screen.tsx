@@ -46,7 +46,7 @@ import { findExercise, EXERCISE_LIBRARY } from "@/lib/exercise-library";
 import { getRpState, saveRpState, addRating, clearRpState } from "@/lib/rp-store";
 import { getRpExercisesForDay } from "@/lib/program-registry";
 import type { RpProgramState, RpMesoType } from "@/lib/rp-types";
-import { isDeloadWeek, getNextMeso, getMesoWeeks } from "@/lib/rp-engine";
+import { isDeloadWeek, getNextMeso, getMesoWeeks, getMesoRestSeconds, getRirTarget } from "@/lib/rp-engine";
 import { RP_TEMPLATE_NF3 } from "@/lib/rp-template-nf3";
 import { RP_TEMPLATE_NF4 } from "@/lib/rp-template-nf4";
 import { RP_TEMPLATE_NA4 } from "@/lib/rp-template-na4";
@@ -74,6 +74,7 @@ import {
 } from "@/lib/volume-engine";
 import { detectPR } from "@/lib/pr-engine";
 import { Flame } from "@/components/icons";
+import { RpMesoCard } from "@/components/rp-meso-card";
 
 type SessionStatus = "Not Started" | "In Progress" | "Completed";
 
@@ -314,6 +315,23 @@ export function TodayScreen() {
     if (!template) return [];
     return template.slots.filter(s => s.dayNumber === prefs.currentDay);
   }, [isRpProgram, programId, prefs.currentDay]);
+
+  const rpCompletedDays = useMemo<Set<number>>(() => {
+    if (!isRpProgram || !rpState) return new Set();
+    const done = new Set<number>();
+    for (let day = 1; day <= daysPerCycle; day++) {
+      const dayDone = sessionHistory.some(
+        s => s.dayNumber === day &&
+             s.weekNumber === prefs.currentWeek &&
+             s.programId === programId &&
+             Boolean(s.completedAt)
+      );
+      if (dayDone) done.add(day);
+    }
+    return done;
+  }, [isRpProgram, rpState, sessionHistory, prefs.currentWeek, daysPerCycle, programId]);
+
+  const rpAllDaysComplete = rpCompletedDays.size >= daysPerCycle;
 
   const matchingActiveSession =
     activeSession && activeSession.weekNumber === prefs.currentWeek && activeSession.dayNumber === prefs.currentDay
@@ -577,6 +595,40 @@ export function TodayScreen() {
     [applyDaySelection, daysPerCycle, prefs.currentDay, prefs.currentWeek, totalWeeks],
   );
 
+  const handleRpSelectDay = useCallback((day: number) => {
+    applyDaySelection(prefs.currentWeek, day);
+    setRpRatedSlots(new Set());
+  }, [applyDaySelection, prefs.currentWeek]);
+
+  const handleRpAdvanceWeek = useCallback(() => {
+    if (!rpState) return;
+    const newRpWeek = rpState.currentWeek + 1;
+    const updated: RpProgramState = { ...rpState, currentWeek: newRpWeek };
+    saveRpState(activeUser, updated);
+    setRpState(updated);
+    // Advance global week linearly so session weekNumbers stay unique
+    persistPrefs(prefs.currentWeek + 1, 1);
+    setRpRatedSlots(new Set());
+  }, [rpState, activeUser, persistPrefs, prefs.currentWeek]);
+
+  const handleRpCompleteMeso = useCallback(() => {
+    if (!rpState) return;
+    const nextMeso = getNextMeso(rpState.currentMeso);
+    if (nextMeso) {
+      setRpCarryForward(rpState.selections);
+      clearRpState(activeUser);
+      setRpState(null);
+      setRpMesoComplete(true);
+    } else {
+      // Macrocycle complete -- clean slate
+      clearRpState(activeUser);
+      setRpState(null);
+      setRpMesoComplete(false);
+      setMesoNotification("Macrocycle Complete! Start a fresh cycle from the setup screen.");
+      window.setTimeout(() => setMesoNotification(null), 10000);
+    }
+  }, [rpState, activeUser]);
+
   const handleSelectExercise = useCallback(
     (index: number) => {
       setActiveIndex(index);
@@ -763,36 +815,7 @@ export function TodayScreen() {
         window.setTimeout(() => setMesoNotification(null), 8000);
       }
     }
-
-    // RP week/meso progression
-    if (isRpProgram && rpState) {
-      const isLastDayOfWeek = prefs.currentDay === daysPerCycle;
-      if (isLastDayOfWeek) {
-        const mesoWeeks = getMesoWeeks(rpState.currentMeso);
-        if (rpState.currentWeek >= mesoWeeks) {
-          // Meso complete
-          const nextMeso = getNextMeso(rpState.currentMeso);
-          if (nextMeso) {
-            setRpCarryForward(rpState.selections);
-            clearRpState(activeUser);
-            setRpState(null);
-            setRpMesoComplete(true);
-          } else {
-            // Macrocycle done
-            clearRpState(activeUser);
-            setRpState(null);
-            setMesoNotification("Macrocycle Complete! Set up a fresh Meso 1 to start over.");
-            window.setTimeout(() => setMesoNotification(null), 10000);
-          }
-        } else {
-          // Advance to next week
-          const updated: RpProgramState = { ...rpState, currentWeek: rpState.currentWeek + 1 };
-          saveRpState(activeUser, updated);
-          setRpState(updated);
-        }
-      }
-    }
-  }, [activeUser, daysPerCycle, programMeta, isRpProgram, rpState, prefs.currentDay]);
+  }, [activeUser, daysPerCycle, programMeta]);
 
   // Step 2a: User submitted ratings — save them, then complete the session.
   const handleRecoverySubmit = useCallback(
@@ -1008,44 +1031,66 @@ export function TodayScreen() {
           <div className="flex justify-between items-center gap-2">
             <div></div>
             <div>
-              <div className="cycle-toolbar">
-                <label className="compact-field">
-                  <span className="subtle-label">Week</span>
-                  <select
-                    className="compact-select"
-                    value={prefs.currentWeek}
-                    onChange={(event) => applyDaySelection(Number(event.target.value), prefs.currentDay)}
-                  >
-                    {Array.from({ length: totalWeeks }, (_, i) => i + 1).map((weekNum) => (
-                      <option key={weekNum} value={weekNum}>
-                        Week {weekNum}
-                      </option>
-                    ))}
-                  </select>
-                </label>
-                <label className="compact-field">
-                  <span className="subtle-label">Day</span>
-                  <select
-                    className="compact-select"
-                    value={prefs.currentDay}
-                    onChange={(event) => applyDaySelection(prefs.currentWeek, Number(event.target.value))}
-                  >
-                    {Array.from({ length: daysPerCycle }, (_, i) => i + 1).map((dayNum) => (
-                      <option key={dayNum} value={dayNum}>
-                        Day {dayNum} - {getDayTitle(programId, dayNum)}
-                      </option>
-                    ))}
-                  </select>
-                </label>
-                <div className="compact-stepper">
-                  <button type="button" className="ghost-btn" style={{ height: "36px" }} onClick={() => handleShiftDay(-1)} aria-label="Previous day">
-                    {"<"}
-                  </button>
-                  <button type="button" className="ghost-btn" style={{ height: "36px" }} onClick={() => handleShiftDay(1)} aria-label="Next day">
-                    {">"}
-                  </button>
+              {isRpProgram && rpState ? (
+                <RpMesoCard
+                  meso={rpState.currentMeso}
+                  currentWeek={rpState.currentWeek}
+                  totalWeeks={getMesoWeeks(rpState.currentMeso)}
+                  daysPerWeek={daysPerCycle}
+                  dayTitles={(() => {
+                    const t = getRpTemplateById(programId);
+                    return t?.dayTitles ?? [];
+                  })()}
+                  completedDays={rpCompletedDays}
+                  selectedDay={prefs.currentDay}
+                  onSelectDay={handleRpSelectDay}
+                  rirTarget={getRirTarget(rpState.currentWeek, isDeloadWeek(rpState.currentMeso, rpState.currentWeek))}
+                  restRange={getMesoRestSeconds(rpState.currentMeso)}
+                  isDeload={isDeloadWeek(rpState.currentMeso, rpState.currentWeek)}
+                  allDaysComplete={rpAllDaysComplete}
+                  onAdvanceWeek={handleRpAdvanceWeek}
+                  onCompleteMeso={handleRpCompleteMeso}
+                />
+              ) : (
+                <div className="cycle-toolbar">
+                  <label className="compact-field">
+                    <span className="subtle-label">Week</span>
+                    <select
+                      className="compact-select"
+                      value={prefs.currentWeek}
+                      onChange={(event) => applyDaySelection(Number(event.target.value), prefs.currentDay)}
+                    >
+                      {Array.from({ length: totalWeeks }, (_, i) => i + 1).map((weekNum) => (
+                        <option key={weekNum} value={weekNum}>
+                          Week {weekNum}
+                        </option>
+                      ))}
+                    </select>
+                  </label>
+                  <label className="compact-field">
+                    <span className="subtle-label">Day</span>
+                    <select
+                      className="compact-select"
+                      value={prefs.currentDay}
+                      onChange={(event) => applyDaySelection(prefs.currentWeek, Number(event.target.value))}
+                    >
+                      {Array.from({ length: daysPerCycle }, (_, i) => i + 1).map((dayNum) => (
+                        <option key={dayNum} value={dayNum}>
+                          Day {dayNum} - {getDayTitle(programId, dayNum)}
+                        </option>
+                      ))}
+                    </select>
+                  </label>
+                  <div className="compact-stepper">
+                    <button type="button" className="ghost-btn" style={{ height: "36px" }} onClick={() => handleShiftDay(-1)} aria-label="Previous day">
+                      {"<"}
+                    </button>
+                    <button type="button" className="ghost-btn" style={{ height: "36px" }} onClick={() => handleShiftDay(1)} aria-label="Next day">
+                      {">"}
+                    </button>
+                  </div>
                 </div>
-              </div>
+              )}
             </div>
 
             {programId === "mass-impact" ? (
@@ -1494,6 +1539,29 @@ export function TodayScreen() {
                   </div>
                 </div>
               );
+            })()}
+
+            {/* RP rating hint -- shown when ratings aren't available */}
+            {isRpProgram && rpState && activeExercise?.rpSlotId && (() => {
+              const slot = rpDaySlots.find(s => s.slotId === activeExercise.rpSlotId);
+              if (!slot?.isAutoregulated) return null;
+              if (rpRatedSlots.has(activeExercise.rpSlotId)) return null;
+              if (activeExerciseSets.length >= activeExercise.targetSets) return null; // actual rating shows
+              if (rpState.currentWeek === 1) {
+                return (
+                  <p style={{ fontFamily: "var(--font-ui)", fontSize: "0.75rem", color: "var(--text-2)", marginTop: "0.5rem" }}>
+                    Ratings unlock in Week 2
+                  </p>
+                );
+              }
+              if (isDeloadWeek(rpState.currentMeso, rpState.currentWeek)) {
+                return (
+                  <p style={{ fontFamily: "var(--font-ui)", fontSize: "0.75rem", color: "var(--text-2)", marginTop: "0.5rem" }}>
+                    Deload week -- no ratings
+                  </p>
+                );
+              }
+              return null;
             })()}
 
             <div className="flex justify-between flex-wrap" style={{ gap: "0.55rem" }}>
