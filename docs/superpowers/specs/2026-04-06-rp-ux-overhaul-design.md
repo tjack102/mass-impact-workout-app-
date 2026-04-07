@@ -125,29 +125,29 @@ In today-screen, derive `completedDays` from session history:
 ```ts
 const rpCompletedDays = useMemo<Set<number>>(() => {
   if (!isRpProgram || !rpState) return new Set();
-  // Find sessions that match current RP week
-  // Since RP weeks don't map 1:1 to global weeks, we need a different approach.
-  // Use the rpState.currentWeek as context: sessions logged since the last week advance.
-  // Simplest: count completed sessions for each day number in the current global week range.
   const done = new Set<number>();
   for (let day = 1; day <= daysPerCycle; day++) {
     const dayDone = sessionHistory.some(
       s => s.dayNumber === day &&
            s.weekNumber === prefs.currentWeek &&
-           s.programId?.startsWith("rp-") &&
+           s.programId === programId &&
            Boolean(s.completedAt)
     );
     if (dayDone) done.add(day);
   }
   return done;
-}, [isRpProgram, rpState, sessionHistory, prefs.currentWeek, daysPerCycle]);
+}, [isRpProgram, rpState, sessionHistory, prefs.currentWeek, daysPerCycle, programId]);
 ```
 
-Note: This uses `prefs.currentWeek` for session matching since sessions are stored with the global week number. When the RP week advances, `prefs.currentWeek` should also advance (synced).
+`allDaysComplete` derivation: `rpCompletedDays.size >= daysPerCycle`.
+
+**Important:** Filter by exact `programId`, not just `startsWith("rp-")`. Otherwise switching between RP programs would show stale completions.
+
+**Important:** Do NOT use `getCompletedDays` from workout-store -- it doesn't filter by program.
 
 ### Week/Prefs Sync
 
-When `rpState.currentWeek` changes, sync `prefs.currentWeek` to match:
+RP meso weeks (1-5, 1-5, 1-3) don't map 1:1 to global weeks (1-13). The sync approach: `prefs.currentWeek` increments linearly across the full 13-week cycle. When Meso 1 ends at rpWeek 5, prefs is at global week 5. Meso 2 starts at rpWeek 1, prefs continues at global week 6. This ensures session weekNumbers are unique across the macrocycle.
 
 ```ts
 // In the advance week handler:
@@ -155,8 +155,27 @@ const newRpWeek = rpState.currentWeek + 1;
 const updated = { ...rpState, currentWeek: newRpWeek };
 saveRpState(activeUser, updated);
 setRpState(updated);
-// Also advance global week so session history stays aligned
+// Advance global week linearly (never wraps within a macrocycle)
 persistPrefs(prefs.currentWeek + 1, 1); // advance week, reset to day 1
+```
+
+On meso transitions, `prefs.currentWeek` does NOT reset -- it keeps incrementing. Meso 2 Week 1 = global week 6. Meso 3 Week 1 = global week 11. This avoids session weekNumber collisions.
+
+### Meso Number Derivation
+
+`RpMesoType` doesn't carry a number. Derive from type:
+```ts
+const MESO_NUMBER: Record<RpMesoType, number> = { basic: 1, metabolite: 2, resensitization: 3 };
+```
+
+### Week Multiplier Label
+
+```ts
+function getWeekMultiplierLabel(week: number, isDeload: boolean): string {
+  if (isDeload) return "Deload";
+  const labels: Record<number, string> = { 1: "Base", 2: "+5%", 3: "+7.5%", 4: "+10%" };
+  return labels[week] ?? "Base";
+}
 ```
 
 ---
@@ -179,7 +198,11 @@ When user taps a day checkbox:
 
 ### 3c. Week Advancement
 
-Remove the auto-advance logic from `finalizeCompletion()` (lines 767-794 currently). Replace with explicit button in the meso card.
+**Surgery on `finalizeCompletion()`:** Remove the ENTIRE RP block from `finalizeCompletion()` (the `if (isRpProgram && rpState) { ... }` block, currently lines 768-794). All RP week advancement and meso completion is now driven exclusively by the meso card buttons, not by session completion. The existing non-RP meso advancement block (`if (programMeta?.hasAutoRegulation)`) stays -- it doesn't fire for RP because the RP block was the one doing the work.
+
+**Clear `rpRatedSlots` on day change:** When user taps a different day in the meso card, `rpRatedSlots` is cleared. Slot IDs are unique per day so stale IDs from another day wouldn't cause incorrect behavior, but clearing keeps the set small. Add `setRpRatedSlots(new Set())` to the day selection handler.
+
+**Flexible day order:** Day buttons in the meso card are tappable in any order. There's no sequential lock. Users can do Day 3 before Day 1. Each day is independently tracked as complete or not.
 
 When user taps "Advance to Week X":
 1. Increment `rpState.currentWeek`
@@ -231,8 +254,14 @@ When "Complete Mesocycle" is tapped:
 ### After Meso 3
 
 When resensitization deload completes:
-1. Summary: "Macrocycle Complete! 13 weeks · {totalSessions} sessions"
-2. "Start Fresh Cycle" button leads to clean setup screen (Meso 1, no carry-forward)
+1. Summary: "Macrocycle Complete! 13 weeks done"
+2. "Start Fresh Cycle" button: calls `clearRpState()`, sets `rpMesoComplete = false` (NOT true), sets `rpState = null`. Since rpState is null and rpMesoComplete is false, the setup screen renders via the `if (isRpProgram && !rpState)` check. The setup screen defaults to Meso 1 with no carry-forward (clean slate).
+
+**State machine clarity:** The setup screen renders when `isRpProgram && (!rpState || rpMesoComplete)`. For inter-meso transitions, `rpMesoComplete = true` and `rpState = null`. For macrocycle end, both are false/null. Both paths show the setup screen via the `!rpState` condition. The `rpMesoComplete` flag only matters for determining whether to pass carry-forward and which meso to pre-select.
+
+### Session Count (deferred)
+
+The summary mentions sessions logged. Counting sessions within a meso requires filtering by date range or week range. This is nice-to-have -- skip for now and just show "Complete" without a count. Add session counting in a follow-up if wanted.
 
 ---
 
