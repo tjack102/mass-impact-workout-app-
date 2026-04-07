@@ -403,12 +403,15 @@ export function getRpExercisesForDay(
       : getWeekWeight(sel.tenRepMax, meso, week, isSupersetSecondary);
 
     const rir = getRirTarget(week, deload);
+    const repRange = meso === "basic" ? "8-12 reps"
+      : meso === "metabolite" ? "15-25 reps"
+      : "5-8 reps";
 
     exercises.push({
       order: orderNum,
       orderLabel: orderLabels[i],
       name: sel.exerciseName,
-      setGroups: [{ sets, reps: `${rir}` }],
+      setGroups: [{ sets, reps: repRange }],
       restSeconds: restRange.min,
       prescribedWeight: weight,
       rirTarget: rir,
