@@ -52,7 +52,7 @@ import type { RpProgramState, RpMesoType } from "@/lib/rp-types";
 import { isDeloadWeek, getNextMeso, getMesoWeeks, getMesoRestSeconds, getRirTarget } from "@/lib/rp-engine";
 import type { RpTemplate, RpExerciseSlot } from "@/lib/rp-types";
 import { TRACKED_MUSCLES, type MuscleGroup, type ExerciseDefinition } from "@/lib/types";
-import { getPermanentSub, setPermanentSub, clearPermanentSub } from "@/lib/exercise-substitutions";
+import { getAllPermanentSubs, setPermanentSub, clearPermanentSub } from "@/lib/exercise-substitutions";
 import { getExerciseUrl, setExerciseUrl, clearExerciseUrl } from "@/lib/exercise-url-store";
 import { getAdditions } from "@/lib/exercise-additions";
 import { formatMuscleName, formatClock, formatDuration } from "@/lib/format-utils";
@@ -334,6 +334,9 @@ export function TodayScreen() {
       : "Not Started";
 
   const queueExercises = useMemo<QueueExercise[]>(() => {
+    // Batch localStorage reads: load substitution map once instead of per-exercise
+    const allSubs = getAllPermanentSubs(prefs.activeUser);
+
     // Resolve additions for registry programs
     const additions = programId !== "mass-impact"
       ? getAdditions(prefs.activeUser, programId, prefs.currentDay)
@@ -345,7 +348,8 @@ export function TodayScreen() {
     return allExercises.map((exercise, index) => {
       // Resolve substitution: session > permanent > original
       const sessionSub = matchingActiveSession?.substitutions?.[exercise.name];
-      const permanentSub = getPermanentSub(prefs.activeUser, programId, prefs.currentDay, exercise.name);
+      const subKey = `${programId}:${prefs.currentDay}:${exercise.name}`;
+      const permanentSub = allSubs[subKey];
       const resolvedName = sessionSub ?? permanentSub ?? exercise.name;
       const originalName = resolvedName !== exercise.name ? exercise.name : undefined;
 
