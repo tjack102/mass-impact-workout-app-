@@ -224,7 +224,6 @@ export function TodayScreen() {
   const [targetReached, setTargetReached] = useState(false);
   const [exerciseStartedAt, setExerciseStartedAt] = useState<number | null>(null);
   const [exerciseRestSeconds, setExerciseRestSeconds] = useState(0);
-  const [workoutRestSeconds, setWorkoutRestSeconds] = useState(0);
   const [exerciseSummary, setExerciseSummary] = useState<ExerciseSummary | null>(null);
   const [nowMs, setNowMs] = useState<number | null>(null);
   // Captures session data when "Finish Workout" is tapped, before actually completing the session.
@@ -411,7 +410,6 @@ export function TodayScreen() {
     restStartedAtRef.current = null;
     if (loggedSeconds > 0) {
       setExerciseRestSeconds((prev) => prev + loggedSeconds);
-      setWorkoutRestSeconds((prev) => prev + loggedSeconds);
     }
   }, []);
 
@@ -1796,7 +1794,6 @@ export function TodayScreen() {
               setActiveSession(null);
               setExerciseSummary(null);
               setExerciseRestSeconds(0);
-              setWorkoutRestSeconds(0);
               setDraft({ weight: "", reps: "", rpe: "" });
               setPendingCompletion(null);
               stopTimer();
