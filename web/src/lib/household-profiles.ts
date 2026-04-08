@@ -116,3 +116,9 @@ export function getActiveUserFromLocalStorage(): HouseholdUser {
 export function getUserLabel(user: HouseholdUser): string {
   return user === "his" ? "His" : "Hers";
 }
+
+/** Resolve optional user param to concrete user, defaulting to active profile. */
+export function resolveUser(user?: HouseholdUser): HouseholdUser {
+  if (user) return user;
+  return getStoredPrefsFromLocalStorage().activeUser;
+}

@@ -1,4 +1,4 @@
-import { getActiveUserFromLocalStorage, type HouseholdUser } from "@/lib/household-profiles";
+import { resolveUser, type HouseholdUser } from "@/lib/household-profiles";
 import { MASS_IMPACT_PROGRAM, cloneProgram, type Program, type ProgramDay } from "@/lib/program-data";
 
 const PROGRAM_KEY = "mi_program";
@@ -17,10 +17,6 @@ function clonePrograms(programs: ProgramsByUser): ProgramsByUser {
     his: cloneProgram(programs.his),
     hers: cloneProgram(programs.hers),
   };
-}
-
-function resolveUser(user?: HouseholdUser): HouseholdUser {
-  return user ?? getActiveUserFromLocalStorage();
 }
 
 function readPrograms(): ProgramsByUser {

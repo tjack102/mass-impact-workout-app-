@@ -4,6 +4,7 @@ import {
   getDefaultStoredPrefs,
   getStoredPrefsFromLocalStorage,
   parseStoredPrefs,
+  resolveUser,
   PREFS_STORAGE_KEY,
   type HouseholdUser,
   type StoredPrefs,
@@ -155,10 +156,6 @@ function readActiveSessionsByUser(): ActiveSessionsByUser {
 
 function writeActiveSessionsByUser(activeSessionsByUser: ActiveSessionsByUser): void {
   writeJson(KEYS.ACTIVE_SESSION, activeSessionsByUser);
-}
-
-function resolveUser(user?: HouseholdUser): HouseholdUser {
-  return user ?? getStoredPrefs().activeUser;
 }
 
 // Run once per page load to backfill programId on sessions created before it existed
