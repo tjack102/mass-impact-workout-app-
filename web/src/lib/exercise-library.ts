@@ -2276,25 +2276,31 @@ export const EXERCISE_LIBRARY: ExerciseDefinition[] = [
 // Lookup helpers
 // ─────────────────────────────────────────────────────────────────────────────
 
+// Build lookup map at module load time for O(1) access.
+// This avoids iterating through 229 exercises on every findExercise() call,
+// which happens 6-8 times in queueExercises useMemo during active workouts.
+const EXERCISE_MAP = new Map<string, ExerciseDefinition>(
+  EXERCISE_LIBRARY.map((e) => [e.name.toLowerCase(), e])
+);
+
 /**
  * Find an exercise by name.
- * 1. Exact match (case-insensitive)
+ * 1. Exact match (case-insensitive) -- O(1) via Map
  * 2. Prefix match — query is a prefix of the stored name (e.g. "Hip Thrust"
- *    matches "Hip Thrust (Barbell)")
+ *    matches "Hip Thrust (Barbell)") -- O(N) fallback, rarely hit
  * Returns the first match found; undefined if nothing matches.
  */
 export function findExercise(query: string): ExerciseDefinition | undefined {
   const q = query.toLowerCase().trim();
 
-  // Pass 1: exact match
-  const exact = EXERCISE_LIBRARY.find((e) => e.name.toLowerCase() === q);
+  // Pass 1: exact match (O(1) via Map)
+  const exact = EXERCISE_MAP.get(q);
   if (exact) return exact;
 
-  // Pass 2: prefix match (query is a prefix of the stored name)
-  const prefix = EXERCISE_LIBRARY.find((e) =>
+  // Pass 2: prefix match (O(N) fallback, rarely hit)
+  return EXERCISE_LIBRARY.find((e) =>
     e.name.toLowerCase().startsWith(q)
   );
-  return prefix;
 }
 
 /**
