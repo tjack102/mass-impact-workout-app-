@@ -210,7 +210,7 @@ export function getProgramMeta(programId: string): ProgramMeta | undefined {
 }
 
 // Helper to look up RP template by program ID
-function getRpTemplate(programId: string): RpTemplate | undefined {
+export function getRpTemplate(programId: string): RpTemplate | undefined {
   switch (programId) {
     case "rp-nf3": return RP_TEMPLATE_NF3;
     case "rp-nf4": return RP_TEMPLATE_NF4;

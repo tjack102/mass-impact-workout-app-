@@ -25,6 +25,7 @@ import {
   getDayTitle,
   getDaysInCycle,
   getProgramMeta,
+  getRpTemplate,
 } from "@/lib/program-registry";
 import {
   clearActiveSession,
@@ -49,10 +50,6 @@ import { getRpState, saveRpState, addRating, clearRpState } from "@/lib/rp-store
 import { getRpExercisesForDay } from "@/lib/program-registry";
 import type { RpProgramState, RpMesoType } from "@/lib/rp-types";
 import { isDeloadWeek, getNextMeso, getMesoWeeks, getMesoRestSeconds, getRirTarget } from "@/lib/rp-engine";
-import { RP_TEMPLATE_NF3 } from "@/lib/rp-template-nf3";
-import { RP_TEMPLATE_NF4 } from "@/lib/rp-template-nf4";
-import { RP_TEMPLATE_NA4 } from "@/lib/rp-template-na4";
-import { RP_TEMPLATE_NC4 } from "@/lib/rp-template-nc4";
 import type { RpTemplate, RpExerciseSlot } from "@/lib/rp-types";
 import { TRACKED_MUSCLES, type MuscleGroup, type ExerciseDefinition } from "@/lib/types";
 import { getPermanentSub, setPermanentSub, clearPermanentSub } from "@/lib/exercise-substitutions";
@@ -195,16 +192,6 @@ function clampDayPrefs(prefs: UserPrefs, daysPerCycle: number, totalWeeks: numbe
   };
 }
 
-function getRpTemplateById(id: string): RpTemplate | undefined {
-  switch (id) {
-    case "rp-nf3": return RP_TEMPLATE_NF3;
-    case "rp-nf4": return RP_TEMPLATE_NF4;
-    case "rp-na4": return RP_TEMPLATE_NA4;
-    case "rp-nc4": return RP_TEMPLATE_NC4;
-    default: return undefined;
-  }
-}
-
 export function TodayScreen() {
   const router = useRouter();
   const { ownerPinEnabled, ownerUnlocked, activeUser } = useAccess();
@@ -303,7 +290,7 @@ export function TodayScreen() {
 
   const rpDaySlots = useMemo<RpExerciseSlot[]>(() => {
     if (!isRpProgram) return [];
-    const template = getRpTemplateById(programId);
+    const template = getRpTemplate(programId);
     if (!template) return [];
     return template.slots.filter(s => s.dayNumber === prefs.currentDay);
   }, [isRpProgram, programId, prefs.currentDay]);
@@ -1038,7 +1025,7 @@ export function TodayScreen() {
                   totalWeeks={getMesoWeeks(rpState.currentMeso)}
                   daysPerWeek={daysPerCycle}
                   dayTitles={(() => {
-                    const t = getRpTemplateById(programId);
+                    const t = getRpTemplate(programId);
                     return t?.dayTitles ?? [];
                   })()}
                   completedDays={rpCompletedDays}

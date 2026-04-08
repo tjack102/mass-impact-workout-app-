@@ -2,13 +2,9 @@
 
 import { useState, useMemo } from "react";
 import type { RpMesoType, RpProgramState, RpExerciseSlot } from "@/lib/rp-types";
-import { RP_TEMPLATE_NF3 } from "@/lib/rp-template-nf3";
-import { RP_TEMPLATE_NF4 } from "@/lib/rp-template-nf4";
-import { RP_TEMPLATE_NA4 } from "@/lib/rp-template-na4";
-import { RP_TEMPLATE_NC4 } from "@/lib/rp-template-nc4";
 import { getRpExercisesForCategory } from "@/lib/rp-exercise-library";
 import { estimateTenRepMax, getRirTarget, getMesoRestSeconds } from "@/lib/rp-engine";
-import { getRpExercisesForDay } from "@/lib/program-registry";
+import { getRpExercisesForDay, getRpTemplate } from "@/lib/program-registry";
 import type { RpTemplate } from "@/lib/rp-types";
 
 const MESO_OPTIONS: RpMesoType[] = ["basic", "metabolite", "resensitization"];
@@ -35,28 +31,13 @@ const MESO_INFO: Record<RpMesoType, { title: string; description: string }> = {
   },
 };
 
-function getTemplate(id: string): RpTemplate | undefined {
-  switch (id) {
-    case "rp-nf3":
-      return RP_TEMPLATE_NF3;
-    case "rp-nf4":
-      return RP_TEMPLATE_NF4;
-    case "rp-na4":
-      return RP_TEMPLATE_NA4;
-    case "rp-nc4":
-      return RP_TEMPLATE_NC4;
-    default:
-      return undefined;
-  }
-}
-
 export function RpSetupScreen({
   templateId,
   meso: initialMeso,
   carryForward,
   onComplete,
 }: RpSetupScreenProps) {
-  const template = getTemplate(templateId);
+  const template = getRpTemplate(templateId);
   if (!template) return <p>Template not found</p>;
 
   const t = template as RpTemplate;
