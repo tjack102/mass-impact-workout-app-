@@ -26,11 +26,7 @@ import {
 } from "@/lib/volume-store";
 import { getStoredPrefsFromLocalStorage } from "@/lib/household-profiles";
 import { getProgramMeta } from "@/lib/program-registry";
-
-// Convert snake_case muscle names (e.g. "side_delts") to "Side Delts"
-function muscleName(key: string): string {
-  return key.replace(/_/g, " ").replace(/\b\w/g, (c) => c.toUpperCase());
-}
+import { formatMuscleName } from "@/lib/format-utils";
 
 type InstallPromptEvent = Event & {
   prompt: () => Promise<void>;
@@ -470,7 +466,7 @@ export function SettingsScreen() {
                         color: "var(--text-1)",
                       }}
                     >
-                      {muscleName(muscle)}
+                      {formatMuscleName(muscle)}
                     </td>
                     {fields.map(([field, label]) => (
                       <td
@@ -483,7 +479,7 @@ export function SettingsScreen() {
                       >
                         <input
                           type="number"
-                          aria-label={`${muscleName(muscle)} ${label}`}
+                          aria-label={`${formatMuscleName(muscle)} ${label}`}
                           value={entry[field]}
                           min={0}
                           onChange={(e) => handleLandmarkChange(muscle, field, e.target.value)}

@@ -14,14 +14,9 @@ import { Sparkline } from "@/components/sparkline";
 import { useAccess } from "@/components/access-context";
 import { ChevronDown } from "@/components/icons";
 import { getRecoveryRatings } from "@/lib/volume-store";
+import { formatMuscleName } from "@/lib/format-utils";
 
 // --- Helpers ----------------------------------------------------------------
-
-function toTitleCase(s: string): string {
-  return s
-    .replace(/_/g, " ")
-    .replace(/\b\w/g, (c) => c.toUpperCase());
-}
 
 /** Collect direct volume per week for a single muscle, across all session history. */
 function buildSparklineData(
@@ -119,7 +114,7 @@ function MuscleCard({
       {/* Header row: muscle name + volume number */}
       <div className="flex justify-between items-start gap-2">
         <div>
-          <p className="subtle-label">{toTitleCase(muscle)}</p>
+          <p className="subtle-label">{formatMuscleName(muscle)}</p>
           <p
             className="mono"
             style={{
@@ -504,7 +499,7 @@ export function VolumeContent() {
                     borderBottom: "1px solid var(--border)",
                   }}
                 >
-                  <span className="subtle-label">{toTitleCase(muscle)}</span>
+                  <span className="subtle-label">{formatMuscleName(muscle)}</span>
                   <span
                     className="mono"
                     style={{

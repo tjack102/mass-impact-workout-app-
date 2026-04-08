@@ -4,6 +4,70 @@ _History through UX Overhaul archived in `docs/WORKLOG-ARCHIVE.md`_
 
 ---
 
+## 2026-04-07 -- Codebase Cleanup: Format Utils Migration (Task 4) -- COMPLETE
+
+### Goal
+Replace local formatting functions in 5 files with imports from `web/src/lib/format-utils.ts`, which exports `formatMuscleName`, `formatClock`, `formatDuration`.
+
+### What Was Done
+[x] File 1: recovery-rating-prompt.tsx -- removed local `formatMuscleName()`, added import
+[x] File 2: settings-screen.tsx -- removed local `muscleName()`, added import, replaced 2 call sites
+[x] File 3: volume-content.tsx -- removed local `toTitleCase()`, added import, replaced 2 call sites
+[x] File 4: rest-timer-dial.tsx -- removed local `formatClock()`, added import
+[x] File 5: today-screen.tsx (1838 lines) -- complex:
+  - Removed local `formatElapsed()` (replaced call with `formatClock`)
+  - Removed local `formatDuration()`
+  - Updated `formatMuscleGroup()` to use `formatMuscleName()` for primary and secondary muscle formatting
+  - Added import for all 3 functions
+
+### Verification
+- Vitest: 7 files, 189 tests -- all PASS
+- TypeScript: `npx tsc --noEmit` -- 0 errors
+- All call sites verified working (no orphaned function calls)
+
+### Modified Files
+- `web/src/components/recovery-rating-prompt.tsx`
+- `web/src/components/screens/settings-screen.tsx`
+- `web/src/components/screens/volume-content.tsx`
+- `web/src/components/rest-timer-dial.tsx`
+- `web/src/components/screens/today-screen.tsx`
+
+### Next: Task 5
+Export getRpTemplate, kill duplicates.
+
+---
+
+## 2026-04-07 -- Codebase Cleanup: Storage Utils (Task 1) -- COMPLETE
+
+### Goal
+Extract shared `readJson/writeJson` helpers from 3 store files (workout-store.ts, volume-store.ts, rp-store.ts) into single source of truth: `web/src/lib/storage-utils.ts`.
+
+### What Was Done
+[x] Step 1: Created test file (`web/src/lib/__tests__/storage-utils.test.ts`)
+[x] Step 2: Ran test to verify it fails (module not found -- expected)
+[x] Step 3: Created implementation (`web/src/lib/storage-utils.ts`)
+[x] Step 4: Ran test to verify it passes (4 tests PASS)
+[x] Step 5: Committed (bceb5f6)
+
+### Implementation
+- `readJson(key)` -- reads localStorage with SSR guard, parses JSON, returns null on error
+- `writeJson(key, value)` -- writes to localStorage with SSR guard, serializes to JSON
+- Both handle missing keys, corrupt JSON, and SSR gracefully
+
+### Verification
+- 4 tests pass: missing key, JSON parse, corrupt JSON, serialization
+- TypeScript: 0 errors (`npx tsc --noEmit` passes)
+- Commit: `git log --oneline | head -1` → bceb5f6
+
+### Files Created
+- `web/src/lib/storage-utils.ts`
+- `web/src/lib/__tests__/storage-utils.test.ts`
+
+### Next: Task 2
+Migrate workout-store.ts, volume-store.ts, rp-store.ts to use shared helpers.
+
+---
+
 ## 2026-04-07 -- Exercise Library Audit & Expansion -- COMPLETE
 
 ### Goal
@@ -842,4 +906,52 @@ Add 4 new simple split programs (split-fb3, split-fb4, split-arms4, split-chest4
 
 ### Status
 Complete. Registry integration ready; awaiting `program-data-splits.ts` from parallel agent.
+
+---
+
+## 2026-04-07 -- Migrate 5 Store Files to storage-utils
+
+### Goal
+Replace duplicated readRaw/write functions in 5 store files with shared storage-utils exports.
+
+### Files Modified
+1. **workout-store.ts**: Added import; deleted readRaw/write functions; replaced readRaw( → readJson(, write(KEYS.* → writeJson(KEYS.*
+2. **volume-store.ts**: Added import; deleted readRaw/write functions; replaced readRaw( → readJson(, write(KEYS.* → writeJson(KEYS.*
+3. **rp-store.ts**: Added import; deleted readRaw/write functions; replaced readRaw( → readJson(, write(STORAGE_KEY → writeJson(STORAGE_KEY
+4. **exercise-substitutions.ts**: Added import; replaced load() body to use readJson; replaced save() body to use writeJson
+5. **exercise-additions.ts**: Added import; replaced load() body to use readJson; replaced save() body to use writeJson
+
+### Verification
+- Tests: 181 passed, 6 files, 0 failures (npx vitest run)
+- Types: 0 errors (npx tsc --noEmit)
+- Commit: `ee04471` -- refactor: migrate 5 store files to shared storage-utils
+
+### Status
+COMPLETE. All duplicated storage functions consolidated to storage-utils.ts.
+
+---
+
+## 2026-04-07 -- Task 3: Create format-utils.ts
+
+### Goal
+Create shared format-utils module centralizing 4 duplicated formatting functions across the codebase.
+
+### Files Created
+- `web/src/lib/format-utils.ts` -- formatMuscleName, formatClock, formatDuration functions
+- `web/src/lib/__tests__/format-utils.test.ts` -- unit tests (8 tests)
+
+### What Was Done
+1. Created test file with 8 assertions (formatMuscleName: 3 tests, formatClock: 3 tests, formatDuration: 2 tests)
+2. Ran test to verify it fails (cannot find module)
+3. Created implementation file with 3 pure functions:
+   - formatMuscleName: snake_case -> Title Case
+   - formatClock: seconds -> M:SS (e.g., 90 -> "1:30")
+   - formatDuration: seconds -> Mm SSs (e.g., 125 -> "2m 05s")
+4. Ran test again: all 8 tests passing
+5. Committed: `d382f89` -- feat: add shared format-utils (formatMuscleName, formatClock, formatDuration)
+
+### Status
+COMPLETE. Ready for Task 4: Migrate 5 files to use format-utils.
+
+---
 

@@ -1,4 +1,5 @@
 import type { CSSProperties } from "react";
+import { formatClock } from "@/lib/format-utils";
 
 type RestTimerDialProps = {
   targetSeconds: number;
@@ -10,12 +11,6 @@ type RestTimerDialProps = {
   onAdjustDuration: (delta: number) => void;
   onSetDuration: (seconds: number) => void;
 };
-
-function formatClock(seconds: number) {
-  const minutes = Math.floor(seconds / 60);
-  const remainder = seconds % 60;
-  return `${minutes}:${remainder.toString().padStart(2, "0")}`;
-}
 
 export function RestTimerDial({
   targetSeconds,

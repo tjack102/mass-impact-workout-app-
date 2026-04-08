@@ -2,6 +2,7 @@
 
 import { useState } from "react";
 import type { MuscleGroup } from "@/lib/types";
+import { formatMuscleName } from "@/lib/format-utils";
 
 interface RecoveryRatingPromptProps {
   musclesTrained: MuscleGroup[];
@@ -10,14 +11,6 @@ interface RecoveryRatingPromptProps {
 }
 
 const RATING_OPTIONS = [-2, -1, 0, 1, 2] as const;
-
-// Convert snake_case muscle keys to Title Case for display
-function formatMuscleName(muscle: MuscleGroup): string {
-  return muscle
-    .split("_")
-    .map((word) => word.charAt(0).toUpperCase() + word.slice(1))
-    .join(" ");
-}
 
 export function RecoveryRatingPrompt({
   musclesTrained,

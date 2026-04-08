@@ -58,6 +58,7 @@ import { TRACKED_MUSCLES, type MuscleGroup, type ExerciseDefinition } from "@/li
 import { getPermanentSub, setPermanentSub, clearPermanentSub } from "@/lib/exercise-substitutions";
 import { getExerciseUrl, setExerciseUrl, clearExerciseUrl } from "@/lib/exercise-url-store";
 import { getAdditions } from "@/lib/exercise-additions";
+import { formatMuscleName, formatClock, formatDuration } from "@/lib/format-utils";
 import { ExercisePickerModal } from "@/components/exercise-picker-modal";
 import {
   saveRecoveryRating,
@@ -110,11 +111,6 @@ type QueueExercise = {
   isSkipped?: boolean;
 };
 
-function formatElapsed(seconds: number): string {
-  const m = Math.floor(seconds / 60);
-  const s = seconds % 60;
-  return `${m}:${String(s).padStart(2, "0")}`;
-}
 
 function buildTemplateDraft(exercise?: ProgramExercise): ExerciseTemplateDraft {
   return {
@@ -144,22 +140,13 @@ function isRepCeilingHit(exercise: ProgramExercise, loggedSets: LoggedSet[]): bo
 function formatMuscleGroup(exerciseName: string): string {
   const def = findExercise(exerciseName);
   if (!def) return "";
-  const primary = def.primaryMuscle.replace(/_/g, " ");
-  const title = primary.charAt(0).toUpperCase() + primary.slice(1);
+  const title = formatMuscleName(def.primaryMuscle);
   const secondaries = def.secondaryMuscles
     .filter(s => s.factor >= 0.3)
-    .map(s => {
-      const n = s.muscle.replace(/_/g, " ");
-      return n.charAt(0).toUpperCase() + n.slice(1);
-    });
+    .map((s) => formatMuscleName(s.muscle));
   return secondaries.length > 0 ? `${title} & ${secondaries[0]}` : title;
 }
 
-function formatDuration(totalSeconds: number) {
-  const minutes = Math.floor(totalSeconds / 60);
-  const seconds = totalSeconds % 60;
-  return `${minutes}m ${seconds.toString().padStart(2, "0")}s`;
-}
 
 function formatLastSet(set?: LoggedSet) {
   if (!set) {
@@ -1803,7 +1790,7 @@ export function TodayScreen() {
 
     {matchingActiveSession ? (
       <div className="workout-status-bar" role="status" aria-label="Active workout status">
-        <span className="workout-status-time">{formatElapsed(workoutElapsedSeconds)}</span>
+        <span className="workout-status-time">{formatClock(workoutElapsedSeconds)}</span>
         <span className="workout-status-sets">{matchingActiveSession.sets.length} sets</span>
         <button
           type="button"
