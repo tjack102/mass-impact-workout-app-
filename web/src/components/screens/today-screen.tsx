@@ -159,16 +159,6 @@ function formatSetTimestamp(timestamp: number) {
   });
 }
 
-function getLastPerformanceFromSessions(sessions: WorkoutSession[], exerciseName: string) {
-  for (let index = sessions.length - 1; index >= 0; index -= 1) {
-    const sets = sessions[index].sets.filter((set) => set.exerciseName === exerciseName);
-    if (sets.length > 0) {
-      return sets.reduce((best, set) => (set.weight > best.weight ? set : best), sets[0]);
-    }
-  }
-  return undefined;
-}
-
 function shiftWeekDay(currentWeek: number, currentDay: number, step: 1 | -1, daysPerCycle: number, totalWeeks: number) {
   let week = currentWeek;
   let day = currentDay + step;
@@ -333,6 +323,25 @@ export function TodayScreen() {
       ? "Completed"
       : "Not Started";
 
+  // Pre-compute last performance per exercise -- O(N*M) once when history changes,
+  // then O(1) lookups inside queueExercises.
+  const lastPerformanceMap = useMemo(() => {
+    const map = new Map<string, LoggedSet>();
+    // Walk sessions newest-first; first session with matching sets wins per exercise
+    for (let i = sessionHistory.length - 1; i >= 0; i--) {
+      const session = sessionHistory[i];
+      // Group this session's sets by exercise name
+      for (const set of session.sets) {
+        if (map.has(set.exerciseName)) continue; // already found from a more recent session
+        // Find best set for this exercise in this session
+        const setsForExercise = session.sets.filter(s => s.exerciseName === set.exerciseName);
+        const best = setsForExercise.reduce((b, s) => (s.weight > b.weight ? s : b), setsForExercise[0]);
+        map.set(set.exerciseName, best);
+      }
+    }
+    return map;
+  }, [sessionHistory]);
+
   const queueExercises = useMemo<QueueExercise[]>(() => {
     // Batch localStorage reads: load substitution map once instead of per-exercise
     const allSubs = getAllPermanentSubs(prefs.activeUser);
@@ -356,7 +365,7 @@ export function TodayScreen() {
       const completedSets = matchingActiveSession
         ? matchingActiveSession.sets.filter((set) => set.exerciseName === resolvedName).length
         : 0;
-      const lastPerformance = getLastPerformanceFromSessions(sessionHistory, resolvedName);
+      const lastPerformance = lastPerformanceMap.get(resolvedName);
 
       // Apply session-only override keyed on RESOLVED name
       const override = matchingActiveSession?.overrides?.[resolvedName];
@@ -389,7 +398,7 @@ export function TodayScreen() {
       };
     });
   // eslint-disable-next-line react-hooks/exhaustive-deps -- subVersion/urlVersion are intentional cache-busters
-  }, [exercises, matchingActiveSession, prefs.activeUser, prefs.currentDay, prefs.currentWeek, sessionHistory, programId, subVersion, urlVersion, rpDaySlots]);
+  }, [exercises, matchingActiveSession, prefs.activeUser, prefs.currentDay, prefs.currentWeek, lastPerformanceMap, programId, subVersion, urlVersion, rpDaySlots]);
 
   const safeActiveIndex =
     queueExercises.length === 0 ? 0 : Math.min(activeIndex, Math.max(0, queueExercises.length - 1));
