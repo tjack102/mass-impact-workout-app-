@@ -33,8 +33,7 @@ type AppShellProps = {
 
 export function AppShell({ children }: AppShellProps) {
   const pathname = usePathname();
-  const initialPrefs = getPrefs();
-  const [activeUser, setActiveUserState] = useState<HouseholdUser>(initialPrefs.activeUser);
+  const [activeUser, setActiveUserState] = useState<HouseholdUser>(() => getPrefs().activeUser);
   const currentWeek = getPrefs().currentWeek;
   const [hasSession, setHasSession] = useState(false);
 
@@ -52,7 +51,8 @@ export function AppShell({ children }: AppShellProps) {
   }, [activeUser]); // re-sync on profile switch
 
   function setActiveUser(nextUser: HouseholdUser) {
-    const updated = getPrefs().activeUser === nextUser ? getPrefs() : savePrefs({ activeUser: nextUser });
+    const current = getPrefs();
+    const updated = current.activeUser === nextUser ? current : savePrefs({ activeUser: nextUser });
     setActiveUserState(updated.activeUser);
   }
 
