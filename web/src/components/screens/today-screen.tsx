@@ -471,9 +471,14 @@ export function TodayScreen() {
   );
 
   useEffect(() => {
+    if (!matchingActiveSession) {
+      setNowMs(null);
+      return;
+    }
+    setNowMs(Date.now());
     const id = window.setInterval(() => setNowMs(Date.now()), 1000);
     return () => window.clearInterval(id);
-  }, []);
+  }, [matchingActiveSession]);
 
   useEffect(() => {
     if (!timerRunning) {
