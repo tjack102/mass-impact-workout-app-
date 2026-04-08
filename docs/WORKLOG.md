@@ -4,6 +4,59 @@ _History through UX Overhaul archived in `docs/WORKLOG-ARCHIVE.md`_
 
 ---
 
+## 2026-04-07 -- Exercise Library Audit & Expansion -- COMPLETE
+
+### Goal
+Audit all templates for missing swap alternatives in the exercise picker. The swap modal only shows exercises with `tier: "S"` or `tier: "A"`, so many existing exercises were invisible (e.g., hamstrings showed only 4 options despite having 10 exercises).
+
+### Root Cause
+`web/src/components/exercise-picker-modal.tsx:47` filters to `e.tier === "S" || e.tier === "A"`. 45 of 197 exercises had no tier assigned.
+
+### What Was Done
+- Launched 8 parallel audit agents (one per template group + tier audit)
+- Added tier assignments to all ~156 previously untiered exercises
+- Upgraded Incline Curl (Dumbbell) from A to S tier (THE stretch-position bicep exercise)
+- Added 32 new staple exercises across all muscle groups
+- Cardio intentionally left untiered (placeholder entry)
+
+### New Exercises Added (32)
+- **Back (4):** Chin-Up (Bodyweight), Pendlay Row, Seal Row, Inverted Row (Bodyweight)
+- **Chest (2):** Decline Bench Press (Barbell), Decline Dumbbell Press
+- **Side Delts (1):** Leaning Lateral Raise (Dumbbell)
+- **Rear Delts (2):** Rear Delt Fly (Dumbbell), Band Pull-Apart
+- **Front Delts (3):** Front Raise (Dumbbell), Front Raise (Cable), Smith Machine Shoulder Press
+- **Traps (1):** Cable Shrug
+- **Quads (3):** Goblet Squat, Belt Squat, Split Squat (Dumbbell)
+- **Hamstrings (3):** Glute Ham Raise, Standing Leg Curl (Machine), Cable Romanian Deadlift
+- **Glutes (4):** Hip Thrust (Machine), Reverse Lunge (Dumbbell), Curtsy Lunge, Reverse Hyperextension
+- **Calves (2):** Donkey Calf Raise, Single-Leg Calf Raise
+- **Biceps (2):** Concentration Curl, Reverse Curl (Barbell)
+- **Triceps (2):** Diamond Push-Up, Rope Pushdown
+- **Abs (3):** Captain's Chair Leg Raise, Reverse Crunch, Cable Woodchop
+
+### Impact (visible swap options per muscle group)
+| Muscle Group | Before | After |
+|---|---|---|
+| Hamstrings | 4 | 13 |
+| Front Delts | 2 | 10 |
+| Abs | 3 | 14 |
+| Traps | 3 | 9 |
+| Triceps | 8 | 18 |
+| Calves | 3 | 7 |
+| Rear Delts | 5 | 10 |
+| Side Delts | 7 | 13 |
+
+### Verification
+- TypeScript: 0 errors (`npx tsc --noEmit`)
+- Total exercises: 229 (was 197)
+- S-tier: 65, A-tier: 163
+- Deployed to Vercel production
+
+### Modified Files
+- `web/src/lib/exercise-library.ts` -- tiers + 32 new exercises
+
+---
+
 ## 2026-04-05 -- RP Exercise Library -- COMPLETE
 
 ### Goal
@@ -462,6 +515,136 @@ Integrate RP program support into today-screen.tsx so users can:
 
 ---
 
+## 2026-04-06 -- ExerciseQueueCard Layout Rewrite -- COMPLETE
+
+### Goal
+Rewrite `web/src/components/exercise-queue-card.tsx` to new data-cluster layout with:
+- Header: order + name + actions (URL/swap buttons)
+- Muscles row
+- Data cluster: SETS / REPS / WEIGHT as three columns
+- Footer: progress + RIR badge
+- Notes row
+
+### What Was Done
+- [x] Replaced component entirely with new layout structure
+- [x] Updated props: removed scheme/track/lastPerformance, added muscleGroup/reps/lastWeight/prescribedWeight/rirTarget/isSkipped
+- [x] Removed ProgressRing SVG component (no longer used)
+- [x] Simplified button layout: orderLabel/name flex, actions group flex
+- [x] Data cluster: three equal-width stat blocks (SETS, REPS, WEIGHT labels above values)
+- [x] Footer: conditional rendering of progress + RIR badge
+- [x] Notes: optional notes row at bottom
+- [x] Removed ArrowLeftRight icon import (doesn't exist), using ⇄ symbol instead
+- [x] Updated data attributes: data-active, data-complete, data-skipped
+- [x] TypeScript: 0 errors (component file clean)
+
+### Files Modified
+- `web/src/components/exercise-queue-card.tsx` -- complete rewrite
+
+### Expected Issue (Not Fixed)
+- today-screen.tsx still passes old props (scheme, track, lastPerformance) -- will be fixed by another agent
+- Component file itself: 0 TypeScript errors
+- Full tsc will show today-screen prop mismatch -- expected
+
+### Verification
+- `npx tsc --noEmit | grep exercise-queue-card` -- no errors in component file
+- Component structure matches spec: header/muscles/data-cluster/footer/notes layout
+
+---
+
+## 2026-04-06 -- Today Screen to Stitch Design -- IN PROGRESS
+
+### Goal
+Modify `web/src/components/screens/today-screen.tsx` to match new Stitch design mockups.
+
+### Changes Made
+- [x] Added `formatMuscleGroup()` helper function (line ~137) -- formats exercise muscle groups from exercise-library definitions
+- [x] Updated `QueueExercise` type to add: `muscleGroup`, `reps`, `lastWeight?`, `isSkipped?`
+- [x] Updated `queueExercises` memo return object to populate new fields using formatMuscleGroup() and exercise data
+- [x] Updated `ExerciseQueueCard` JSX props: removed old `scheme`, `lastPerformance`, `track` props; added new `muscleGroup`, `reps`, `lastWeight`, `prescribedWeight`, `rirTarget`, `isSkipped` props
+- [x] Removed both `<details>` collapsible-section wrappers around Exercise Queue and Live Console
+- [x] Removed redundant section titles (Exercise Queue / Today Pipeline) from Exercise Queue section
+- [x] Updated exercise name display in Live Console: replaced `.section-title` with custom inline styles (display font, 1.4rem, uppercase, letter-spacing)
+- [x] Added `glass-card` class to Live Console `<article>`
+- [x] Added gap styling to `queue-list` div: `display: flex`, `flexDirection: column`, `gap: 12px`
+- [x] TypeScript: 0 errors (`npx tsc --noEmit`)
+
+### Files Modified
+- `web/src/components/screens/today-screen.tsx` -- all changes above
+
+### Verification
+- TypeScript compilation clean (no errors)
+
+---
+
+## 2026-04-06 -- RP UX Overhaul -- IN PROGRESS
+
+### Plan
+- Plan: `docs/superpowers/plans/2026-04-06-rp-ux-overhaul.md`
+- Spec: `docs/superpowers/specs/2026-04-06-rp-ux-overhaul-design.md`
+
+### Task 1: Create RpMesoCard Component -- COMPLETE
+- [x] Step 1: Create the component file -- `web/src/components/rp-meso-card.tsx`
+- [x] Step 2: Add meso card CSS to globals.css -- added before @media queries (line 1207)
+- [x] Step 3: Verify TypeScript -- 0 errors (`npx tsc --noEmit`)
+- [x] Step 4: Commit -- `850794c` feat: create RpMesoCard component with day checkboxes and week advancement
+
+### Task 2: Add Week 1 Preview to Setup Screen -- COMPLETE
+- [x] Step 1: Add getRpExercisesForDay import (line 11)
+- [x] Step 2: Add preview section before submit button (lines 478-527)
+- [x] Step 3: Verify RpProgramState import (confirmed, line 4 from rp-types)
+- [x] Step 4: Verify TypeScript -- 0 errors
+- [x] Step 5: Commit -- `d09e4cc` feat: add Week 1 preview to RP setup screen
+
+### What Was Done (Task 2)
+- Added `getRpExercisesForDay` import from `@/lib/program-registry` at top of rp-setup-screen.tsx
+- Inserted Week 1 preview section (61 lines) between day cards loop and submit button
+- Preview builds temporary RpProgramState with currentWeek=1 and calls getRpExercisesForDay() for each day
+- Shows calculated prescribed weights, set counts, and RIR targets for verification before starting
+- Only displays when isComplete (all 10RMs entered)
+- Uses existing CSS variables for styling (font-display, accent-primary, accent-power)
+- TypeScript: 0 errors (`npx tsc --noEmit`)
+- Commit: `d09e4cc`
+
+### Task 3: Wire Meso Card into Today Screen + Remove Auto-Advance -- COMPLETE
+- [x] Step 1: Add new imports (RpMesoCard, getMesoRestSeconds, getRirTarget)
+- [x] Step 2: Add rpCompletedDays memo with rpAllDaysComplete derivation
+- [x] Step 3: Add handleRpSelectDay callback after handleShiftDay
+- [x] Step 4: Add handleRpAdvanceWeek callback after handleRpSelectDay
+- [x] Step 5: Add handleRpCompleteMeso callback after handleRpAdvanceWeek
+- [x] Step 6: Remove auto-advance RP block from finalizeCompletion (deleted lines 819-846)
+- [x] Step 7: Replace week/day selectors with conditional (show meso card for RP, toolbar for non-RP)
+- [x] Step 8: Add rating visibility hints after RP rating section
+- [x] Step 9: Verify TypeScript + tests -- 0 errors, 177/177 passing
+
+### What Was Done (Task 3)
+- Added imports: `RpMesoCard` component, `getMesoRestSeconds`, `getRirTarget` from rp-engine
+- Created `rpCompletedDays` useMemo tracking which days completed in current week for RP programs
+- Created `rpAllDaysComplete` boolean derived from rpCompletedDays
+- Created three event handlers:
+  1. `handleRpSelectDay` -- calls applyDaySelection, clears rated slots
+  2. `handleRpAdvanceWeek` -- increments rpState.currentWeek, advances global prefs.currentWeek, clears ratings
+  3. `handleRpCompleteMeso` -- handles meso transition (next meso or macrocycle complete)
+- Deleted 28-line RP auto-advance block from finalizeCompletion (was checking isLastDayOfWeek)
+- Updated finalizeCompletion dependency array: removed isRpProgram, rpState, prefs.currentDay
+- Replaced cycle-toolbar section with conditional:
+  - `{isRpProgram && rpState ? <RpMesoCard .../> : <div className="cycle-toolbar">...}</div>`
+  - RpMesoCard receives all state + handlers, day titles from getRpTemplateById()
+- Added rating hints section after existing inline rating UI:
+  - Shows "Ratings unlock in Week 2" in Week 1
+  - Shows "Deload week -- no ratings" in deload weeks
+  - Uses existing inline IIFE pattern
+- TypeScript: 0 errors (`npx tsc --noEmit`)
+- Vitest: 177/177 passing
+- Commit: ready (not yet committed per instructions)
+
+### Files to Modify/Create
+- Create: `web/src/components/rp-meso-card.tsx` -- DONE
+- Modify: `web/src/app/globals.css` (add CSS before media queries) -- DONE
+- Modify: `web/src/components/screens/rp-setup-screen.tsx` (add preview section) -- DONE
+- Modify: `web/src/components/screens/today-screen.tsx` -- DONE
+
+---
+
 ## HANDOFF
 
 ### Current State
@@ -470,17 +653,193 @@ Integrate RP program support into today-screen.tsx so users can:
 - **Working:** 177/177 tests, 0 TypeScript errors
 - **Working:** RP programs (NF3, NF4, NA4, NC4) fully integrated into today-screen.tsx
 - **Working:** RpSetupScreen shown on first RP program launch
-- **Working:** Prescribed weights, RIR targets, recovery ratings, week/meso advancement
-- **Broken:** Nothing known
+- **Working:** Prescribed weights, RIR targets, recovery ratings
+- **Working:** ExerciseQueueCard rewritten with new data-cluster layout
+- **Working:** today-screen.tsx updated to pass new props to ExerciseQueueCard
+- **JUST COMPLETED:** Task 1, 2, 3 of RP UX Overhaul:
+  - RpMesoCard component created with day checkboxes, week/meso buttons
+  - Week 1 preview added to rp-setup-screen.tsx
+  - Meso card wired into today-screen, auto-advance removed
+  - Rating visibility hints added (Week 1 unlock, Deload week)
+  - rpCompletedDays tracking implemented
+  - All 3 event handlers added (select day, advance week, complete meso)
+
+### What's Ready to Test
+1. RpMesoCard displays for RP programs (replaces week/day dropdowns)
+2. Day checkboxes show current week completion status (✓ / ○)
+3. "Advance to Week X" button appears when all days complete (non-deload)
+4. "Complete Mesocycle" button appears when all days complete (deload)
+5. Clicking week advance updates prefs.currentWeek globally + rpState.currentWeek
+6. Rating hints show in Week 1 and deload weeks
+7. Non-RP programs still show cycle-toolbar (week/day selectors)
 
 ### Next Steps
-1. Test RP workflow end-to-end (select program, setup, log workout, rate recovery, check week advance)
-2. Verify meso transitions trigger correctly and carryForward works
-3. Test skipped exercise display and week auto-advance
-4. Deploy to Vercel for live testing
+1. Commit Task 3 changes when ready: `git add ... && git commit -m "..."`
+2. Implement Task 4: Final verification + deploy
+   - Full build check (tsc --noEmit && vitest run && next build)
+   - Push to origin/main
+   - Vercel deploy
 
-### Context
-- All 4 RP templates ready with exercise slot data
-- Engine functions produce correct weights/reps/sets based on 10RM, meso, week, ratings
-- RpSetupScreen collects initial exercise selection and 10RM per slot
-- Today-screen now handles full RP workflow: setup -> logging -> rating -> week advance -> meso transition
+### Architecture Notes
+- rpCompletedDays is a Set<number> tracking days 1-daysPerCycle completed in current week
+- handleRpSelectDay clears rpRatedSlots on day switch
+- handleRpAdvanceWeek increments both rpState.currentWeek AND prefs.currentWeek linearly
+- formatMuscleGroup helper uses findExercise to get primary + secondary muscles (≥0.3 factor)
+
+---
+
+## 2026-04-06 -- Three Today-Screen Changes
+
+### Goal
+Apply three targeted UX improvements to today-screen.tsx:
+1. Add delete button to logged set chips
+2. Pre-fill weight when selecting an exercise
+3. Inline 10RM editor for RP exercises
+
+### Files to Touch
+- `web/src/lib/workout-store.ts` -- create deleteSet() function
+- `web/src/components/screens/today-screen.tsx` -- all three changes
+
+### Plan
+**Change 1: Delete button on logged sets**
+- Create deleteSet(exerciseName, setIndex, user?) function in workout-store.ts
+- Removes matching set from active session, returns updated session or null
+- Pattern matches logSet() function
+- In today-screen.tsx: import deleteSet, add ✕ button to each logged-set-chip div
+- Button positioned after timestamp, uses setActiveSession callback
+
+**Change 2: Pre-fill weight**
+- In handleSelectExercise callback (line 632), after setTimerTarget call
+- Extract prescribedWeight or lastWeight from selected exercise
+- Pre-fill draft.weight via setDraft
+
+**Change 3: Inline 10RM editor**
+- Add rpTenRmEdit, rpTenRmDraft state vars after rpRatedSlots
+- Insert UI block after exercise name h2 (line 1202)
+- Toggle edit/view mode for activeExercise.rpSlotId
+- Save updates rpState.selections[slotId].tenRepMax via saveRpState
+- View shows "Target: {weight} lbs" or "No 10RM set" button
+
+### Starting State
+- today-screen.tsx: 1700 lines, imports all necessary stores
+- workout-store.ts: has logSet, completeSession, no deleteSet yet
+- Tests passing: 177/177, 0 TypeScript errors
+
+### What Was Done
+
+**Step 1: Create deleteSet() in workout-store.ts**
+- Added function after logSet (line 310)
+- Signature: deleteSet(exerciseName: string, setIndex: number, user?: HouseholdUser)
+- Filters out matching set from active session.sets array
+- Returns updated session or null
+- Follows same pattern as logSet: read, mutate, write, return
+
+**Step 2: Add delete button to logged-set-chip**
+- Added deleteSet to imports from @/lib/workout-store (line 31)
+- Updated logged-set-chip JSX in renderActiveExercise section (around line 1460)
+- Button positioned after timestamp with marginLeft: "auto"
+- Click handler: calls deleteSet(exerciseName, setIndex), updates activeSession
+- Styling: no background/border, text-2 color, pointer cursor, light gray
+- aria-label for accessibility, ✕ character for visual clarity
+
+**Step 3: Add weight pre-fill on exercise select**
+- Updated handleSelectExercise callback (line 634)
+- After setTimerTarget call, added logic to extract prescribedWeight or lastWeight
+- Pre-fills draft.weight using setDraft callback
+- Only fills if selected exercise has weight value
+
+**Step 4: Add inline 10RM editor for RP exercises**
+- Added rpTenRmEdit, rpTenRmDraft state vars after rpRatedSlots (line 287-288)
+- Added UI block after exercise name h2 in Live Console (line 1216)
+- Block conditionally renders if: isRpProgram && rpState && activeExercise.rpSlotId
+- View mode: button showing "Target: {weight} lbs" or "No 10RM set"
+- Edit mode: number input (min 0, step 5) + Save/Cancel buttons
+- Save handler: updates rpState.selections[slotId].tenRepMax via saveRpState
+- Clear logic: exits edit mode on save or cancel
+
+### Verification
+- TypeScript: `npx tsc --noEmit` -- 0 errors
+- Tests: `npx vitest run` -- 177/177 passing
+- No new dependencies added
+- All changes backward compatible (conditional rendering for RP programs)
+
+### Summary
+All three changes complete and verified:
+1. Delete set chips -- users can now remove individual logged sets with ✕ button
+2. Weight pre-fill -- selecting exercise pre-populates weight field for faster data entry
+3. 10RM inline editor -- RP users can edit 10RM values directly in Live Console
+
+New deleteSet function follows established patterns in workout-store (read/mutate/write/return).
+All UI additions use existing inline styling and state management patterns.
+No breaking changes; non-RP programs unaffected by 10RM editor code.
+
+---
+
+## 2026-04-06: Create `program-data-splits.ts` for simple split templates
+
+### Goal
+Create a new file that provides double-progression templates derived from RP template data. These are simple, static templates (unlike RP's adaptive ones) that use the same slots and exercise categories.
+
+### Plan
+1. Read spec at `docs/superpowers/specs/2026-04-07-simple-split-templates-design.md`
+2. Create `web/src/lib/program-data-splits.ts` with exact code from spec
+3. Verify TypeScript compilation
+
+### What Was Done
+
+**Step 1: Created program-data-splits.ts**
+- File: `web/src/lib/program-data-splits.ts`
+- Imports: RpTemplate types, RP templates (NF3, NF4, NA4, NC4), getRpExercisesForCategory, findExercise, getDefaultRestSeconds
+- TEMPLATE_MAP: Maps 4 program IDs to their RP sources
+  - `split-fb3` -> RP_TEMPLATE_NF3
+  - `split-fb4` -> RP_TEMPLATE_NF4
+  - `split-arms4` -> RP_TEMPLATE_NA4
+  - `split-chest4` -> RP_TEMPLATE_NC4
+- getSplitDayTemplate(programId, dayNumber) function:
+  - Reads template from TEMPLATE_MAP, returns null if not found
+  - Gets day title from template.dayTitles[dayNumber - 1]
+  - Filters slots: only includes dayNumber match + baseSets.basic > 0
+  - Maps to ProgramExercise[]:
+    - Exercise name: first from getRpExercisesForCategory(slot.muscleCategory)
+    - Sets: slot.baseSets.basic
+    - Reps: "8-12 reps" for compounds, "10-15 reps" for isolations (via findExercise().type check)
+    - Rest: getDefaultRestSeconds(name)
+  - Returns { title, exercises } or null
+
+**Step 2: Verified TypeScript**
+- `npx tsc --noEmit` from web directory
+- 0 errors
+
+### Notes
+- Registry integration (PROGRAM_REGISTRY additions) not done yet -- next step per spec
+- This file is standalone and ready for use
+- All imports validated; paths match existing RP integration pattern
+- No new dependencies required
+
+### Status
+COMPLETE -- File created, syntax verified. Ready for registry integration in next phase.
+
+---
+
+## 2026-04-06 -- Add Split Programs to Registry
+
+### Goal
+Add 4 new simple split programs (split-fb3, split-fb4, split-arms4, split-chest4) to program registry.
+
+### What Was Done
+1. Added import: `import { getSplitDayTemplate } from "./program-data-splits";`
+2. Added 4 entries to PROGRAM_REGISTRY:
+   - split-fb3: Full Body 3-Day (Push/Legs/Pull)
+   - split-fb4: Full Body 4-Day (Upper/Lower)
+   - split-arms4: Arms-Focus 4-Day
+   - split-chest4: Chest/Back 4-Day
+3. Added split handling in getExercisesForDay() before RP block
+4. Added split handling in getDayTitle() before RP block
+5. TypeScript: 0 errors (npx tsc --noEmit)
+
+### Files Changed
+- `web/src/lib/program-registry.ts`
+
+### Status
+Complete. Registry integration ready; awaiting `program-data-splits.ts` from parallel agent.
+
