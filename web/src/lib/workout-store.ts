@@ -15,6 +15,7 @@ import {
   saveProgramsByUser,
   type ProgramsByUser,
 } from "@/lib/program-store";
+import { readJson, writeJson } from "./storage-utils";
 
 export type LoggedSet = {
   exerciseName: string;
@@ -73,31 +74,13 @@ function dispatchSessionChange(): void {
   }
 }
 
-function readRaw(key: string): unknown {
-  if (typeof window === "undefined") {
-    return null;
-  }
-  try {
-    const raw = window.localStorage.getItem(key);
-    return raw ? JSON.parse(raw) : null;
-  } catch {
-    return null;
-  }
-}
-
-function write(key: string, value: unknown): void {
-  if (typeof window === "undefined") {
-    return;
-  }
-  window.localStorage.setItem(key, JSON.stringify(value));
-}
 
 function getStoredPrefs(): StoredPrefs {
   return getStoredPrefsFromLocalStorage();
 }
 
 function writeStoredPrefs(prefs: StoredPrefs): void {
-  write(KEYS.PREFS, prefs);
+  writeJson(KEYS.PREFS, prefs);
 }
 
 function toUserPrefs(storedPrefs: StoredPrefs): UserPrefs {
@@ -124,7 +107,7 @@ function getDefaultActiveSessionsByUser(): ActiveSessionsByUser {
 }
 
 function readSessionsByUser(): SessionsByUser {
-  const raw = readRaw(KEYS.SESSIONS);
+  const raw = readJson(KEYS.SESSIONS);
   if (Array.isArray(raw)) {
     const legacySessions = raw as WorkoutSession[];
     return {
@@ -145,11 +128,11 @@ function readSessionsByUser(): SessionsByUser {
 }
 
 function writeSessionsByUser(sessionsByUser: SessionsByUser): void {
-  write(KEYS.SESSIONS, sessionsByUser);
+  writeJson(KEYS.SESSIONS, sessionsByUser);
 }
 
 function readActiveSessionsByUser(): ActiveSessionsByUser {
-  const raw = readRaw(KEYS.ACTIVE_SESSION);
+  const raw = readJson(KEYS.ACTIVE_SESSION);
   if (raw && typeof raw === "object" && "id" in raw) {
     const legacySession = raw as WorkoutSession;
     const activeUser = getActiveUserFromLocalStorage();
@@ -171,7 +154,7 @@ function readActiveSessionsByUser(): ActiveSessionsByUser {
 }
 
 function writeActiveSessionsByUser(activeSessionsByUser: ActiveSessionsByUser): void {
-  write(KEYS.ACTIVE_SESSION, activeSessionsByUser);
+  writeJson(KEYS.ACTIVE_SESSION, activeSessionsByUser);
 }
 
 function resolveUser(user?: HouseholdUser): HouseholdUser {
@@ -187,7 +170,7 @@ function migrateSessionData(): void {
   migrated = true;
 
   // Migrate completed sessions
-  const rawSessions = readRaw(KEYS.SESSIONS);
+  const rawSessions = readJson(KEYS.SESSIONS);
   if (rawSessions && typeof rawSessions === "object") {
     const byUser = rawSessions as Partial<SessionsByUser>;
     let changed = false;
@@ -212,7 +195,7 @@ function migrateSessionData(): void {
   }
 
   // Migrate active session
-  const rawActive = readRaw(KEYS.ACTIVE_SESSION);
+  const rawActive = readJson(KEYS.ACTIVE_SESSION);
   if (rawActive && typeof rawActive === "object") {
     const byUser = rawActive as Partial<ActiveSessionsByUser>;
     let activeChanged = false;

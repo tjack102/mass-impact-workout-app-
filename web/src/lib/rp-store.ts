@@ -1,5 +1,6 @@
 import type { HouseholdUser } from "@/lib/household-profiles";
 import type { RpProgramState, RpRatingEntry } from "./rp-types";
+import { readJson, writeJson } from "./storage-utils";
 
 // ---------------------------------------------------------------------------
 // Storage key
@@ -11,25 +12,6 @@ const STORAGE_KEY = "mi_rp_state";
 // Private helpers (same pattern as volume-store.ts)
 // ---------------------------------------------------------------------------
 
-function readRaw(key: string): unknown {
-  if (typeof window === "undefined") {
-    return null;
-  }
-  try {
-    const raw = window.localStorage.getItem(key);
-    return raw ? JSON.parse(raw) : null;
-  } catch {
-    return null;
-  }
-}
-
-function write(key: string, value: unknown): void {
-  if (typeof window === "undefined") {
-    return;
-  }
-  window.localStorage.setItem(key, JSON.stringify(value));
-}
-
 // ---------------------------------------------------------------------------
 // Public API
 // ---------------------------------------------------------------------------
@@ -39,7 +21,7 @@ function write(key: string, value: unknown): void {
  * Returns null if no state has been saved (e.g. fresh program selection).
  */
 export function getRpState(user: HouseholdUser): RpProgramState | null {
-  const raw = readRaw(STORAGE_KEY);
+  const raw = readJson(STORAGE_KEY);
   if (!raw || typeof raw !== "object") {
     return null;
   }
@@ -73,11 +55,11 @@ export function getRpState(user: HouseholdUser): RpProgramState | null {
  * Reads the current record first so the other user's data is preserved.
  */
 export function saveRpState(user: HouseholdUser, state: RpProgramState): void {
-  const raw = readRaw(STORAGE_KEY);
+  const raw = readJson(STORAGE_KEY);
   const byUser = (raw && typeof raw === "object" ? raw : {}) as Record<HouseholdUser, RpProgramState | null>;
 
   byUser[user] = state;
-  write(STORAGE_KEY, byUser);
+  writeJson(STORAGE_KEY, byUser);
 }
 
 /**
@@ -103,9 +85,9 @@ export function addRating(user: HouseholdUser, entry: RpRatingEntry): void {
  * Called when the user switches away from an RP program (spec: mid-meso switch edge case).
  */
 export function clearRpState(user: HouseholdUser): void {
-  const raw = readRaw(STORAGE_KEY);
+  const raw = readJson(STORAGE_KEY);
   const byUser = (raw && typeof raw === "object" ? raw : {}) as Record<HouseholdUser, RpProgramState | null>;
 
   byUser[user] = null;
-  write(STORAGE_KEY, byUser);
+  writeJson(STORAGE_KEY, byUser);
 }

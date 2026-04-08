@@ -1,5 +1,6 @@
 import type { HouseholdUser } from "./household-profiles";
 import type { ProgramExercise } from "./program-data";
+import { readJson, writeJson } from "./storage-utils";
 
 const STORAGE_KEY = "mi_additions";
 
@@ -11,17 +12,11 @@ function buildKey(programId: string, day: number): string {
 }
 
 function load(): ProgramAdditions {
-  if (typeof window === "undefined") return { his: {}, hers: {} };
-  try {
-    const raw = localStorage.getItem(STORAGE_KEY);
-    return raw ? JSON.parse(raw) : { his: {}, hers: {} };
-  } catch {
-    return { his: {}, hers: {} };
-  }
+  return (readJson(STORAGE_KEY) as ProgramAdditions) ?? { his: {}, hers: {} };
 }
 
 function save(data: ProgramAdditions): void {
-  localStorage.setItem(STORAGE_KEY, JSON.stringify(data));
+  writeJson(STORAGE_KEY, data);
 }
 
 export function getAdditions(

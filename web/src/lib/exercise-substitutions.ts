@@ -1,4 +1,5 @@
 import type { HouseholdUser } from "./household-profiles";
+import { readJson, writeJson } from "./storage-utils";
 
 const STORAGE_KEY = "mi_substitutions";
 
@@ -10,17 +11,11 @@ function buildKey(programId: string, day: number, exerciseName: string): string 
 }
 
 function load(): PermanentSubstitutions {
-  if (typeof window === "undefined") return { his: {}, hers: {} };
-  try {
-    const raw = localStorage.getItem(STORAGE_KEY);
-    return raw ? JSON.parse(raw) : { his: {}, hers: {} };
-  } catch {
-    return { his: {}, hers: {} };
-  }
+  return (readJson(STORAGE_KEY) as PermanentSubstitutions) ?? { his: {}, hers: {} };
 }
 
 function save(data: PermanentSubstitutions): void {
-  localStorage.setItem(STORAGE_KEY, JSON.stringify(data));
+  writeJson(STORAGE_KEY, data);
 }
 
 export function getPermanentSub(

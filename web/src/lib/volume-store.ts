@@ -1,6 +1,7 @@
 import type { HouseholdUser } from "./household-profiles";
 import type { VolumeLandmarks, MesocycleState, RecoveryRating } from "./types";
 import { TRACKED_MUSCLES } from "./types";
+import { readJson, writeJson } from "./storage-utils";
 
 const KEYS = {
   VOLUME_STATE: "mi_volume_state",
@@ -40,24 +41,6 @@ export const DEFAULT_HERS_LANDMARKS: VolumeLandmarks = {
 } as VolumeLandmarks;
 
 // --- Helpers ---
-function readRaw(key: string): unknown {
-  if (typeof window === "undefined") {
-    return null;
-  }
-  try {
-    const raw = window.localStorage.getItem(key);
-    return raw ? JSON.parse(raw) : null;
-  } catch {
-    return null;
-  }
-}
-
-function write(key: string, value: unknown): void {
-  if (typeof window === "undefined") {
-    return;
-  }
-  window.localStorage.setItem(key, JSON.stringify(value));
-}
 
 export function getDefaultLandmarks(profile: HouseholdUser): VolumeLandmarks {
   return profile === "his" ? { ...DEFAULT_HIS_LANDMARKS } : { ...DEFAULT_HERS_LANDMARKS };
@@ -65,7 +48,7 @@ export function getDefaultLandmarks(profile: HouseholdUser): VolumeLandmarks {
 
 // --- Volume Landmarks ---
 export function getVolumeLandmarks(user: HouseholdUser): VolumeLandmarks {
-  const raw = readRaw(KEYS.VOLUME_LANDMARKS);
+  const raw = readJson(KEYS.VOLUME_LANDMARKS);
   if (!raw || typeof raw !== "object") {
     return getDefaultLandmarks(user);
   }
@@ -103,11 +86,11 @@ export function getVolumeLandmarks(user: HouseholdUser): VolumeLandmarks {
 }
 
 export function saveVolumeLandmarks(user: HouseholdUser, landmarks: VolumeLandmarks): void {
-  const raw = readRaw(KEYS.VOLUME_LANDMARKS);
+  const raw = readJson(KEYS.VOLUME_LANDMARKS);
   const byUser = (raw && typeof raw === "object" ? raw : {}) as Record<HouseholdUser, VolumeLandmarks>;
 
   byUser[user] = landmarks;
-  write(KEYS.VOLUME_LANDMARKS, byUser);
+  writeJson(KEYS.VOLUME_LANDMARKS, byUser);
 }
 
 export function resetVolumeLandmarks(user: HouseholdUser): VolumeLandmarks {
@@ -118,7 +101,7 @@ export function resetVolumeLandmarks(user: HouseholdUser): VolumeLandmarks {
 
 // --- Recovery Ratings ---
 export function getRecoveryRatings(user: HouseholdUser): RecoveryRating[] {
-  const raw = readRaw(KEYS.RECOVERY_RATINGS);
+  const raw = readJson(KEYS.RECOVERY_RATINGS);
   if (!raw || typeof raw !== "object") {
     return [];
   }
@@ -141,7 +124,7 @@ export function getRecoveryRatings(user: HouseholdUser): RecoveryRating[] {
 }
 
 export function saveRecoveryRating(user: HouseholdUser, rating: RecoveryRating): void {
-  const raw = readRaw(KEYS.RECOVERY_RATINGS);
+  const raw = readJson(KEYS.RECOVERY_RATINGS);
   const byUser = (raw && typeof raw === "object" ? raw : {}) as Record<HouseholdUser, RecoveryRating[]>;
 
   if (!Array.isArray(byUser[user])) {
@@ -149,12 +132,12 @@ export function saveRecoveryRating(user: HouseholdUser, rating: RecoveryRating):
   }
 
   byUser[user].push(rating);
-  write(KEYS.RECOVERY_RATINGS, byUser);
+  writeJson(KEYS.RECOVERY_RATINGS, byUser);
 }
 
 // --- Mesocycle State ---
 export function getMesoState(user: HouseholdUser): MesocycleState | null {
-  const raw = readRaw(KEYS.VOLUME_STATE);
+  const raw = readJson(KEYS.VOLUME_STATE);
   if (!raw || typeof raw !== "object") {
     return null;
   }
@@ -182,11 +165,11 @@ export function getMesoState(user: HouseholdUser): MesocycleState | null {
 }
 
 export function saveMesoState(user: HouseholdUser, state: MesocycleState): void {
-  const raw = readRaw(KEYS.VOLUME_STATE);
+  const raw = readJson(KEYS.VOLUME_STATE);
   const byUser = (raw && typeof raw === "object" ? raw : {}) as Record<HouseholdUser, MesocycleState>;
 
   byUser[user] = state;
-  write(KEYS.VOLUME_STATE, byUser);
+  writeJson(KEYS.VOLUME_STATE, byUser);
 }
 
 export function initMesoState(user: HouseholdUser, mesoLength: number = 5): MesocycleState {
