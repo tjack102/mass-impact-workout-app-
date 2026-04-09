@@ -235,6 +235,8 @@ export function TodayScreen() {
   const [swapConfirm, setSwapConfirm] = useState<{ exercise: ExerciseDefinition; originalTemplateName: string; rpSlotId?: string } | null>(null);
   // Bumped whenever a permanent sub is written so queueExercises memo re-runs
   const [subVersion, setSubVersion] = useState(0);
+  // Pending session-only subs keyed by subKey (programId:day:slotId or programId:day:name)
+  const [pendingSubs, setPendingSubs] = useState<Record<string, string>>({});
   // Bumped when exercise URLs finish loading from server
   const [urlVersion, setUrlVersion] = useState(0);
   // URL editor state for adding demo links from today screen
@@ -355,12 +357,13 @@ export function TodayScreen() {
       : exercises;
 
     return allExercises.map((exercise, index) => {
-      // Resolve substitution: session > permanent > original
+      // Resolve substitution: session (pending+active) > permanent > original
       // For RP programs, key by slotId to avoid collisions when same exercise fills multiple slots
-      const sessionSub = matchingActiveSession?.substitutions?.[exercise.name];
       const subKey = exercise.rpSlotId
         ? `${programId}:${prefs.currentDay}:${exercise.rpSlotId}`
         : `${programId}:${prefs.currentDay}:${exercise.name}`;
+      const sessionSub = pendingSubs[subKey]
+        ?? matchingActiveSession?.substitutions?.[exercise.rpSlotId ?? exercise.name];
       const permanentSub = allSubs[subKey];
       const resolvedName = sessionSub ?? permanentSub ?? exercise.name;
       const originalName = resolvedName !== exercise.name ? exercise.name : undefined;
@@ -401,7 +404,7 @@ export function TodayScreen() {
       };
     });
   // eslint-disable-next-line react-hooks/exhaustive-deps -- subVersion/urlVersion are intentional cache-busters
-  }, [exercises, matchingActiveSession, prefs.activeUser, prefs.currentDay, prefs.currentWeek, lastPerformanceMap, programId, subVersion, urlVersion, rpDaySlots]);
+  }, [exercises, matchingActiveSession, prefs.activeUser, prefs.currentDay, prefs.currentWeek, lastPerformanceMap, programId, subVersion, urlVersion, rpDaySlots, pendingSubs]);
 
   const safeActiveIndex =
     queueExercises.length === 0 ? 0 : Math.min(activeIndex, Math.max(0, queueExercises.length - 1));
@@ -541,12 +544,22 @@ export function TodayScreen() {
       return matchingActiveSession;
     }
     const session = startSession(prefs.currentWeek, prefs.currentDay, undefined, programId);
+    // Carry pending session subs into the new session
+    if (Object.keys(pendingSubs).length > 0) {
+      const initialSubs: Record<string, string> = {};
+      for (const [key, value] of Object.entries(pendingSubs)) {
+        const parts = key.split(":");
+        const subId = parts.slice(2).join(":");
+        initialSubs[subId] = value;
+      }
+      session.substitutions = initialSubs;
+    }
     setActiveSession(session);
     setNowMs(Date.now());
     setExerciseStartedAt(Date.now());
     setExerciseRestSeconds(0);
     return session;
-  }, [matchingActiveSession, prefs.currentDay, prefs.currentWeek, programId]);
+  }, [matchingActiveSession, pendingSubs, prefs.currentDay, prefs.currentWeek, programId]);
 
   const persistPrefs = useCallback(
     (nextWeek: number, nextDay: number) => {
@@ -930,16 +943,11 @@ export function TodayScreen() {
     if (permanent) {
       setPermanentSub(prefs.activeUser, programId, prefs.currentDay, originalTemplateName, exercise.name, rpSlotId);
       setSubVersion((v) => v + 1);
-    } else if (matchingActiveSession) {
-      const updated: WorkoutSession = {
-        ...matchingActiveSession,
-        substitutions: {
-          ...matchingActiveSession.substitutions,
-          [originalTemplateName]: exercise.name,
-        },
-      };
-      saveActiveSession(updated);
-      setActiveSession(updated);
+    } else {
+      const subKey = rpSlotId
+        ? `${programId}:${prefs.currentDay}:${rpSlotId}`
+        : `${programId}:${prefs.currentDay}:${originalTemplateName}`;
+      setPendingSubs((prev) => ({ ...prev, [subKey]: exercise.name }));
     }
     setSwapConfirm(null);
   }
@@ -1702,15 +1710,13 @@ export function TodayScreen() {
         <div style={{ padding: "1rem" }}>
           <p>Replace with <strong>{swapConfirm.exercise.name}</strong>?</p>
           <div className="flex flex-col gap-2 mt-4">
-            {matchingActiveSession && (
-              <button
-                type="button"
-                className="ghost-btn"
-                onClick={() => handleSwapConfirm(false)}
-              >
-                Just this session
-              </button>
-            )}
+            <button
+              type="button"
+              className="ghost-btn"
+              onClick={() => handleSwapConfirm(false)}
+            >
+              Just this session
+            </button>
             <button
               type="button"
               className="ghost-btn"
