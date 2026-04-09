@@ -459,12 +459,15 @@ export function getRpExercisesForDay(
 
     // Dedupe: if this exercise name already appeared on this day, pick next from category
     let exerciseName = sel.exerciseName;
+    console.warn(`[RP-DEDUPE] slot=${slot.slotId} cat=${slot.muscleCategory} original=${sel.exerciseName} usedNames=${[...usedNames].join(",")}`);
     if (usedNames.has(exerciseName)) {
       const pool = getRpExercisesForCategory(slot.muscleCategory);
       const alt = pool.find(e => !usedNames.has(e));
+      console.warn(`[RP-DEDUPE] DUPLICATE FOUND. pool=${pool.join(",")} alt=${alt}`);
       if (alt) exerciseName = alt;
     }
     usedNames.add(exerciseName);
+    console.warn(`[RP-DEDUPE] FINAL name=${exerciseName}`);
 
     // Detect if this is a superset secondary (its supersetWith partner is in a lower order position)
     const isSupersetSecondary = !!(slot.supersetWith &&
