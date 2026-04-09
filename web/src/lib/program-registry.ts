@@ -2,7 +2,7 @@ import type { ProgramExercise } from "./program-data";
 import { getDayForWeek, getDefaultRestSeconds } from "./program-data";
 import { getDayForWeekMaxVolume } from "./program-data-mass-impact-max-volume";
 import { RAVAGE_PROGRAM, getRavageDayTemplate } from "./program-data-ravage";
-import { RAMPAGE_PROGRAM, getRampageDayTemplate } from "./program-data-rampage";
+import { RAMPAGE_PROGRAM, RAMPAGE_HERS_PROGRAM, getRampageDayTemplate, getRampageHersDayTemplate } from "./program-data-rampage";
 import { UPPER_LOWER_PROGRAM, getUpperLowerDayTemplate } from "./program-data-upper-lower";
 import { getHersDayTemplate } from "./program-data-hers";
 import { getMinimalistDayTemplate } from "./program-data-nippard-minimalist";
@@ -84,6 +84,16 @@ export const PROGRAM_REGISTRY: ProgramMeta[] = [
     daysPerCycle: 2,
     cycleLength: 0,
     periodizationType: "auto-regulated",
+    hasAutoRegulation: true,
+    hasVolumeTracking: true,
+  },
+  {
+    id: "rampage-hers",
+    name: "RAMPAGE (Hers)",
+    profile: "hers",
+    daysPerCycle: 3,
+    cycleLength: 10,
+    periodizationType: "double-progression",
     hasAutoRegulation: true,
     hasVolumeTracking: true,
   },
@@ -256,11 +266,13 @@ export function getExercisesForDay(
       } satisfies ProgramExercise;
     });
   }
-  if (programId === "rampage") {
-    const template = getRampageDayTemplate(dayNumber);
+  if (programId === "rampage" || programId === "rampage-hers") {
+    const prog = programId === "rampage-hers" ? RAMPAGE_HERS_PROGRAM : RAMPAGE_PROGRAM;
+    const getTemplate = programId === "rampage-hers" ? getRampageHersDayTemplate : getRampageDayTemplate;
+    const template = getTemplate(dayNumber);
     if (!template) return [];
     const isDeload =
-      RAMPAGE_PROGRAM.weeks.find((w) => w.weekNumber === weekNumber)?.isDeload ?? false;
+      prog.weeks.find((w) => w.weekNumber === weekNumber)?.isDeload ?? false;
     return template.exercises.map((ex, i) => {
       const setGroups = isDeload
         ? ex.setGroups.map((sg) => ({ ...sg, sets: 1 }))
@@ -347,6 +359,9 @@ export function getDayTitle(programId: string, dayNumber: number): string {
   }
   if (programId === "rampage") {
     return getRampageDayTemplate(dayNumber)?.title ?? `Day ${dayNumber}`;
+  }
+  if (programId === "rampage-hers") {
+    return getRampageHersDayTemplate(dayNumber)?.title ?? `Day ${dayNumber}`;
   }
   if (programId === "upper-lower") {
     return getUpperLowerDayTemplate(dayNumber)?.title ?? `Day ${dayNumber}`;

@@ -49,14 +49,20 @@ export function RpSetupScreen({
     Record<string, { exerciseName: string; tenRepMax: number }>
   >(() => {
     const init: Record<string, { exerciseName: string; tenRepMax: number }> = {};
+    // Track used exercises per day+category so same-category slots get different defaults
+    const usedPerDayCat: Record<string, Set<string>> = {};
     for (const slot of t.slots) {
       const carried = carryForward?.[slot.slotId];
       if (carried) {
         init[slot.slotId] = { ...carried };
       } else {
-        // Default to first exercise in category, 10RM of 0
         const exercises = getRpExercisesForCategory(slot.muscleCategory);
-        init[slot.slotId] = { exerciseName: exercises[0] ?? "", tenRepMax: 0 };
+        const key = `${slot.dayNumber}-${slot.muscleCategory}`;
+        const used = usedPerDayCat[key] ?? new Set<string>();
+        const pick = exercises.find((e) => !used.has(e)) ?? exercises[0] ?? "";
+        init[slot.slotId] = { exerciseName: pick, tenRepMax: 0 };
+        used.add(pick);
+        usedPerDayCat[key] = used;
       }
     }
     return init;
