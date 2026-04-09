@@ -46,16 +46,15 @@ import {
 import { RecoveryRatingPrompt } from "@/components/recovery-rating-prompt";
 import { RpSetupScreen } from "./rp-setup-screen";
 import { findExercise, EXERCISE_LIBRARY } from "@/lib/exercise-library";
-import { getRpState, saveRpState, addRating, clearRpState, dedupeRpSelections } from "@/lib/rp-store";
+import { getRpState, saveRpState, addRating, clearRpState } from "@/lib/rp-store";
 import { getRpExercisesForDay } from "@/lib/program-registry";
 import type { RpProgramState, RpMesoType } from "@/lib/rp-types";
 import { isDeloadWeek, getNextMeso, getMesoWeeks, getMesoRestSeconds, getRirTarget } from "@/lib/rp-engine";
 import type { RpTemplate, RpExerciseSlot } from "@/lib/rp-types";
 import { TRACKED_MUSCLES, type MuscleGroup, type ExerciseDefinition } from "@/lib/types";
-import { getAllPermanentSubs, setPermanentSub, clearPermanentSub, migrateRpSubKeys } from "@/lib/exercise-substitutions";
+import { getAllPermanentSubs, setPermanentSub, clearPermanentSub } from "@/lib/exercise-substitutions";
 import { getExerciseUrl, setExerciseUrl, clearExerciseUrl } from "@/lib/exercise-url-store";
 import { getAdditions } from "@/lib/exercise-additions";
-import { getRpExercisesForCategory } from "@/lib/rp-exercise-library";
 import { formatMuscleName, formatClock, formatDuration } from "@/lib/format-utils";
 import { ExercisePickerModal } from "@/components/exercise-picker-modal";
 import {
@@ -250,26 +249,7 @@ export function TodayScreen() {
     isRpProgram ? getRpState(activeUser) : null
   );
 
-  // One-time fix: dedupe same-day duplicate exercises + migrate old sub keys
-  useEffect(() => {
-    if (!isRpProgram || !rpState) return;
-    const template = getRpTemplate(programId);
-    if (!template) return;
 
-    const patched = dedupeRpSelections(
-      rpState.selections,
-      template.slots,
-      getRpExercisesForCategory,
-    );
-    if (patched) {
-      const updated = { ...rpState, selections: patched };
-      saveRpState(prefs.activeUser, updated);
-      setRpState(updated);
-    }
-
-    migrateRpSubKeys(prefs.activeUser, programId, template.slots, rpState.selections);
-    // eslint-disable-next-line react-hooks/exhaustive-deps -- intentional mount-only
-  }, []);
 
   // Track which exercises have been rated this session
   const [rpRatedSlots, setRpRatedSlots] = useState<Set<string>>(new Set());

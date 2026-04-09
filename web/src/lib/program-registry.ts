@@ -24,6 +24,7 @@ import {
 } from "./rp-engine";
 import type { ProgramMeta } from "./types";
 import type { HouseholdUser } from "./household-profiles";
+import { getRpExercisesForCategory } from "./rp-exercise-library";
 
 // Program metadata for all programs
 export const PROGRAM_REGISTRY: ProgramMeta[] = [
@@ -449,11 +450,21 @@ export function getRpExercisesForDay(
 
   const exercises: ProgramExercise[] = [];
   let orderNum = 1;
+  const usedNames = new Set<string>();
 
   for (let i = 0; i < daySlots.length; i++) {
     const slot = daySlots[i];
     const sel = rpState.selections[slot.slotId];
     if (!sel) continue;
+
+    // Dedupe: if this exercise name already appeared on this day, pick next from category
+    let exerciseName = sel.exerciseName;
+    if (usedNames.has(exerciseName)) {
+      const pool = getRpExercisesForCategory(slot.muscleCategory);
+      const alt = pool.find(e => !usedNames.has(e));
+      if (alt) exerciseName = alt;
+    }
+    usedNames.add(exerciseName);
 
     // Detect if this is a superset secondary (its supersetWith partner is in a lower order position)
     const isSupersetSecondary = !!(slot.supersetWith &&
@@ -475,7 +486,7 @@ export function getRpExercisesForDay(
     exercises.push({
       order: orderNum,
       orderLabel: orderLabels[i],
-      name: sel.exerciseName,
+      name: exerciseName,
       setGroups: [{ sets, reps: repRange }],
       restSeconds: restRange.min,
       prescribedWeight: weight,

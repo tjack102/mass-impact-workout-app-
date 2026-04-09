@@ -54,7 +54,18 @@ export function RpSetupScreen({
     for (const slot of t.slots) {
       const carried = carryForward?.[slot.slotId];
       if (carried) {
-        init[slot.slotId] = { ...carried };
+        // Dedupe carryForward too: existing data may have same exercise in multiple same-day slots
+        let name = carried.exerciseName;
+        const key = `${slot.dayNumber}-${slot.muscleCategory}`;
+        const used = usedPerDayCat[key] ?? new Set<string>();
+        if (used.has(name)) {
+          const pool = getRpExercisesForCategory(slot.muscleCategory);
+          const alt = pool.find((e) => !used.has(e));
+          if (alt) name = alt;
+        }
+        used.add(name);
+        usedPerDayCat[key] = used;
+        init[slot.slotId] = { ...carried, exerciseName: name };
       } else {
         const exercises = getRpExercisesForCategory(slot.muscleCategory);
         const key = `${slot.dayNumber}-${slot.muscleCategory}`;
