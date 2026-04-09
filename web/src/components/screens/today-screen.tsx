@@ -231,8 +231,8 @@ export function TodayScreen() {
     initialWeight?: number;
     autoAbbreviated?: boolean;
   }>({});
-  const [swapTarget, setSwapTarget] = useState<{ index: number; muscleGroup: MuscleGroup; originalTemplateName: string } | null>(null);
-  const [swapConfirm, setSwapConfirm] = useState<{ exercise: ExerciseDefinition; originalTemplateName: string } | null>(null);
+  const [swapTarget, setSwapTarget] = useState<{ index: number; muscleGroup: MuscleGroup; originalTemplateName: string; rpSlotId?: string } | null>(null);
+  const [swapConfirm, setSwapConfirm] = useState<{ exercise: ExerciseDefinition; originalTemplateName: string; rpSlotId?: string } | null>(null);
   // Bumped whenever a permanent sub is written so queueExercises memo re-runs
   const [subVersion, setSubVersion] = useState(0);
   // Bumped when exercise URLs finish loading from server
@@ -356,8 +356,11 @@ export function TodayScreen() {
 
     return allExercises.map((exercise, index) => {
       // Resolve substitution: session > permanent > original
+      // For RP programs, key by slotId to avoid collisions when same exercise fills multiple slots
       const sessionSub = matchingActiveSession?.substitutions?.[exercise.name];
-      const subKey = `${programId}:${prefs.currentDay}:${exercise.name}`;
+      const subKey = exercise.rpSlotId
+        ? `${programId}:${prefs.currentDay}:${exercise.rpSlotId}`
+        : `${programId}:${prefs.currentDay}:${exercise.name}`;
       const permanentSub = allSubs[subKey];
       const resolvedName = sessionSub ?? permanentSub ?? exercise.name;
       const originalName = resolvedName !== exercise.name ? exercise.name : undefined;
@@ -911,21 +914,21 @@ export function TodayScreen() {
     const templateName = qe.originalName ?? qe.name;
     const def = findExercise(qe.name);
     const muscle = def?.primaryMuscle ?? "back";
-    setSwapTarget({ index, muscleGroup: muscle, originalTemplateName: templateName });
+    setSwapTarget({ index, muscleGroup: muscle, originalTemplateName: templateName, rpSlotId: qe.rpSlotId });
   }
 
   function handleSwapSelect(exercise: ExerciseDefinition) {
     if (!swapTarget) return;
-    setSwapConfirm({ exercise, originalTemplateName: swapTarget.originalTemplateName });
+    setSwapConfirm({ exercise, originalTemplateName: swapTarget.originalTemplateName, rpSlotId: swapTarget.rpSlotId });
     setSwapTarget(null);
   }
 
   function handleSwapConfirm(permanent: boolean) {
     if (!swapConfirm) return;
-    const { exercise, originalTemplateName } = swapConfirm;
+    const { exercise, originalTemplateName, rpSlotId } = swapConfirm;
 
     if (permanent) {
-      setPermanentSub(prefs.activeUser, programId, prefs.currentDay, originalTemplateName, exercise.name);
+      setPermanentSub(prefs.activeUser, programId, prefs.currentDay, originalTemplateName, exercise.name, rpSlotId);
       setSubVersion((v) => v + 1);
     } else if (matchingActiveSession) {
       const updated: WorkoutSession = {
@@ -1725,7 +1728,7 @@ export function TodayScreen() {
               className="ghost-btn"
               style={{ color: "var(--text-2)", fontSize: "0.8rem", marginTop: "0.75rem" }}
               onClick={() => {
-                clearPermanentSub(prefs.activeUser, programId, prefs.currentDay, swapConfirm.originalTemplateName);
+                clearPermanentSub(prefs.activeUser, programId, prefs.currentDay, swapConfirm.originalTemplateName, swapConfirm.rpSlotId);
                 setSubVersion((v) => v + 1);
                 setSwapConfirm(null);
               }}

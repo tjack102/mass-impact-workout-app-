@@ -6,8 +6,9 @@ const STORAGE_KEY = "mi_substitutions";
 type SubstitutionMap = Record<string, string>;
 type PermanentSubstitutions = Record<HouseholdUser, SubstitutionMap>;
 
-function buildKey(programId: string, day: number, exerciseName: string): string {
-  return `${programId}:${day}:${exerciseName}`;
+function buildKey(programId: string, day: number, exerciseName: string, slotId?: string): string {
+  // slotId disambiguates when the same exercise appears in multiple slots (e.g. RP Quads)
+  return slotId ? `${programId}:${day}:${slotId}` : `${programId}:${day}:${exerciseName}`;
 }
 
 function load(): PermanentSubstitutions {
@@ -23,8 +24,9 @@ export function getPermanentSub(
   programId: string,
   day: number,
   exerciseName: string,
+  slotId?: string,
 ): string | undefined {
-  return load()[user][buildKey(programId, day, exerciseName)];
+  return load()[user][buildKey(programId, day, exerciseName, slotId)];
 }
 
 export function setPermanentSub(
@@ -33,9 +35,10 @@ export function setPermanentSub(
   day: number,
   exerciseName: string,
   replacement: string,
+  slotId?: string,
 ): void {
   const data = load();
-  data[user][buildKey(programId, day, exerciseName)] = replacement;
+  data[user][buildKey(programId, day, exerciseName, slotId)] = replacement;
   save(data);
 }
 
@@ -44,9 +47,10 @@ export function clearPermanentSub(
   programId: string,
   day: number,
   exerciseName: string,
+  slotId?: string,
 ): void {
   const data = load();
-  delete data[user][buildKey(programId, day, exerciseName)];
+  delete data[user][buildKey(programId, day, exerciseName, slotId)];
   save(data);
 }
 
