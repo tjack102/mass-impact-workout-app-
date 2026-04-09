@@ -369,9 +369,6 @@ export function TodayScreen() {
         ?? matchingActiveSession?.substitutions?.[exercise.rpSlotId ?? exercise.name];
       const permanentSub = allSubs[subKey];
       const resolvedName = sessionSub ?? permanentSub ?? exercise.name;
-      if (exercise.rpSlotId) {
-        console.warn(`[SUB-RESOLVE] slot=${exercise.rpSlotId} base=${exercise.name} subKey=${subKey} permSub=${permanentSub} sessSub=${sessionSub} final=${resolvedName}`);
-      }
       const originalName = resolvedName !== exercise.name ? exercise.name : undefined;
 
       const completedSets = matchingActiveSession
