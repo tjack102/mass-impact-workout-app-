@@ -1,6 +1,8 @@
 import type { HouseholdUser } from "@/lib/household-profiles";
 import type { RpProgramState, RpRatingEntry } from "./rp-types";
 import { readJson, writeJson } from "./storage-utils";
+import { getRpTemplate } from "./program-registry";
+import { getRpExercisesForCategory } from "./rp-exercise-library";
 
 // ---------------------------------------------------------------------------
 // Storage key
@@ -11,6 +13,48 @@ const STORAGE_KEY = "mi_rp_state";
 // ---------------------------------------------------------------------------
 // Private helpers (same pattern as volume-store.ts)
 // ---------------------------------------------------------------------------
+
+// ---------------------------------------------------------------------------
+// Migration: fix duplicate exercises on the same day
+// ---------------------------------------------------------------------------
+
+function dedupeSelections(state: RpProgramState, user: HouseholdUser): void {
+  const template = getRpTemplate(state.templateId);
+  if (!template) return;
+
+  // Group slots by day
+  const slotsByDay = new Map<number, typeof template.slots>();
+  for (const slot of template.slots) {
+    const arr = slotsByDay.get(slot.dayNumber) ?? [];
+    arr.push(slot);
+    slotsByDay.set(slot.dayNumber, arr);
+  }
+
+  let changed = false;
+  for (const daySlots of slotsByDay.values()) {
+    const usedNames = new Set<string>();
+    for (const slot of daySlots) {
+      const sel = state.selections[slot.slotId];
+      if (!sel) continue;
+      if (!usedNames.has(sel.exerciseName)) {
+        usedNames.add(sel.exerciseName);
+        continue;
+      }
+      // Duplicate -- pick next unused exercise from this slot's category
+      const pool = getRpExercisesForCategory(slot.muscleCategory);
+      const alt = pool.find((e) => !usedNames.has(e));
+      if (alt) {
+        sel.exerciseName = alt;
+        usedNames.add(alt);
+        changed = true;
+      }
+    }
+  }
+
+  if (changed) {
+    saveRpState(user, state);
+  }
+}
 
 // ---------------------------------------------------------------------------
 // Public API
@@ -44,7 +88,9 @@ export function getRpState(user: HouseholdUser): RpProgramState | null {
     typeof state.selections === "object" &&
     Array.isArray(state.ratings)
   ) {
-    return state as RpProgramState;
+    const validated = state as RpProgramState;
+    dedupeSelections(validated, user);
+    return validated;
   }
 
   return null;

@@ -1702,18 +1702,15 @@ export function TodayScreen() {
         <div style={{ padding: "1rem" }}>
           <p>Replace with <strong>{swapConfirm.exercise.name}</strong>?</p>
           <div className="flex flex-col gap-2 mt-4">
-            <button
-              type="button"
-              className="ghost-btn"
-              onClick={() => {
-                const session = ensureActiveSession();
-                if (session) {
-                  handleSwapConfirm(false);
-                }
-              }}
-            >
-              Just this session
-            </button>
+            {matchingActiveSession && (
+              <button
+                type="button"
+                className="ghost-btn"
+                onClick={() => handleSwapConfirm(false)}
+              >
+                Just this session
+              </button>
+            )}
             <button
               type="button"
               className="ghost-btn"
