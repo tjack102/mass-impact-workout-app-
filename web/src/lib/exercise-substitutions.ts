@@ -57,3 +57,34 @@ export function clearPermanentSub(
 export function getAllPermanentSubs(user: HouseholdUser): SubstitutionMap {
   return load()[user];
 }
+
+/**
+ * Rewrite old exercise-name-keyed permanent subs to slotId-keyed subs for RP programs.
+ * Idempotent -- already-migrated keys are skipped.
+ */
+export function migrateRpSubKeys(
+  user: HouseholdUser,
+  programId: string,
+  slots: { slotId: string; dayNumber: number }[],
+  selections: Record<string, { exerciseName: string }>,
+): void {
+  const data = load();
+  const userSubs = data[user];
+  let changed = false;
+
+  for (const slot of slots) {
+    const sel = selections[slot.slotId];
+    if (!sel) continue;
+    const oldKey = `${programId}:${slot.dayNumber}:${sel.exerciseName}`;
+    const newKey = `${programId}:${slot.dayNumber}:${slot.slotId}`;
+    if (userSubs[oldKey] !== undefined && userSubs[newKey] === undefined) {
+      userSubs[newKey] = userSubs[oldKey];
+      delete userSubs[oldKey];
+      changed = true;
+    }
+  }
+
+  if (changed) {
+    save(data);
+  }
+}
