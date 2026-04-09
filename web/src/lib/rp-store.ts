@@ -1,8 +1,54 @@
 import type { HouseholdUser } from "@/lib/household-profiles";
 import type { RpProgramState, RpRatingEntry } from "./rp-types";
 import { readJson, writeJson } from "./storage-utils";
-import { getRpTemplate } from "./program-registry";
-import { getRpExercisesForCategory } from "./rp-exercise-library";
+
+// ---------------------------------------------------------------------------
+// Dedupe: fix duplicate exercise names on the same day
+// ---------------------------------------------------------------------------
+
+type RpSelection = { exerciseName: string; tenRepMax: number };
+type SlotInfo = { slotId: string; dayNumber: number; muscleCategory: string };
+
+/**
+ * Pure function: detect duplicate exercise names on the same day and fix them.
+ * Returns patched selections object if changes were made, null otherwise.
+ */
+export function dedupeRpSelections(
+  selections: Record<string, RpSelection>,
+  slots: SlotInfo[],
+  getPool: (category: string) => string[],
+): Record<string, RpSelection> | null {
+  const byDay = new Map<number, SlotInfo[]>();
+  for (const slot of slots) {
+    const arr = byDay.get(slot.dayNumber) ?? [];
+    arr.push(slot);
+    byDay.set(slot.dayNumber, arr);
+  }
+
+  let changed = false;
+  const patched = { ...selections };
+
+  for (const daySlots of byDay.values()) {
+    const usedNames = new Set<string>();
+    for (const slot of daySlots) {
+      const sel = patched[slot.slotId];
+      if (!sel) continue;
+      if (!usedNames.has(sel.exerciseName)) {
+        usedNames.add(sel.exerciseName);
+        continue;
+      }
+      const pool = getPool(slot.muscleCategory);
+      const alt = pool.find((e) => !usedNames.has(e));
+      if (alt) {
+        patched[slot.slotId] = { ...sel, exerciseName: alt };
+        usedNames.add(alt);
+        changed = true;
+      }
+    }
+  }
+
+  return changed ? patched : null;
+}
 
 // ---------------------------------------------------------------------------
 // Storage key
@@ -13,48 +59,6 @@ const STORAGE_KEY = "mi_rp_state";
 // ---------------------------------------------------------------------------
 // Private helpers (same pattern as volume-store.ts)
 // ---------------------------------------------------------------------------
-
-// ---------------------------------------------------------------------------
-// Migration: fix duplicate exercises on the same day
-// ---------------------------------------------------------------------------
-
-function dedupeSelections(state: RpProgramState, user: HouseholdUser): void {
-  const template = getRpTemplate(state.templateId);
-  if (!template) return;
-
-  // Group slots by day
-  const slotsByDay = new Map<number, typeof template.slots>();
-  for (const slot of template.slots) {
-    const arr = slotsByDay.get(slot.dayNumber) ?? [];
-    arr.push(slot);
-    slotsByDay.set(slot.dayNumber, arr);
-  }
-
-  let changed = false;
-  for (const daySlots of slotsByDay.values()) {
-    const usedNames = new Set<string>();
-    for (const slot of daySlots) {
-      const sel = state.selections[slot.slotId];
-      if (!sel) continue;
-      if (!usedNames.has(sel.exerciseName)) {
-        usedNames.add(sel.exerciseName);
-        continue;
-      }
-      // Duplicate -- pick next unused exercise from this slot's category
-      const pool = getRpExercisesForCategory(slot.muscleCategory);
-      const alt = pool.find((e) => !usedNames.has(e));
-      if (alt) {
-        sel.exerciseName = alt;
-        usedNames.add(alt);
-        changed = true;
-      }
-    }
-  }
-
-  if (changed) {
-    saveRpState(user, state);
-  }
-}
 
 // ---------------------------------------------------------------------------
 // Public API
@@ -88,9 +92,7 @@ export function getRpState(user: HouseholdUser): RpProgramState | null {
     typeof state.selections === "object" &&
     Array.isArray(state.ratings)
   ) {
-    const validated = state as RpProgramState;
-    dedupeSelections(validated, user);
-    return validated;
+    return state as RpProgramState;
   }
 
   return null;
