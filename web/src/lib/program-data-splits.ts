@@ -29,9 +29,11 @@ export function getSplitDayTemplate(
     s => s.dayNumber === dayNumber && s.baseSets.basic > 0
   );
 
+  const usedNames = new Set<string>();
   const exercises: ProgramExercise[] = daySlots.map((slot, i) => {
     const categoryExercises = getRpExercisesForCategory(slot.muscleCategory);
-    const name = categoryExercises[0] ?? slot.muscleCategory;
+    const name = categoryExercises.find(e => !usedNames.has(e)) ?? categoryExercises[0] ?? slot.muscleCategory;
+    usedNames.add(name);
     const def = findExercise(name);
     const isIsolation = def?.type === "isolation";
     const reps = isIsolation ? "10-15 reps" : "8-12 reps";
