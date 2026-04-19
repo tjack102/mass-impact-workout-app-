@@ -2270,6 +2270,92 @@ export const EXERCISE_LIBRARY: ExerciseDefinition[] = [
     tier: "A",
     secondaryMuscles: [],
   },
+
+  // ─────────────────────────────────────────────
+  // ADDITIONAL — KONG / Raider programs
+  // ─────────────────────────────────────────────
+  {
+    id: "push-press-barbell",
+    name: "Push Press (Barbell)",
+    primaryMuscle: "front_delts",
+    type: "compound",
+    equipment: "barbell",
+    tier: "A",
+    secondaryMuscles: [
+      { muscle: "triceps", factor: 0.5 },
+      { muscle: "quads", factor: 0.3 },
+    ],
+  },
+  {
+    id: "floor-press-barbell",
+    name: "Floor Press (Barbell)",
+    primaryMuscle: "chest",
+    type: "compound",
+    equipment: "barbell",
+    tier: "A",
+    secondaryMuscles: [
+      { muscle: "triceps", factor: 0.5 },
+      { muscle: "front_delts", factor: 0.5 },
+    ],
+  },
+  {
+    id: "dumbbell-pullover",
+    name: "Dumbbell Pullover",
+    primaryMuscle: "back",
+    type: "compound",
+    equipment: "dumbbell",
+    tier: "A",
+    secondaryMuscles: [{ muscle: "chest", factor: 0.5 }],
+  },
+
+  // ─────────────────────────────────────────────
+  // ADDITIONAL — Golden Warrior program
+  // ─────────────────────────────────────────────
+  {
+    id: "machine-hip-adduction",
+    name: "Machine Hip Adduction",
+    primaryMuscle: "glutes",
+    type: "isolation",
+    equipment: "machine",
+    tier: "A",
+    secondaryMuscles: [{ muscle: "quads", factor: 0.3 }],
+  },
+  {
+    id: "kelso-shrug",
+    name: "Kelso Shrug",
+    primaryMuscle: "traps",
+    type: "isolation",
+    equipment: "dumbbell",
+    tier: "A",
+    secondaryMuscles: [{ muscle: "rear_delts", factor: 0.4 }],
+  },
+  {
+    id: "lat-prayer-cable",
+    name: "Lat Prayer (Cable)",
+    primaryMuscle: "back",
+    type: "isolation",
+    equipment: "cable",
+    tier: "A",
+    secondaryMuscles: [],
+  },
+  {
+    id: "incline-tricep-pressdown-cable",
+    name: "Incline Tricep Pressdown (Cable)",
+    primaryMuscle: "triceps",
+    type: "isolation",
+    equipment: "cable",
+    tier: "A",
+    secondaryMuscles: [],
+  },
+  {
+    id: "hanging-oblique-knee-raise",
+    name: "Hanging Oblique Knee Raise",
+    primaryMuscle: "abs",
+    type: "isolation",
+    equipment: "bodyweight",
+    tier: "A",
+    secondaryMuscles: [],
+  },
 ];
 
 // ─────────────────────────────────────────────────────────────────────────────

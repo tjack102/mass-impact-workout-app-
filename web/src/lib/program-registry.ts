@@ -3,7 +3,10 @@ import { getDayForWeek, getDefaultRestSeconds } from "./program-data";
 import { getDayForWeekMaxVolume } from "./program-data-mass-impact-max-volume";
 import { RAVAGE_PROGRAM, getRavageDayTemplate } from "./program-data-ravage";
 import { RAMPAGE_PROGRAM, RAMPAGE_HERS_PROGRAM, getRampageDayTemplate, getRampageHersDayTemplate } from "./program-data-rampage";
-import { UPPER_LOWER_PROGRAM, getUpperLowerDayTemplate } from "./program-data-upper-lower";
+import { PPLU_PROGRAM, getPpluDayTemplate } from "./program-data-pplu";
+import { getRaiderExercisesForDay, getRaiderDayTitle } from "./program-data-raider";
+import { getKongExercisesForDay, getKongDayTitle } from "./program-data-kong";
+import { getGoldenWarriorExercisesForDay, getGoldenWarriorDayTitle } from "./program-data-golden-warrior";
 import { getHersDayTemplate } from "./program-data-hers";
 import { getMinimalistDayTemplate } from "./program-data-nippard-minimalist";
 import { getSplitDayTemplate } from "./program-data-splits";
@@ -69,13 +72,43 @@ export const PROGRAM_REGISTRY: ProgramMeta[] = [
     hasVolumeTracking: true,
   },
   {
-    id: "upper-lower",
-    name: "4-Day Upper/Lower",
-    profile: "his",
+    id: "pplu",
+    name: "Mass Impact 4-Day",
+    profile: "both",
     daysPerCycle: 4,
     cycleLength: 12,
     periodizationType: "double-progression",
     hasAutoRegulation: false,
+    hasVolumeTracking: true,
+  },
+  {
+    id: "raider",
+    name: "Raider (Bald Omni-Man)",
+    profile: "both",
+    daysPerCycle: 4,
+    cycleLength: 12,
+    periodizationType: "double-progression",
+    hasAutoRegulation: false,
+    hasVolumeTracking: true,
+  },
+  {
+    id: "kong",
+    name: "KONG (Alex Bromley)",
+    profile: "both",
+    daysPerCycle: 5,
+    cycleLength: 12,
+    periodizationType: "block",
+    hasAutoRegulation: false,
+    hasVolumeTracking: true,
+  },
+  {
+    id: "golden-warrior",
+    name: "Golden Warrior (Bald Omni-Man)",
+    profile: "both",
+    daysPerCycle: 5,
+    cycleLength: 12,
+    periodizationType: "block",
+    hasAutoRegulation: true,
     hasVolumeTracking: true,
   },
   {
@@ -130,7 +163,7 @@ export const PROGRAM_REGISTRY: ProgramMeta[] = [
   },
   {
     id: "rp-nf3",
-    name: "RP Full Body 3-Day",
+    name: "RP 3-Day (Push/Legs/Pull)",
     profile: "both",
     daysPerCycle: 3,
     cycleLength: 13,
@@ -140,7 +173,7 @@ export const PROGRAM_REGISTRY: ProgramMeta[] = [
   },
   {
     id: "rp-nf4",
-    name: "RP Full Body 4-Day",
+    name: "RP 4-Day (Upper/Lower)",
     profile: "both",
     daysPerCycle: 4,
     cycleLength: 13,
@@ -288,13 +321,12 @@ export function getExercisesForDay(
       } satisfies ProgramExercise;
     });
   }
-  if (programId === "upper-lower") {
-    const template = getUpperLowerDayTemplate(dayNumber);
+  if (programId === "pplu") {
+    const template = getPpluDayTemplate(dayNumber);
     if (!template) return [];
     const isDeload =
-      UPPER_LOWER_PROGRAM.weeks.find((w) => w.weekNumber === weekNumber)?.isDeload ?? false;
+      PPLU_PROGRAM.weeks.find((w) => w.weekNumber === weekNumber)?.isDeload ?? false;
     return template.exercises.map((ex, i) => {
-      // Deload: cut sets in half (round up), not down to 1
       const setGroups = isDeload
         ? ex.setGroups.map((sg) => ({ ...sg, sets: Math.ceil(sg.sets / 2) }))
         : ex.setGroups;
@@ -306,6 +338,15 @@ export function getExercisesForDay(
         restSeconds: getDefaultRestSeconds(ex.name),
       } satisfies ProgramExercise;
     });
+  }
+  if (programId === "raider") {
+    return getRaiderExercisesForDay(dayNumber, weekNumber);
+  }
+  if (programId === "kong") {
+    return getKongExercisesForDay(dayNumber, weekNumber);
+  }
+  if (programId === "golden-warrior") {
+    return getGoldenWarriorExercisesForDay(dayNumber, weekNumber);
   }
   if (programId === "nippard-minimalist") {
     const template = getMinimalistDayTemplate(dayNumber);
@@ -345,7 +386,7 @@ export function getExercisesForDay(
 }
 
 // Get day title for display
-export function getDayTitle(programId: string, dayNumber: number): string {
+export function getDayTitle(programId: string, dayNumber: number, weekNumber?: number): string {
   // Mass Impact titles (from program-data.ts)
   if (programId === "mass-impact") {
     const titles = ["Pull", "Push", "Legs / Density", "Pull", "Push"];
@@ -364,8 +405,17 @@ export function getDayTitle(programId: string, dayNumber: number): string {
   if (programId === "rampage-hers") {
     return getRampageHersDayTemplate(dayNumber)?.title ?? `Day ${dayNumber}`;
   }
-  if (programId === "upper-lower") {
-    return getUpperLowerDayTemplate(dayNumber)?.title ?? `Day ${dayNumber}`;
+  if (programId === "pplu") {
+    return getPpluDayTemplate(dayNumber)?.title ?? `Day ${dayNumber}`;
+  }
+  if (programId === "raider") {
+    return getRaiderDayTitle(dayNumber);
+  }
+  if (programId === "kong") {
+    return getKongDayTitle(dayNumber, weekNumber ?? 1);
+  }
+  if (programId === "golden-warrior") {
+    return getGoldenWarriorDayTitle(dayNumber);
   }
   if (programId === "nippard-minimalist") {
     return getMinimalistDayTemplate(dayNumber)?.title ?? `Day ${dayNumber}`;

@@ -1,28 +1,27 @@
-// 4-Day Upper/Lower program data — 12 weeks (deload week 7: sets cut in half)
-// Based on Damian Zepeda's 4-Day Hypertrophy Program (modified with rear delt work + deload)
+// PPLU (Pull/Push/Legs/Upper) 4-Day program — 12 weeks (deload week 7: sets cut in half)
 // Exercise names must match exercise-library.ts exactly for volume tracking to work.
 
-export interface UpperLowerExercise {
+export interface PpluExercise {
   orderLabel: string;
   name: string;
   setGroups: { sets: number; reps: string }[];
   rpe?: string;
 }
 
-export interface UpperLowerDayTemplate {
+export interface PpluDayTemplate {
   dayNumber: number;
   title: string;
-  exercises: UpperLowerExercise[];
+  exercises: PpluExercise[];
 }
 
-export interface UpperLowerProgram {
-  id: "upper-lower";
+export interface PpluProgram {
+  id: "pplu";
   weeks: { weekNumber: number; isDeload: boolean }[];
-  dayTemplates: UpperLowerDayTemplate[];
+  dayTemplates: PpluDayTemplate[];
 }
 
-export const UPPER_LOWER_PROGRAM: UpperLowerProgram = {
-  id: "upper-lower",
+export const PPLU_PROGRAM: PpluProgram = {
+  id: "pplu",
   weeks: [
     { weekNumber: 1, isDeload: false },
     { weekNumber: 2, isDeload: false },
@@ -39,202 +38,211 @@ export const UPPER_LOWER_PROGRAM: UpperLowerProgram = {
   ],
   dayTemplates: [
     // ─────────────────────────────────────────────
-    // Day 1: Upper A (Press-dominant)
+    // Day 1: Pull (thickness-focused, power shrugs)
     // ─────────────────────────────────────────────
     {
       dayNumber: 1,
-      title: "Upper A",
+      title: "Pull",
       exercises: [
         {
           orderLabel: "1",
-          name: "Incline Bench Press (Barbell)",
-          setGroups: [{ sets: 4, reps: "5-8" }],
-          rpe: "8-10",
-        },
-        {
-          orderLabel: "2",
-          name: "Lat Pulldown",
-          setGroups: [{ sets: 4, reps: "5-8" }],
-          rpe: "8-10",
-        },
-        {
-          orderLabel: "3",
-          name: "Seated Shoulder Press (Dumbbell)",
+          name: "Pull-Up (Bodyweight)",
           setGroups: [{ sets: 3, reps: "6-10" }],
           rpe: "8-10",
         },
         {
-          orderLabel: "4",
-          name: "Seated Wide-Grip Row (Cable)",
-          setGroups: [{ sets: 3, reps: "5-8" }],
-          rpe: "8-10",
-        },
-        {
-          orderLabel: "5",
-          name: "Tricep Pushdown",
-          setGroups: [{ sets: 3, reps: "8-15" }],
-          rpe: "8-10",
-        },
-        {
-          orderLabel: "6",
-          name: "Preacher Curl (Barbell)",
-          setGroups: [{ sets: 3, reps: "8-15" }],
-          rpe: "8-10",
-        },
-        {
-          orderLabel: "7",
-          name: "Lateral Raise (Cable)",
-          setGroups: [{ sets: 3, reps: "10-15" }],
-          rpe: "8-10",
-        },
-        {
-          orderLabel: "8",
-          name: "Face Pull",
-          setGroups: [{ sets: 3, reps: "12-15" }],
-          rpe: "8-9",
-        },
-      ],
-    },
-
-    // ─────────────────────────────────────────────
-    // Day 2: Lower A (Quad-dominant)
-    // ─────────────────────────────────────────────
-    {
-      dayNumber: 2,
-      title: "Lower A",
-      exercises: [
-        {
-          orderLabel: "1",
-          name: "Hack Squat",
-          setGroups: [{ sets: 3, reps: "5-8" }],
-          rpe: "8-10",
-        },
-        {
           orderLabel: "2",
-          name: "Seated Hamstring Curl",
-          setGroups: [{ sets: 3, reps: "8-15" }],
+          name: "Bent Over Row (Barbell)",
+          setGroups: [{ sets: 3, reps: "6-8" }],
           rpe: "8-10",
         },
         {
           orderLabel: "3",
-          name: "Bulgarian Split Squat",
-          setGroups: [{ sets: 2, reps: "6-10" }],
+          name: "Power Shrug",
+          setGroups: [{ sets: 4, reps: "6-8" }],
           rpe: "8-10",
         },
         {
           orderLabel: "4",
-          name: "Standing Calf Raise",
-          setGroups: [{ sets: 3, reps: "5-8" }],
+          name: "Single Arm Row (Dumbbell)",
+          setGroups: [{ sets: 3, reps: "10-12" }],
           rpe: "8-10",
         },
         {
           orderLabel: "5",
-          name: "Cable Crunch",
-          setGroups: [{ sets: 2, reps: "10-20" }],
+          name: "Standing Pullover (Cable)",
+          setGroups: [{ sets: 3, reps: "12-15" }],
+          rpe: "8-10",
+        },
+        {
+          orderLabel: "6",
+          name: "Rear Delt Fly (Cable)",
+          setGroups: [{ sets: 3, reps: "12-15" }],
+          rpe: "8-10",
+        },
+        {
+          orderLabel: "7",
+          name: "Incline Curl (Dumbbell)",
+          setGroups: [{ sets: 3, reps: "8-10" }],
           rpe: "8-10",
         },
       ],
     },
 
     // ─────────────────────────────────────────────
-    // Day 3: Upper B (Pull-dominant)
+    // Day 2: Push (upper chest, delts, triceps)
     // ─────────────────────────────────────────────
     {
-      dayNumber: 3,
-      title: "Upper B",
+      dayNumber: 2,
+      title: "Push",
       exercises: [
         {
           orderLabel: "1",
-          name: "Wide Overhand Pulldown",
-          setGroups: [{ sets: 4, reps: "5-8" }],
+          name: "Face Pull",
+          setGroups: [{ sets: 3, reps: "12-15" }],
           rpe: "8-10",
         },
         {
           orderLabel: "2",
           name: "Incline Bench Press (Dumbbell)",
-          setGroups: [{ sets: 4, reps: "5-8" }],
+          setGroups: [{ sets: 4, reps: "8-10" }],
           rpe: "8-10",
         },
         {
           orderLabel: "3",
-          name: "Seated Row (Cable)",
-          setGroups: [{ sets: 3, reps: "5-8" }],
+          name: "Seated Shoulder Press (Dumbbell)",
+          setGroups: [{ sets: 3, reps: "8-10" }],
           rpe: "8-10",
         },
         {
           orderLabel: "4",
-          name: "Cable Chest Fly",
-          setGroups: [{ sets: 3, reps: "8-15" }],
+          name: "Dip (Weighted)",
+          setGroups: [{ sets: 3, reps: "8-12" }],
           rpe: "8-10",
         },
         {
           orderLabel: "5",
-          name: "Skull Crusher",
-          setGroups: [{ sets: 3, reps: "8-15" }],
+          name: "Lateral Raise (Cable)",
+          setGroups: [{ sets: 4, reps: "10-15" }],
           rpe: "8-10",
         },
         {
           orderLabel: "6",
-          name: "Hammer Curl",
-          setGroups: [{ sets: 3, reps: "8-15" }],
+          name: "Cable Crossover",
+          setGroups: [{ sets: 3, reps: "12-15" }],
           rpe: "8-10",
         },
         {
           orderLabel: "7",
-          name: "Lateral Raise (Dumbbell)",
+          name: "Overhead Tricep Extension (Cable)",
           setGroups: [{ sets: 3, reps: "10-15" }],
-          rpe: "8-10",
-        },
-        {
-          orderLabel: "8",
-          name: "Rear Delt Fly (Cable)",
-          setGroups: [{ sets: 2, reps: "12-15" }],
           rpe: "8-10",
         },
       ],
     },
 
     // ─────────────────────────────────────────────
-    // Day 4: Lower B (Posterior-dominant)
+    // Day 3: Legs (one leg day, make it count)
     // ─────────────────────────────────────────────
     {
-      dayNumber: 4,
-      title: "Lower B",
+      dayNumber: 3,
+      title: "Legs",
       exercises: [
         {
           orderLabel: "1",
-          name: "Romanian Deadlift (Barbell)",
-          setGroups: [{ sets: 3, reps: "5-8" }],
+          name: "Hack Squat",
+          setGroups: [{ sets: 3, reps: "6-10" }],
           rpe: "8-10",
         },
         {
           orderLabel: "2",
-          name: "Leg Press",
-          setGroups: [{ sets: 3, reps: "5-8" }],
+          name: "Romanian Deadlift (Barbell)",
+          setGroups: [
+            { sets: 1, reps: "6-8" },
+            { sets: 1, reps: "10-15" },
+          ],
           rpe: "8-10",
         },
         {
           orderLabel: "3",
-          name: "Lying Leg Curl",
-          setGroups: [{ sets: 2, reps: "8-15" }],
+          name: "Walking Lunge (Dumbbell)",
+          setGroups: [{ sets: 2, reps: "20" }],
           rpe: "8-10",
         },
         {
           orderLabel: "4",
-          name: "Leg Extension",
-          setGroups: [{ sets: 2, reps: "8-15" }],
+          name: "Seated Hamstring Curl",
+          setGroups: [{ sets: 3, reps: "10-12" }],
           rpe: "8-10",
         },
         {
           orderLabel: "5",
-          name: "Seated Calf Raise",
-          setGroups: [{ sets: 3, reps: "12-20" }],
+          name: "Leg Extension",
+          setGroups: [{ sets: 3, reps: "12-15" }],
           rpe: "8-10",
         },
         {
           orderLabel: "6",
-          name: "Hanging Leg Raise",
-          setGroups: [{ sets: 2, reps: "10-20" }],
+          name: "Standing Calf Raise",
+          setGroups: [{ sets: 3, reps: "10-12" }],
+          rpe: "8-10",
+        },
+        {
+          orderLabel: "7",
+          name: "Seated Calf Raise",
+          setGroups: [{ sets: 3, reps: "12-15" }],
+          rpe: "8-10",
+        },
+      ],
+    },
+
+    // ─────────────────────────────────────────────
+    // Day 4: Upper (greatest hits — width back, second chest/delts/arms)
+    // ─────────────────────────────────────────────
+    {
+      dayNumber: 4,
+      title: "Upper",
+      exercises: [
+        {
+          orderLabel: "1",
+          name: "Wide Overhand Pulldown",
+          setGroups: [{ sets: 4, reps: "10-12" }],
+          rpe: "8-10",
+        },
+        {
+          orderLabel: "2",
+          name: "Incline Bench Press (Dumbbell)",
+          setGroups: [{ sets: 4, reps: "8-10" }],
+          rpe: "8-10",
+        },
+        {
+          orderLabel: "3",
+          name: "Chest-Supported Row",
+          setGroups: [{ sets: 3, reps: "10-12" }],
+          rpe: "8-10",
+        },
+        {
+          orderLabel: "4",
+          name: "Lateral Raise (Cable)",
+          setGroups: [{ sets: 4, reps: "12-15" }],
+          rpe: "8-10",
+        },
+        {
+          orderLabel: "5",
+          name: "Cable Crossover",
+          setGroups: [{ sets: 3, reps: "12-15" }],
+          rpe: "8-10",
+        },
+        {
+          orderLabel: "6",
+          name: "Hammer Curl",
+          setGroups: [{ sets: 3, reps: "10-12" }],
+          rpe: "8-10",
+        },
+        {
+          orderLabel: "7",
+          name: "Overhead Tricep Extension (Cable)",
+          setGroups: [{ sets: 3, reps: "10-15" }],
           rpe: "8-10",
         },
       ],
@@ -242,6 +250,6 @@ export const UPPER_LOWER_PROGRAM: UpperLowerProgram = {
   ],
 };
 
-export function getUpperLowerDayTemplate(dayNumber: number): UpperLowerDayTemplate | undefined {
-  return UPPER_LOWER_PROGRAM.dayTemplates.find((d) => d.dayNumber === dayNumber);
+export function getPpluDayTemplate(dayNumber: number): PpluDayTemplate | undefined {
+  return PPLU_PROGRAM.dayTemplates.find((d) => d.dayNumber === dayNumber);
 }

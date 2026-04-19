@@ -4,6 +4,114 @@ _History through UX Overhaul archived in `docs/WORKLOG-ARCHIVE.md`_
 
 ---
 
+## 2026-04-07 -- Perf: Fix Triple getPrefs() in AppShell (Task 10) -- COMPLETE
+
+### Goal
+Eliminate redundant `getPrefs()` calls in AppShell component. The function calls `localStorage.getItem + JSON.parse` each time, and was being called multiple times within a single render cycle.
+
+### What Was Done
+[x] Step 1: Removed `const initialPrefs = getPrefs()` variable (line 36)
+[x] Step 2: Converted useState init to lazy form: `useState<HouseholdUser>(() => getPrefs().activeUser)` -- init runs once, not on every render
+[x] Step 3: Fixed `setActiveUser` function to cache result: `const current = getPrefs()` then reuse instead of calling getPrefs() twice
+[x] Step 4: Type check -- 0 errors
+[x] Step 5: Committed (b3787d6)
+
+### Details
+- **Before**: `initialPrefs` was read at line 36, then `getPrefs()` called again at line 38 (currentWeek), then called up to 3 times in setActiveUser (line 55)
+- **After**: Line 38 still calls getPrefs() once for currentWeek (expected per component lifetime), lazy init avoids init call, setActiveUser caches to 1 call
+- Net reduction: 2-3 redundant localStorage reads per component lifecycle
+
+### Verification
+- TypeScript check: 0 errors
+- All changes match task spec exactly
+- Commit: b3787d6
+
+### Next: Task 11
+Batch localStorage reads in queueExercises useMemo.
+
+---
+
+## 2026-04-07 -- Perf: Batch localStorage reads in queueExercises memo (Task 11) -- COMPLETE
+
+### Goal
+Eliminate 8 redundant `localStorage.getItem + JSON.parse` calls in queueExercises useMemo. Currently `getPermanentSub()` is called for each exercise, each doing a full load. Load once via `getAllPermanentSubs()`, then lookup from the resulting map.
+
+### What Was Done
+[x] Step 1: Verified getAllPermanentSubs exists in exercise-substitutions.ts (returns Record<string, string>)
+[x] Step 2: Added getAllPermanentSubs to import on line 55
+[x] Step 3: Added `const allSubs = getAllPermanentSubs(prefs.activeUser)` at top of queueExercises memo (line 338)
+[x] Step 4: Replaced `getPermanentSub(prefs.activeUser, programId, prefs.currentDay, exercise.name)` with direct map lookup: `const subKey = \`${programId}:${prefs.currentDay}:${exercise.name}\`; const permanentSub = allSubs[subKey];` (lines 351-352)
+[x] Step 5: Checked getPermanentSub usage -- no longer called, removed from import; setPermanentSub and clearPermanentSub still used at lines 919 and 1719
+[x] Step 6: Type check -- 0 errors; Vitest -- 195 passed
+[x] Step 7: Committed (f450b1b)
+
+### Details
+- **Optimization**: Instead of 8 calls to `getPermanentSub()` (each doing localStorage.getItem + JSON.parse), now 1 call to `getAllPermanentSubs()` and 8 direct map lookups
+- **Key format**: Matches buildKey format in exercise-substitutions.ts -- `${programId}:${day}:${exerciseName}`
+- **Net reduction**: 7 redundant localStorage reads per queueExercises memo execution
+
+### Verification
+- TypeScript: 0 errors
+- Vitest: 195 tests pass
+- Git: Commit f450b1b
+
+### Next: Task 12
+Pre-compute lastPerformanceMap in useMemo to avoid repeated sessionHistory lookups.
+
+---
+
+## 2026-04-07 -- Dead Code: Remove workoutRestSeconds State (Task 8) -- COMPLETE
+
+### Goal
+Remove the dead state variable `workoutRestSeconds` from `web/src/components/screens/today-screen.tsx`. It's written but never read.
+
+### What Was Done
+[x] Step 1: Removed state declaration `const [workoutRestSeconds, setWorkoutRestSeconds] = useState(0);` (line 227)
+[x] Step 2: Removed setWorkoutRestSeconds call from finalizeRest (line 414: `setWorkoutRestSeconds((prev) => prev + loggedSeconds);`)
+[x] Step 3: Removed setWorkoutRestSeconds call from Cancel Workout handler (line 1799: `setWorkoutRestSeconds(0);`)
+[x] Step 4: Type check -- 0 errors
+[x] Step 5: Committed (b3a6b28)
+
+### Verification
+- TypeScript check: 0 errors
+- All 3 call sites removed
+- Commit: b3a6b28
+
+### Next: Task 9
+Conditional 1-second interval.
+
+---
+
+## 2026-04-07 -- Perf: Map Index for findExercise (Task 7) -- COMPLETE
+
+### Goal
+Replace O(N) `.find()` iteration in `findExercise(query)` with O(1) Map lookup for exact-match case. The function is called 6-8 times during active workouts in `queueExercises` useMemo, so this optimization helps latency on set-save operations.
+
+### What Was Done
+[x] Step 1: Created test file (`web/src/lib/__tests__/exercise-library.test.ts`) with 6 test cases
+[x] Step 2: Ran tests with current implementation -- all 6 PASS (baseline)
+[x] Step 3: Added EXERCISE_MAP at module load time, updated findExercise to use Map.get() for exact match
+[x] Step 4: Ran tests with new implementation -- all 6 PASS
+[x] Step 5: Full test suite (195 tests) + TypeScript check -- all PASS, 0 errors
+[x] Step 6: Committed (3be995c)
+
+### Details
+- EXERCISE_MAP built at module load from EXERCISE_LIBRARY.map() -- O(N) once, then O(1) per lookup
+- Exact match now uses Map.get() instead of .find() iteration
+- Prefix match falls back to O(N) .find(), but rarely hit in practice
+- ExerciseDefinition type already imported in file, no new imports needed
+
+### Verification
+- All 6 new tests pass (exact match, lowercase, prefix, undefined for nonsense, prefer exact over prefix)
+- All 195 tests in suite pass
+- 0 TypeScript errors
+- Commit: 3be995c
+
+### Next: Task 8
+Remove dead workoutRestSeconds state.
+
+---
+
 ## 2026-04-07 -- Codebase Cleanup: Format Utils Migration (Task 4) -- COMPLETE
 
 ### Goal
@@ -615,6 +723,46 @@ Rewrite `web/src/components/exercise-queue-card.tsx` to new data-cluster layout 
 
 ---
 
+## 2026-04-07 -- Export getRpTemplate, Kill Duplicates -- COMPLETE
+
+### Goal
+Remove duplicate switch statements mapping RP template IDs from 3 files:
+- Export canonical `getRpTemplate()` from program-registry.ts
+- Delete duplicate functions in today-screen.tsx and rp-setup-screen.tsx
+- Update imports to use the exported function
+
+### What Was Done
+- [x] Step 1: Added `export` keyword to `getRpTemplate()` in program-registry.ts (line 213)
+- [x] Step 2: Updated today-screen.tsx:
+  - Added `getRpTemplate` to existing import from "@/lib/program-registry" (line 23-29)
+  - Deleted 4 RP template imports (RP_TEMPLATE_NF3/NF4/NA4/NC4)
+  - Deleted duplicate `getRpTemplateById()` function (was at line 195)
+  - Replaced 2 call sites: `getRpTemplateById(` → `getRpTemplate(` (lines 293, 1028)
+- [x] Step 3: Updated rp-setup-screen.tsx:
+  - Added `getRpTemplate` to import from "@/lib/program-registry" (line 11)
+  - Deleted 4 RP template imports (RP_TEMPLATE_NF3/NF4/NA4/NC4)
+  - Deleted duplicate `getTemplate()` function (was at line 34)
+  - Replaced 1 call site: `getTemplate(` → `getRpTemplate(` (line 40)
+- [x] Step 4: Verified:
+  - TypeScript: 0 errors (`npx tsc --noEmit`)
+  - Next build: succeeded in 1838.1ms, 0 type errors
+  - No remaining imports of RP template constants in component files
+  - All call sites use exported `getRpTemplate()` from program-registry
+- [x] Step 5: Committed: `d5b0d76`
+
+### Files Modified
+- `web/src/lib/program-registry.ts` -- added export to getRpTemplate
+- `web/src/components/screens/today-screen.tsx` -- removed duplicate imports/function/calls
+- `web/src/components/screens/rp-setup-screen.tsx` -- removed duplicate imports/function/calls
+
+### Changes Summary
+- Deleted 8 lines of import statements (4 in each screen)
+- Deleted 22 lines of duplicate switch statement code
+- Net change: -32 lines, +6 lines (import additions) = -26 lines total
+- Single source of truth: getRpTemplate is now in program-registry.ts only
+
+---
+
 ## 2026-04-06 -- Today Screen to Stitch Design -- IN PROGRESS
 
 ### Goal
@@ -931,6 +1079,37 @@ COMPLETE. All duplicated storage functions consolidated to storage-utils.ts.
 
 ---
 
+## 2026-04-07 -- Task 6: Export resolveUser from household-profiles
+
+### Goal
+Consolidate duplicated `resolveUser` functions from workout-store.ts and program-store.ts into household-profiles.ts.
+
+### What Was Done
+1. Added `resolveUser(user?: HouseholdUser): HouseholdUser` export to household-profiles.ts
+   - Returns concrete user if provided, otherwise defaults to active user from localStorage
+2. Updated workout-store.ts:
+   - Added `resolveUser` to import from household-profiles
+   - Deleted local `resolveUser` function (3 lines)
+   - Kept local `getStoredPrefs()` wrapper (used in 4+ other places)
+3. Updated program-store.ts:
+   - Replaced `getActiveUserFromLocalStorage` import with just `resolveUser`
+   - Deleted local `resolveUser` function
+   - `getActiveUserFromLocalStorage` no longer imported (wasn't used elsewhere)
+4. Verification:
+   - Tests: 189 passed (npx vitest run)
+   - Types: 0 errors (npx tsc --noEmit)
+   - Commit: `b059fa8` -- refactor: consolidate resolveUser into household-profiles
+
+### Files Modified
+- `web/src/lib/household-profiles.ts`
+- `web/src/lib/workout-store.ts`
+- `web/src/lib/program-store.ts`
+
+### Status
+COMPLETE. resolveUser consolidated; all tests passing.
+
+---
+
 ## 2026-04-07 -- Task 3: Create format-utils.ts
 
 ### Goal
@@ -954,4 +1133,153 @@ Create shared format-utils module centralizing 4 duplicated formatting functions
 COMPLETE. Ready for Task 4: Migrate 5 files to use format-utils.
 
 ---
+
+
+## 2026-04-07 -- Task 9: Conditional 1-second interval
+
+### Goal
+Stop the 1-second interval that fires `setNowMs(Date.now())` unconditionally, causing wasteful re-renders when no workout is active.
+
+### What Was Done
+1. Located the interval useEffect in today-screen.tsx around line 473
+2. Replaced unconditional interval with conditional version:
+   - When `matchingActiveSession` is null, clear `nowMs` and return early (no interval)
+   - When `matchingActiveSession` exists, immediately set `nowMs`, then start the 1-second interval
+   - Changed dependency array from `[]` to `[matchingActiveSession]`
+3. Verified `workoutElapsedSeconds` useMemo already guards for null (line 517: `if (nowMs == null || !matchingActiveSession`)
+4. Verified `nowMs` is typed as `number | null` (line 228)
+5. TypeScript check: 0 errors (npx tsc --noEmit)
+6. Commit: `cd71a5e` -- perf: only run 1-second interval when workout is active
+
+### Files Modified
+- `web/src/components/screens/today-screen.tsx` (useEffect starting at line 473)
+
+### Status
+COMPLETE. Interval now conditional on active session.
+
+---
+
+## 2026-04-07 -- Task 12: Pre-compute lastPerformanceMap -- COMPLETE
+
+### Goal
+Pre-compute last performance per exercise in a separate memo to avoid O(N*M) lookups on every set save. Currently `getLastPerformanceFromSessions()` iterates all sessions for each exercise (8 exercises * 60 sessions * 20 sets = ~10,000 comparisons per set save).
+
+### What Was Done
+[x] Step 1: Added `lastPerformanceMap` memo before `queueExercises` memo (line 335)
+[x] Step 2: Replaced `getLastPerformanceFromSessions(sessionHistory, resolvedName)` with `lastPerformanceMap.get(resolvedName)` (line 389)
+[x] Step 3: Updated queueExercises dependency array: replaced `sessionHistory` with `lastPerformanceMap` (line 422)
+[x] Step 4: Verified sessionHistory not used elsewhere in queueExercises body, safe to remove
+[x] Step 5: Deleted unused `getLastPerformanceFromSessions()` function (was at line 162)
+[x] Step 6: Type check -- 0 errors (npx tsc --noEmit)
+[x] Step 7: Committed (540ee20)
+
+### Details
+- **Memo logic**: Walks sessions newest-first, builds a Map where key = exercise name, value = LoggedSet with highest weight
+- **Optimization**: O(N*M) work happens once when sessionHistory changes, then O(1) lookups per exercise in queueExercises
+- **Dependency**: Map keyed on `sessionHistory`, so it recalculates only when history is loaded or session completes
+- **LoggedSet**: Already imported at line 42, no new imports needed
+
+### Files Modified
+- `web/src/components/screens/today-screen.tsx` (added memo, replaced call, updated deps, deleted function)
+
+### Status
+COMPLETE. lastPerformanceMap now pre-computed, queueExercises has O(1) lookups instead of O(N*M).
+
+---
+
+## 2026-04-09 -- Task 1: Fix Exercise Swap Bugs (pendingSubs state) -- COMPLETE
+
+### Goal
+Fix two exercise swap bugs:
+1. "Just this session" button was hidden behind `matchingActiveSession` check -- should always be visible
+2. Session-only subs for RP programs were keyed by exercise name, causing collisions when two slots have same exercise (e.g. two "Quads" slots both defaulting to "Squat (Barbell)")
+
+### What Was Done
+[x] Change 1: Added `pendingSubs` state (line 239)
+[x] Change 2: Reordered sub resolution in queueExercises memo (lines 360-366) -- now checks pendingSubs before session.substitutions
+[x] Change 3: Updated handleSwapConfirm (lines 939-953) -- "just this session" now stores in pendingSubs with proper key
+[x] Change 4: Updated ensureActiveSession (lines 542-562) -- carries pendingSubs into new session when starting workout
+[x] Change 5: Removed conditional wrapper from "Just this session" button (line 1713) -- now always visible
+[x] Change 6: Added pendingSubs to queueExercises dependency array (line 407)
+[x] Type check: 0 errors (npx tsc --noEmit)
+
+### Details
+- **pendingSubs structure**: `Record<string, string>` keyed like `programId:day:slotId` or `programId:day:exerciseName`
+- **Resolution order**: pendingSubs (user pending) > session.substitutions (already-started) > permanent subs > original
+- **RP slot fix**: For RP programs, use `exercise.rpSlotId` in key instead of `exercise.name`, avoiding collisions
+- **ensureActiveSession logic**: When starting new session, extract pending subs and convert keys from `programId:day:subId` to `subId` format for session storage
+- **Button visibility**: Removed `matchingActiveSession &&` guard, so "Just this session" appears even when no active session yet
+
+### Files Modified
+- `web/src/components/screens/today-screen.tsx` (6 changes across lines 239, 360-366, 939-953, 542-562, 1713, 407)
+
+### Status
+COMPLETE. All changes applied, type-checked, ready for testing.
+
+
+---
+
+## 2026-04-09 -- Task 2: Add migrateRpSubKeys Migration Function -- COMPLETE
+
+### Goal
+Add `migrateRpSubKeys()` function to exercise-substitutions.ts to handle backward compatibility. Old permanent subs were keyed by exercise name (`programId:day:exerciseName`), but RP programs need slotId-based keys (`programId:day:slotId`) to avoid collisions.
+
+### What Was Done
+[x] Added migrateRpSubKeys() export to exercise-substitutions.ts
+[x] Function signature: takes user, programId, slots array, and selections map
+[x] Logic: walks slots, compares old-format keys with new-format keys, moves values and deletes old keys
+[x] Idempotent: skips migration if new key already exists (prevents double-migration)
+[x] Only calls save() if changes were made (avoids unnecessary localStorage writes)
+[x] Type check: 0 errors (npx tsc --noEmit)
+[x] Committed (ee1fd2c)
+
+### Details
+- **Old key format**: `programId:day:exerciseName` (caused collisions for duplicate exercises like two Quad slots)
+- **New key format**: `programId:day:slotId` (unique per slot, even if same exercise)
+- **Idempotency**: Checks `userSubs[newKey] === undefined` before moving, so multiple runs are safe
+- **Change tracking**: `changed` flag prevents save() call if no work was done
+
+### Files Modified
+- `web/src/lib/exercise-substitutions.ts` (added migrateRpSubKeys export)
+
+### Next Steps (Task 3 & 4)
+This function is now ready to be wired into today-screen.tsx in the main workout initialization logic. Will be called during getRpExercisesForDay() or in the useEffect that initializes RP program state.
+
+### Status
+COMPLETE. Function implemented, type-checked, and committed.
+
+---
+
+## 2026-04-09 -- Task 3: Wire dedupe + migration into today-screen useEffect -- COMPLETE
+
+### Goal
+Wire `dedupeRpSelections()` and `migrateRpSubKeys()` into a mount-only useEffect in today-screen.tsx to fix duplicate exercise bug and migrate old sub keys on program load.
+
+### What Was Done
+[x] Added import: `dedupeRpSelections` to rp-store import (line 49)
+[x] Added import: `migrateRpSubKeys` to exercise-substitutions import (line 55)
+[x] Added import: `getRpExercisesForCategory` from rp-exercise-library (new line 58)
+[x] Added useEffect right after rpState useState (lines 253-272)
+  - Checks `!isRpProgram || !rpState` early return
+  - Fetches template via `getRpTemplate(programId)`
+  - Calls `dedupeRpSelections()` with selections, slots, and lookup function
+  - If patched, saves to localStorage and updates local state
+  - Calls `migrateRpSubKeys()` with old sub format keys, migrates them
+  - Dependency array: `[]` (intentional mount-only, eslint-disable-next-line added)
+[x] Type check: 0 errors (npx tsc --noEmit)
+[x] Tests: 8 test files, 185 tests, all passing
+[x] Committed (8e388ad)
+
+### Details
+- **Early returns**: Exits immediately if not RP program or rpState not initialized
+- **Dedup flow**: Get template, run dedupe, if patched save and update state
+- **Migration flow**: Always run after dedupe, migrates old key format to new one
+- **Mount-only behavior**: Empty dependency array ensures this runs exactly once per component mount
+- **Intentional lint disable**: ESLint exhaustive-deps is deliberately disabled with comment
+
+### Files Modified
+- `web/src/components/screens/today-screen.tsx` (3 imports, 20-line useEffect)
+
+### Status
+COMPLETE. Deduplication and migration now wired into component lifecycle, running on mount before any render.
 

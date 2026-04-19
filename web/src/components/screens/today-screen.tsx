@@ -1023,7 +1023,7 @@ export function TodayScreen() {
     <>
     <section className="screen">
       <WorkoutHeader
-        dayLabel={`Week ${prefs.currentWeek} - Day ${prefs.currentDay}  |  ${getDayTitle(programId, prefs.currentDay)}`}
+        dayLabel={`Week ${prefs.currentWeek} - Day ${prefs.currentDay}  |  ${getDayTitle(programId, prefs.currentDay, prefs.currentWeek)}`}
         sessionStatus={sessionStatus}
         onPrimaryAction={() => {
           ensureActiveSession();
@@ -1093,7 +1093,7 @@ export function TodayScreen() {
                     >
                       {Array.from({ length: daysPerCycle }, (_, i) => i + 1).map((dayNum) => (
                         <option key={dayNum} value={dayNum}>
-                          Day {dayNum} - {getDayTitle(programId, dayNum)}
+                          Day {dayNum} - {getDayTitle(programId, dayNum, prefs.currentWeek)}
                         </option>
                       ))}
                     </select>
