@@ -9,6 +9,7 @@ import { getKongExercisesForDay, getKongDayTitle } from "./program-data-kong";
 import { getGoldenWarriorExercisesForDay, getGoldenWarriorDayTitle } from "./program-data-golden-warrior";
 import { getHersDayTemplate } from "./program-data-hers";
 import { getMinimalistDayTemplate } from "./program-data-nippard-minimalist";
+import { getFoundationDayTemplate } from "./program-data-foundation";
 import { getSplitDayTemplate } from "./program-data-splits";
 import type { RpProgramState } from "./rp-types";
 import type { RpTemplate } from "./rp-types";
@@ -119,6 +120,16 @@ export const PROGRAM_REGISTRY: ProgramMeta[] = [
     cycleLength: 0,
     periodizationType: "auto-regulated",
     hasAutoRegulation: true,
+    hasVolumeTracking: true,
+  },
+  {
+    id: "foundation",
+    name: "Foundation (MVP)",
+    profile: "both",
+    daysPerCycle: 3,
+    cycleLength: 0,
+    periodizationType: "double-progression",
+    hasAutoRegulation: false,
     hasVolumeTracking: true,
   },
   {
@@ -361,6 +372,18 @@ export function getExercisesForDay(
       notes: ex.notes,
     } satisfies ProgramExercise));
   }
+  if (programId === "foundation") {
+    const template = getFoundationDayTemplate(dayNumber);
+    if (!template) return [];
+    return template.exercises.map((ex, i) => ({
+      order: i + 1,
+      orderLabel: ex.orderLabel,
+      name: ex.name,
+      setGroups: ex.setGroups,
+      restSeconds: getDefaultRestSeconds(ex.name),
+      notes: ex.notes,
+    } satisfies ProgramExercise));
+  }
   if (programId.startsWith("hers-")) {
     const template = getHersDayTemplate(programId, dayNumber);
     if (!template) return [];
@@ -419,6 +442,9 @@ export function getDayTitle(programId: string, dayNumber: number, weekNumber?: n
   }
   if (programId === "nippard-minimalist") {
     return getMinimalistDayTemplate(dayNumber)?.title ?? `Day ${dayNumber}`;
+  }
+  if (programId === "foundation") {
+    return getFoundationDayTemplate(dayNumber)?.title ?? `Day ${dayNumber}`;
   }
   if (programId.startsWith("hers-")) {
     return getHersDayTemplate(programId, dayNumber)?.title ?? `Day ${dayNumber}`;

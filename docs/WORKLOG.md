@@ -1283,3 +1283,37 @@ Wire `dedupeRpSelections()` and `migrateRpSubKeys()` into a mount-only useEffect
 ### Status
 COMPLETE. Deduplication and migration now wired into component lifecycle, running on mount before any render.
 
+---
+
+## 2026-05-13 -- Foundation (MVP) 3-Day Template -- COMPLETE
+
+### Goal
+Add a "minimum viable" 3-day program for habit re-formation during low-motivation periods. Synthesized greatest-hits exercises from Mass Impact / RAVAGE / RAMPAGE / Nippard splits, filtered for "minimum dose that still moves aesthetics." 5 lifts per day, ~40 min sessions.
+
+### What Was Done
+[x] Verified all 15 canonical exercise names exist in exercise-library.ts (grep confirmed each)
+[x] Created `web/src/lib/program-data-foundation.ts` mirroring program-data-nippard-minimalist.ts structure
+[x] Added `foundation` import to program-registry.ts
+[x] Added Foundation (MVP) metadata to PROGRAM_REGISTRY (3-day, double-progression, no auto-regulation, volume tracking on) -- slotted right after `nippard-minimalist`
+[x] Added `foundation` branches to `getExercisesForDay()` and `getDayTitle()`
+[x] TypeScript: 0 errors (npx tsc --noEmit)
+[x] Vitest: 8 files, 185 tests, all passing
+[x] Dev server boots clean (HTTP 200)
+[x] Playwright UI verification: Foundation appears in dropdown, Day 1 renders "Upper (Push)" with "Incline Bench Press (Dumbbell)" as exercise 1, all 3 day titles correct, sets/reps/notes populate
+
+### Design Summary
+- **Day 1 Upper (Push)**: Incline DB Press, Cable Lateral Raise, Chest-Supported Row, Cable Overhead Tricep Ext, Cable Crunch (optional)
+- **Day 2 Lower**: Hack Squat, RDL, Walking Lunge, Standing Calf Raise, Hanging Knee Raise (optional)
+- **Day 3 Upper (Pull)**: Neutral-Grip Pull-Up, Single Arm Cable Row, Cable Lateral Raise, Incline DB Curl, Face Pull (optional)
+- Side delts hit 2x/week intentionally (highest aesthetic ROI per set)
+- Notes on each lift include rep guidance + skip-rules for low-motivation days
+
+### Files Modified
+- `web/src/lib/program-data-foundation.ts` (new, 122 lines)
+- `web/src/lib/program-registry.ts` (3 small edits: import, metadata entry, two switch branches)
+
+### Status
+COMPLETE. Foundation (MVP) is selectable from the program dropdown. Renders + logs identically to other no-RP programs. Not committed yet -- waiting on user.
+
+### Note (housekeeping)
+WORKLOG.md is at 1300+ lines, well past the 200-line target. Older completed sections should be archived to WORKLOG-ARCHIVE.md when the user has time.
